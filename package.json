@@ -1,0 +1,30 @@
+{
+  "name": "sonder-fm",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "concurrently \"npm run dev:web\" \"npm run dev:backend\"",
+    "dev:web": "cd apps/web && npm run dev",
+    "dev:backend": "cd apps/backend && npm run dev",
+    "build": "turbo run build",
+    "build:web": "cd apps/web && npm run build",
+    "build:backend": "cd apps/backend && npm run build",
+    "start": "concurrently \"npm run start:web\" \"npm run start:backend\"",
+    "start:web": "cd apps/web && npm run start",
+    "start:backend": "cd apps/backend && npm run start",
+    "type-check": "turbo run type-check"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "turbo": "^1.10.16",
+    "@types/node": "^20.8.0",
+    "typescript": "^5.2.2"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

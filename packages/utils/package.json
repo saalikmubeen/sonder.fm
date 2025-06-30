@@ -1,0 +1,11 @@
+{
+  "name": "@sonder/utils",
+  "version": "1.0.0",
+  "main": "index.ts",
+  "types": "index.ts",
+  "dependencies": {
+    "@sonder/types": "*",
+    "crypto": "^1.0.1",
+    "axios": "^1.6.0"
+  }
+}
