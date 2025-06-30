@@ -12,25 +12,27 @@ const router = express.Router();
 router.get('/:slug', async (req, res) => {
   try {
     const { slug } = req.params;
-    const currentUserId = req.headers.authorization ? await getCurrentUserId(req.headers.authorization) : null;
+    const currentUserId = req.headers.authorization
+      ? await getCurrentUserId(req.headers.authorization)
+      : null;
 
     const user = await User.findOne({ publicSlug: slug });
-    
+
     if (!user) {
       return res.status(404).json({
         success: false,
-        error: 'Profile not found'
+        error: 'Profile not found',
       });
     }
 
     // Get reactions count
     const reactions = await Reaction.aggregate([
       { $match: { targetUserId: user._id } },
-      { $group: { _id: '$emoji', count: { $sum: 1 } } }
+      { $group: { _id: '$emoji', count: { $sum: 1 } } },
     ]);
 
     const reactionCounts: { [emoji: string]: number } = {};
-    reactions.forEach(r => {
+    reactions.forEach((r) => {
       reactionCounts[r._id] = r.count;
     });
 
@@ -45,7 +47,7 @@ router.get('/:slug', async (req, res) => {
     if (currentUserId) {
       const followRecord = await Follow.findOne({
         followerId: currentUserId,
-        followingId: user._id
+        followingId: user._id,
       });
       isFollowing = !!followRecord;
     }
@@ -56,19 +58,19 @@ router.get('/:slug', async (req, res) => {
       publicSlug: user.publicSlug,
       profileTheme: user.profileTheme,
       vibeSummary: user.vibeSummary,
-      nowPlaying: user.cachedNowPlaying,
-      stats: user.stats,
+      // nowPlaying: user.cachedNowPlaying,
+      // stats: user.stats,
       reactions: reactionCounts,
-      vibeNotes: vibeNotes.map(note => ({
+      vibeNotes: vibeNotes.map((note) => ({
         ...note.toObject(),
-        authorId: note.isAnonymous ? undefined : note.authorId
+        authorId: note.isAnonymous ? undefined : note.authorId,
       })),
-      isFollowing
+      isFollowing,
     };
 
     const response: APIResponse<PublicProfile> = {
       success: true,
-      data: publicProfile
+      data: publicProfile,
     };
 
     res.json(response);
@@ -76,7 +78,7 @@ router.get('/:slug', async (req, res) => {
     console.error('Error fetching profile:', error);
     res.status(500).json({
       success: false,
-      error: 'Failed to fetch profile'
+      error: 'Failed to fetch profile',
     });
   }
 });
@@ -89,11 +91,11 @@ router.put('/:slug/theme', auth, async (req, res) => {
     const userId = (req as any).userId;
 
     const user = await User.findOne({ publicSlug: slug });
-    
+
     if (!user) {
       return res.status(404).json({
         success: false,
-        error: 'Profile not found'
+        error: 'Profile not found',
       });
     }
 
@@ -101,15 +103,23 @@ router.put('/:slug/theme', auth, async (req, res) => {
     if (user._id.toString() !== userId) {
       return res.status(403).json({
         success: false,
-        error: 'Not authorized to update this profile'
+        error: 'Not authorized to update this profile',
       });
     }
 
-    const validThemes = ['default', 'dark', 'pastel', 'grunge', 'sadcore', 'neon', 'forest'];
+    const validThemes = [
+      'default',
+      'dark',
+      'pastel',
+      'grunge',
+      'sadcore',
+      'neon',
+      'forest',
+    ];
     if (!validThemes.includes(theme)) {
       return res.status(400).json({
         success: false,
-        error: 'Invalid theme'
+        error: 'Invalid theme',
       });
     }
 
@@ -118,18 +128,20 @@ router.put('/:slug/theme', auth, async (req, res) => {
 
     res.json({
       success: true,
-      message: 'Theme updated successfully'
+      message: 'Theme updated successfully',
     });
   } catch (error) {
     console.error('Error updating theme:', error);
     res.status(500).json({
       success: false,
-      error: 'Failed to update theme'
+      error: 'Failed to update theme',
     });
   }
 });
 
-async function getCurrentUserId(authHeader: string): Promise<string | null> {
+async function getCurrentUserId(
+  authHeader: string
+): Promise<string | null> {
   try {
     const jwt = require('jsonwebtoken');
     const token = authHeader.replace('Bearer ', '');

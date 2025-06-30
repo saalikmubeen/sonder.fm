@@ -1,3 +1,5 @@
+import { Types } from 'mongoose';
+
 export interface User {
   _id?: string;
   spotifyId: string;
@@ -5,23 +7,14 @@ export interface User {
   avatarUrl: string;
   email: string;
   refreshTokenEncrypted: string;
+  accessToken: string;
   publicSlug: string;
   profileTheme: ProfileTheme;
   vibeSummary: string;
-  topArtists: string[];
-  stats: UserStats;
-  cachedNowPlaying?: NowPlaying;
+  spotifyProfile: Types.ObjectId; // Reference to UserSpotifyProfile
   cachedUpdatedAt?: Date;
   createdAt: Date;
   updatedAt: Date;
-}
-
-export interface UserStats {
-  followers: number;
-  following: number;
-  totalMinutesListened: number;
-  topGenres: string[];
-  recentTracks: number;
 }
 
 export interface NowPlaying {
@@ -38,9 +31,11 @@ export interface NowPlaying {
 }
 
 export interface Follow {
-  _id?: string;
-  followerId: string;
-  followingId: string;
+  _id?: Types.ObjectId;
+  // followerId: string;
+  // followingId: string;
+  followerId: Types.ObjectId;
+  followingId: Types.ObjectId;
   createdAt: Date;
 }
 
@@ -77,7 +72,14 @@ export interface Conversation {
   updatedAt: Date;
 }
 
-export type ProfileTheme = 'default' | 'dark' | 'pastel' | 'grunge' | 'sadcore' | 'neon' | 'forest';
+export type ProfileTheme =
+  | 'default'
+  | 'dark'
+  | 'pastel'
+  | 'grunge'
+  | 'sadcore'
+  | 'neon'
+  | 'forest';
 
 export interface SpotifyTokens {
   accessToken: string;
@@ -85,24 +87,96 @@ export interface SpotifyTokens {
   expiresIn: number;
 }
 
-export interface SpotifyProfile {
+export interface SpotifyArtist {
   id: string;
-  display_name: string;
-  email: string;
-  images: Array<{ url: string; height: number; width: number }>;
-  followers: { total: number };
+  name: string;
+  imageUrl: string;
+  url: string;
+  followers: number;
+  popularity: number;
 }
 
 export interface SpotifyTrack {
+  id: string;
   name: string;
-  artists: Array<{ name: string }>;
+  artists: { id: string; name: string; url: string }[];
   album: {
+    id: string;
     name: string;
-    images: Array<{ url: string; height: number; width: number }>;
+    imageUrl: string;
+    url: string;
+    releaseDate: string;
   };
-  external_urls: { spotify: string };
-  preview_url?: string;
-  duration_ms: number;
+  popularity: number;
+  durationMs: number;
+  url: string;
+}
+
+export interface SpotifyPlaylist {
+  id: string;
+  name: string;
+  description?: string;
+  imageUrl?: string;
+  tracks: number;
+  url: string;
+  public: boolean;
+}
+
+export interface RecentlyPlayedTracks {
+  total: number;
+  items: {
+    trackName: string;
+    trackId: string;
+    trackUrl: string;
+    durationMs: number;
+    playedAt: string;
+  }[];
+}
+
+export interface AudioFeatureSummary {
+  valenceAvg: number;
+  energyAvg: number;
+  danceabilityAvg: number;
+  acousticnessAvg: number;
+  instrumentalnessAvg: number;
+  tempoAvg: number;
+}
+
+export interface UserSpotifyProfile {
+  userId: string;
+  spotifyId: string;
+  country: string;
+  displayName: string;
+  spotifyProfileUrl: string;
+  avatarUrl?: string;
+  email: string;
+  followers: number;
+  following: number;
+  premium: boolean;
+
+  playlists: {
+    total: number;
+    items: SpotifyPlaylist[];
+  };
+  topArtists: {
+    short: SpotifyArtist[];
+    medium: SpotifyArtist[];
+    long: SpotifyArtist[];
+  };
+  topTracks: {
+    short: SpotifyTrack[];
+    medium: SpotifyTrack[];
+    long: SpotifyTrack[];
+  };
+  recentlyPlayedTracks: RecentlyPlayedTracks;
+  followedArtists: {
+    total: number;
+    items: SpotifyArtist[];
+  };
+
+  audioFeatureSummary?: AudioFeatureSummary;
+  genreMap?: Record<string, number>;
+  lastUpdated: Date;
 }
 
 export interface SpotifyCurrentlyPlaying {
@@ -111,27 +185,27 @@ export interface SpotifyCurrentlyPlaying {
   item: SpotifyTrack;
 }
 
-export interface SpotifyTopArtists {
-  items: Array<{
-    name: string;
-    genres: string[];
-    popularity: number;
-    images: Array<{ url: string }>;
-  }>;
-}
-
 // Socket.IO event types
 export interface ServerToClientEvents {
   message_received: (message: Message) => void;
   user_online: (userId: string) => void;
   user_offline: (userId: string) => void;
-  typing_start: (data: { userId: string; conversationId: string }) => void;
-  typing_stop: (data: { userId: string; conversationId: string }) => void;
+  typing_start: (data: {
+    userId: string;
+    conversationId: string;
+  }) => void;
+  typing_stop: (data: {
+    userId: string;
+    conversationId: string;
+  }) => void;
 }
 
 export interface ClientToServerEvents {
   join_room: (userId: string) => void;
-  send_message: (data: { receiverId: string; content: string }) => void;
+  send_message: (data: {
+    receiverId: string;
+    content: string;
+  }) => void;
   mark_read: (messageId: string) => void;
   typing_start: (conversationId: string) => void;
   typing_stop: (conversationId: string) => void;
@@ -150,7 +224,6 @@ export interface PublicProfile {
   profileTheme: ProfileTheme;
   vibeSummary: string;
   nowPlaying?: NowPlaying;
-  stats: UserStats;
   reactions: { [emoji: string]: number };
   vibeNotes: VibeNote[];
   isFollowing?: boolean;
@@ -166,4 +239,12 @@ export interface APIResponse<T = any> {
   data?: T;
   error?: string;
   message?: string;
+}
+
+export interface RefreshToken {
+  _id: Types.ObjectId;
+  userId: Types.ObjectId;
+  tokenHash: string;
+  expiresAt: Date;
+  createdAt?: Date;
 }

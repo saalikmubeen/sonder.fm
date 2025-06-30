@@ -1,15 +1,12 @@
 import mongoose, { Schema, Document } from 'mongoose';
-import type { User as UserType, UserStats, NowPlaying, ProfileTheme } from '@sonder/types';
+import type {
+  User as UserType,
+  NowPlaying,
+  ProfileTheme,
+} from '@sonder/types';
+import { type } from 'os';
 
 interface UserDocument extends Omit<UserType, '_id'>, Document {}
-
-const UserStatsSchema = new Schema<UserStats>({
-  followers: { type: Number, default: 0 },
-  following: { type: Number, default: 0 },
-  totalMinutesListened: { type: Number, default: 0 },
-  topGenres: [{ type: String }],
-  recentTracks: { type: Number, default: 0 }
-});
 
 const NowPlayingSchema = new Schema<NowPlaying>({
   song: { type: String, required: true },
@@ -21,7 +18,7 @@ const NowPlayingSchema = new Schema<NowPlaying>({
   isPlaying: { type: Boolean, required: true },
   progressMs: { type: Number, required: true },
   durationMs: { type: Number, required: true },
-  timestamp: { type: Date, required: true }
+  timestamp: { type: Date, required: true },
 });
 
 const UserSchema = new Schema<UserDocument>({
@@ -30,19 +27,34 @@ const UserSchema = new Schema<UserDocument>({
   avatarUrl: { type: String, required: true },
   email: { type: String, required: true },
   refreshTokenEncrypted: { type: String, required: true },
+  accessToken: { type: String, required: true },
   publicSlug: { type: String, required: true, unique: true },
   profileTheme: {
     type: String,
-    enum: ['default', 'dark', 'pastel', 'grunge', 'sadcore', 'neon', 'forest'],
-    default: 'default'
+    enum: [
+      'default',
+      'dark',
+      'pastel',
+      'grunge',
+      'sadcore',
+      'neon',
+      'forest',
+    ],
+    default: 'default',
   },
   vibeSummary: { type: String, default: '' },
-  topArtists: [{ type: String }],
-  stats: { type: UserStatsSchema, default: () => ({}) },
-  cachedNowPlaying: { type: NowPlayingSchema },
+
+  // cachedNowPlaying: { type: NowPlayingSchema },
+
   cachedUpdatedAt: { type: Date },
+
+  spotifyProfile: {
+    type: Schema.Types.ObjectId,
+    ref: 'UserSpotifyProfile',
+  },
+
   createdAt: { type: Date, default: Date.now },
-  updatedAt: { type: Date, default: Date.now }
+  updatedAt: { type: Date, default: Date.now },
 });
 
 // Index for faster queries
@@ -51,7 +63,7 @@ UserSchema.index({ spotifyId: 1 });
 UserSchema.index({ displayName: 'text' });
 
 // Update the updatedAt field on save
-UserSchema.pre('save', function(next) {
+UserSchema.pre('save', function (next) {
   this.updatedAt = new Date();
   next();
 });

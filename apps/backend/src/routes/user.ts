@@ -10,18 +10,20 @@ const router = express.Router();
 // Get current user profile
 router.get('/me', auth, async (req: AuthRequest, res) => {
   try {
-    const user = await User.findById(req.userId).select('-refreshTokenEncrypted');
-    
+    const user = await User.findById(req.userId).select(
+      '-refreshTokenEncrypted'
+    );
+
     if (!user) {
       return res.status(404).json({
         success: false,
-        error: 'User not found'
+        error: 'User not found',
       });
     }
 
     const response: APIResponse<{ user: any }> = {
       success: true,
-      data: { user }
+      data: { user },
     };
 
     res.json(response);
@@ -29,7 +31,7 @@ router.get('/me', auth, async (req: AuthRequest, res) => {
     console.error('Error fetching user profile:', error);
     res.status(500).json({
       success: false,
-      error: 'Failed to fetch user profile'
+      error: 'Failed to fetch user profile',
     });
   }
 });
@@ -41,11 +43,11 @@ router.put('/me', auth, async (req: AuthRequest, res) => {
     const userId = req.userId;
 
     const user = await User.findById(userId);
-    
+
     if (!user) {
       return res.status(404).json({
         success: false,
-        error: 'User not found'
+        error: 'User not found',
       });
     }
 
@@ -57,13 +59,13 @@ router.put('/me', auth, async (req: AuthRequest, res) => {
     res.json({
       success: true,
       message: 'Profile updated successfully',
-      data: { user: user.toObject() }
+      data: { user: user.toObject() },
     });
   } catch (error) {
     console.error('Error updating user profile:', error);
     res.status(500).json({
       success: false,
-      error: 'Failed to update profile'
+      error: 'Failed to update profile',
     });
   }
 });
@@ -72,21 +74,23 @@ router.put('/me', auth, async (req: AuthRequest, res) => {
 router.post('/me/refresh', auth, async (req: AuthRequest, res) => {
   try {
     const userId = req.userId!;
-    
+
     await forceUpdateUser(userId);
-    
-    const updatedUser = await User.findById(userId).select('-refreshTokenEncrypted');
+
+    const updatedUser = await User.findById(userId).select(
+      '-refreshTokenEncrypted'
+    );
 
     res.json({
       success: true,
       message: 'Now playing updated successfully',
-      data: { user: updatedUser }
+      data: { user: updatedUser },
     });
   } catch (error) {
     console.error('Error refreshing now playing:', error);
     res.status(500).json({
       success: false,
-      error: 'Failed to refresh now playing'
+      error: 'Failed to refresh now playing',
     });
   }
 });
@@ -95,33 +99,35 @@ router.post('/me/refresh', auth, async (req: AuthRequest, res) => {
 router.get('/search', async (req, res) => {
   try {
     const { q, limit = 10 } = req.query;
-    
+
     if (!q || typeof q !== 'string') {
       return res.status(400).json({
         success: false,
-        error: 'Search query is required'
+        error: 'Search query is required',
       });
     }
 
     const users = await User.find({
       $or: [
         { displayName: { $regex: q, $options: 'i' } },
-        { publicSlug: { $regex: q, $options: 'i' } }
-      ]
+        { publicSlug: { $regex: q, $options: 'i' } },
+      ],
     })
-    .select('displayName avatarUrl publicSlug profileTheme vibeSummary stats')
-    .limit(parseInt(limit as string))
-    .sort({ 'stats.followers': -1 });
+      .select(
+        'displayName avatarUrl publicSlug profileTheme vibeSummary stats'
+      )
+      .limit(parseInt(limit as string))
+      .sort({ 'stats.followers': -1 });
 
     res.json({
       success: true,
-      data: { users }
+      data: { users },
     });
   } catch (error) {
     console.error('Error searching users:', error);
     res.status(500).json({
       success: false,
-      error: 'Failed to search users'
+      error: 'Failed to search users',
     });
   }
 });
@@ -130,30 +136,44 @@ router.get('/search', async (req, res) => {
 router.get('/me/stats', auth, async (req: AuthRequest, res) => {
   try {
     const userId = req.userId!;
-    
+
     // Get follower count
-    const followerCount = await Follow.countDocuments({ followingId: userId });
-    
+    const followerCount = await Follow.countDocuments({
+      followingId: userId,
+    });
+
     // Get following count
-    const followingCount = await Follow.countDocuments({ followerId: userId });
-    
+    const followingCount = await Follow.countDocuments({
+      followerId: userId,
+    });
+
     // Update user stats
     await User.findByIdAndUpdate(userId, {
       'stats.followers': followerCount,
-      'stats.following': followingCount
+      'stats.following': followingCount,
     });
 
-    const user = await User.findById(userId).select('stats');
+    const user = await User.findById(userId).populate(
+      'spotifyProfile',
+      'spotifyId displayName avatarUrl followers following'
+    );
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        error: 'User not found',
+      });
+    }
+    // Return user stats
 
     res.json({
       success: true,
-      data: { stats: user?.stats }
+      data: { stats: user?.spotifyProfile },
     });
   } catch (error) {
     console.error('Error fetching user stats:', error);
     res.status(500).json({
       success: false,
-      error: 'Failed to fetch user stats'
+      error: 'Failed to fetch user stats',
     });
   }
 });

@@ -4,8 +4,10 @@ import type { Follow as FollowType } from '@sonder/types';
 interface FollowDocument extends Omit<FollowType, '_id'>, Document {}
 
 const FollowSchema = new Schema<FollowDocument>({
-  followerId: { type: String, required: true },
-  followingId: { type: String, required: true },
+  // followerId: { type: String, required: true },
+  // followingId: { type: String, required: true },
+  followerId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+  followingId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
   createdAt: { type: Date, default: Date.now }
 });
 

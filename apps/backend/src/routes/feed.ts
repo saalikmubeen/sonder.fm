@@ -14,17 +14,20 @@ router.get('/', auth, async (req: AuthRequest, res) => {
 
     // Get users that the current user follows
     const following = await Follow.find({ followerId: userId })
-      .populate('followingId', 'displayName avatarUrl publicSlug profileTheme vibeSummary cachedNowPlaying cachedUpdatedAt')
+      .populate(
+        'followingId',
+        'displayName avatarUrl publicSlug profileTheme vibeSummary cachedNowPlaying cachedUpdatedAt'
+      )
       .sort({ createdAt: -1 })
       .limit(parseInt(limit as string))
       .skip(parseInt(offset as string));
 
     // Transform to feed items
     const feedItems: FeedItem[] = following
-      .map(follow => {
+      .map((follow) => {
         const user = follow.followingId as any;
         if (!user || !user.cachedNowPlaying) return null;
-        
+
         return {
           user: {
             _id: user._id,
@@ -32,20 +35,24 @@ router.get('/', auth, async (req: AuthRequest, res) => {
             avatarUrl: user.avatarUrl,
             publicSlug: user.publicSlug,
             profileTheme: user.profileTheme,
-            vibeSummary: user.vibeSummary
+            vibeSummary: user.vibeSummary,
           },
           nowPlaying: user.cachedNowPlaying,
-          timestamp: user.cachedUpdatedAt || new Date()
+          timestamp: user.cachedUpdatedAt || new Date(),
         };
       })
       .filter(Boolean) as FeedItem[];
 
     // Sort by most recent activity
-    feedItems.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+    feedItems.sort(
+      (a, b) =>
+        new Date(b.timestamp).getTime() -
+        new Date(a.timestamp).getTime()
+    );
 
     const response: APIResponse<{ feed: FeedItem[] }> = {
       success: true,
-      data: { feed: feedItems }
+      data: { feed: feedItems },
     };
 
     res.json(response);
@@ -53,7 +60,7 @@ router.get('/', auth, async (req: AuthRequest, res) => {
     console.error('Error fetching feed:', error);
     res.status(500).json({
       success: false,
-      error: 'Failed to fetch feed'
+      error: 'Failed to fetch feed',
     });
   }
 });
@@ -65,34 +72,40 @@ router.get('/discover', auth, async (req: AuthRequest, res) => {
     const { limit = 10 } = req.query;
 
     // Get current user's top genres
-    const currentUser = await User.findById(userId).select('stats.topGenres topArtists');
-    
+    const currentUser = await User.findById(userId).select(
+      'stats.topGenres topArtists'
+    );
+
     if (!currentUser) {
       return res.status(404).json({
         success: false,
-        error: 'User not found'
+        error: 'User not found',
       });
     }
 
     // Find users with similar genres or artists (excluding current user and already followed)
-    const followedUsers = await Follow.find({ followerId: userId }).select('followingId');
-    const followedIds = followedUsers.map(f => f.followingId);
+    const followedUsers = await Follow.find({
+      followerId: userId,
+    }).select('followingId');
+    const followedIds = followedUsers.map((f) => f.followingId);
     followedIds.push(userId as any); // Exclude self
 
     const similarUsers = await User.find({
       _id: { $nin: followedIds },
-      $or: [
-        { 'stats.topGenres': { $in: currentUser.stats.topGenres } },
-        { topArtists: { $in: currentUser.topArtists } }
-      ]
+      // $or: [
+      //   { 'stats.topGenres': { $in: currentUser.stats.topGenres } },
+      //   { topArtists: { $in: currentUser.topArtists } }
+      // ]
     })
-    .select('displayName avatarUrl publicSlug profileTheme vibeSummary cachedNowPlaying stats')
-    .limit(parseInt(limit as string))
-    .sort({ 'stats.followers': -1 });
+      .select(
+        'displayName avatarUrl publicSlug profileTheme vibeSummary cachedNowPlaying stats'
+      )
+      .limit(parseInt(limit as string))
+      .sort({ 'stats.followers': -1 });
 
     const response: APIResponse<{ users: any[] }> = {
       success: true,
-      data: { users: similarUsers }
+      data: { users: similarUsers },
     };
 
     res.json(response);
@@ -100,7 +113,7 @@ router.get('/discover', auth, async (req: AuthRequest, res) => {
     console.error('Error fetching discover feed:', error);
     res.status(500).json({
       success: false,
-      error: 'Failed to fetch discover feed'
+      error: 'Failed to fetch discover feed',
     });
   }
 });
@@ -112,15 +125,19 @@ router.get('/trending', async (req, res) => {
 
     // Get users with most followers and recent activity
     const trendingUsers = await User.find({
-      cachedUpdatedAt: { $gte: new Date(Date.now() - 24 * 60 * 60 * 1000) } // Last 24 hours
+      cachedUpdatedAt: {
+        $gte: new Date(Date.now() - 24 * 60 * 60 * 1000),
+      }, // Last 24 hours
     })
-    .select('displayName avatarUrl publicSlug profileTheme vibeSummary cachedNowPlaying stats')
-    .sort({ 'stats.followers': -1, cachedUpdatedAt: -1 })
-    .limit(parseInt(limit as string));
+      .select(
+        'displayName avatarUrl publicSlug profileTheme vibeSummary cachedNowPlaying stats'
+      )
+      .sort({ 'stats.followers': -1, cachedUpdatedAt: -1 })
+      .limit(parseInt(limit as string));
 
     const response: APIResponse<{ users: any[] }> = {
       success: true,
-      data: { users: trendingUsers }
+      data: { users: trendingUsers },
     };
 
     res.json(response);
@@ -128,7 +145,7 @@ router.get('/trending', async (req, res) => {
     console.error('Error fetching trending users:', error);
     res.status(500).json({
       success: false,
-      error: 'Failed to fetch trending users'
+      error: 'Failed to fetch trending users',
     });
   }
 });
