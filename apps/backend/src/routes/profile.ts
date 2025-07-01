@@ -1,5 +1,6 @@
 import express from 'express';
 import { User } from '../models/User';
+import { UserSpotifyProfile } from '../models/UserSpotifyProfile';
 import { Follow } from '../models/Follow';
 import { Reaction } from '../models/Reaction';
 import { VibeNote } from '../models/VibeNote';
@@ -16,7 +17,7 @@ router.get('/:slug', async (req, res) => {
       ? await getCurrentUserId(req.headers.authorization)
       : null;
 
-    const user = await User.findOne({ publicSlug: slug });
+    const user = await User.findOne({ publicSlug: slug }).populate('spotifyProfile');
 
     if (!user) {
       return res.status(404).json({
@@ -27,7 +28,7 @@ router.get('/:slug', async (req, res) => {
 
     // Get reactions count
     const reactions = await Reaction.aggregate([
-      { $match: { targetUserId: user._id } },
+      { $match: { targetUserId: user._id.toString() } },
       { $group: { _id: '$emoji', count: { $sum: 1 } } },
     ]);
 
@@ -37,7 +38,7 @@ router.get('/:slug', async (req, res) => {
     });
 
     // Get recent vibe notes
-    const vibeNotes = await VibeNote.find({ targetUserId: user._id })
+    const vibeNotes = await VibeNote.find({ targetUserId: user._id.toString() })
       .populate('authorId', 'displayName avatarUrl')
       .sort({ createdAt: -1 })
       .limit(10);
@@ -58,8 +59,6 @@ router.get('/:slug', async (req, res) => {
       publicSlug: user.publicSlug,
       profileTheme: user.profileTheme,
       vibeSummary: user.vibeSummary,
-      // nowPlaying: user.cachedNowPlaying,
-      // stats: user.stats,
       reactions: reactionCounts,
       vibeNotes: vibeNotes.map((note) => ({
         ...note.toObject(),
@@ -67,6 +66,11 @@ router.get('/:slug', async (req, res) => {
       })),
       isFollowing,
     };
+
+    // Add spotify profile data if available
+    if (user.spotifyProfile) {
+      (publicProfile as any).spotifyProfile = user.spotifyProfile;
+    }
 
     const response: APIResponse<PublicProfile> = {
       success: true,

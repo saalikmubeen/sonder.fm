@@ -45,6 +45,33 @@ export const profileApi = {
   },
 };
 
+export const userApi = {
+  getMe: async () => {
+    const response = await api.get('/user/me');
+    return response.data;
+  },
+
+  getStats: async () => {
+    const response = await api.get('/user/me/stats');
+    return response.data;
+  },
+
+  updateProfile: async (data: { displayName?: string; vibeSummary?: string }) => {
+    const response = await api.put('/user/me', data);
+    return response.data;
+  },
+
+  refreshNowPlaying: async () => {
+    const response = await api.post('/user/me/refresh');
+    return response.data;
+  },
+
+  search: async (query: string, limit: number = 10) => {
+    const response = await api.get(`/user/search?q=${encodeURIComponent(query)}&limit=${limit}`);
+    return response.data;
+  },
+};
+
 export const reactionApi = {
   addReaction: async (slug: string, emoji: string) => {
     const response = await api.post(`/reaction/${slug}`, { emoji });
@@ -57,6 +84,11 @@ export const reactionApi = {
     });
     return response.data;
   },
+
+  getReactions: async (slug: string) => {
+    const response = await api.get(`/reaction/${slug}`);
+    return response.data;
+  },
 };
 
 export const noteApi = {
@@ -67,6 +99,16 @@ export const noteApi = {
 
   getNotes: async (slug: string) => {
     const response = await api.get(`/note/${slug}`);
+    return response.data;
+  },
+
+  getMyNotes: async () => {
+    const response = await api.get('/note/my/notes');
+    return response.data;
+  },
+
+  deleteNote: async (noteId: string) => {
+    const response = await api.delete(`/note/${noteId}`);
     return response.data;
   },
 };
@@ -91,11 +133,26 @@ export const followApi = {
     const response = await api.get(`/follow/${slug}/following`);
     return response.data;
   },
+
+  getFollowStatus: async (slug: string) => {
+    const response = await api.get(`/follow/${slug}/status`);
+    return response.data;
+  },
 };
 
 export const feedApi = {
   getFeed: async () => {
     const response = await api.get('/feed');
+    return response.data;
+  },
+
+  getDiscover: async (limit: number = 10) => {
+    const response = await api.get(`/feed/discover?limit=${limit}`);
+    return response.data;
+  },
+
+  getTrending: async (limit: number = 10) => {
+    const response = await api.get(`/feed/trending?limit=${limit}`);
     return response.data;
   },
 };
@@ -118,6 +175,11 @@ export const messageApi = {
 
   markAsRead: async (messageId: string) => {
     const response = await api.put(`/message/${messageId}/read`);
+    return response.data;
+  },
+
+  deleteMessage: async (messageId: string) => {
+    const response = await api.delete(`/message/${messageId}`);
     return response.data;
   },
 };
