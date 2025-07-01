@@ -3,10 +3,13 @@ import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import { User } from '../models/User';
 import { SpotifyAPI, CryptoUtils } from '@sonder/utils';
-import type { APIResponse, AuthResponse } from '@sonder/types';
+import type { APIResponse } from '@sonder/types';
 import { RefreshToken } from '../models/RefreshToken';
-import { fetchSpotifyStats } from '../services/spotifyStats';
-import { getUserInfo } from '../services/spotify';
+
+import {
+  getAudioFeaturesForTracks,
+  getUserInfo,
+} from '../services/spotify';
 import { release } from 'os';
 import { UserSpotifyProfile } from '../models/UserSpotifyProfile';
 
@@ -275,6 +278,33 @@ router.get('/callback', async (req, res) => {
         })),
       };
 
+      // const audioFeaturesLong = await getAudioFeaturesForTracks(
+      //   topTracksInfo.long.slice(0, 3),
+      //   {
+      //     Authorization: `Bearer ${tokens.accessToken}`,
+      //     'Content-Type': 'application/json',
+      //   }
+      // );
+      // const audioFeaturesShort = await getAudioFeaturesForTracks(
+      //   topTracksInfo.short,
+      //   {
+      //     Authorization: `Bearer ${tokens.accessToken}`,
+      //     'Content-Type': 'application/json',
+      //   }
+      // );
+      // const audioFeaturesMedium = await getAudioFeaturesForTracks(
+      //   topTracksInfo.medium,
+      //   {
+      //     Authorization: `Bearer ${tokens.accessToken}`,
+      //     'Content-Type': 'application/json',
+      //   }
+      // );
+
+      // console.log(
+      //   'Audio Features Long:',
+      //   JSON.stringify(audioFeaturesLong)
+      // );
+
       // check if userSpotifyProfile exists
 
       let userSpotifyProfile = await UserSpotifyProfile.findOne({
@@ -326,21 +356,6 @@ router.get('/callback', async (req, res) => {
         userSpotifyProfile.followedArtists = followedArtistsInfo;
 
         await userSpotifyProfile.save();
-      }
-
-      for (const key in spotifyStats) {
-        console.log(key);
-        console.log(
-          '================================================'
-        );
-        console.log(
-          JSON.stringify(
-            spotifyStats[key as keyof typeof spotifyStats]
-          )
-        );
-        console.log(
-          '================================================'
-        );
       }
     } catch (err) {
       console.error('Failed to fetch Spotify stats:', err);
