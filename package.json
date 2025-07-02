@@ -10,7 +10,7 @@
     "dev": "concurrently \"npm run dev:web\" \"npm run dev:backend\"",
     "dev:web": "cd apps/web && npm run dev",
     "dev:backend": "cd apps/backend && npm run dev",
-    "build": "turbo run build",
+    "build": "npx turbo run build",
     "build:web": "cd apps/web && npm run build",
     "build:backend": "cd apps/backend && npm run build",
     "start": "concurrently \"npm run start:web\" \"npm run start:backend\"",
