@@ -158,10 +158,6 @@ router.get('/:slug', async (req, res) => {
       }
     }
 
-    const nowPlaying = await spotifyAPI.getCurrentlyPlaying(
-      user.accessToken
-    );
-
     // Get reactions count
     const reactions = await Reaction.aggregate([
       { $match: { targetUserId: user._id.toString() } },
@@ -210,12 +206,20 @@ router.get('/:slug', async (req, res) => {
       (publicProfile as any).spotifyProfile = userSpotifyProfile;
     }
 
-    // Add now playing data if available
-    if (nowPlaying) {
-      publicProfile.nowPlaying = nowPlaying;
+    // const nowPlaying = await spotifyAPI.getCurrentlyPlaying(
+    //   user.accessToken
+    // );
 
-      user.cachedNowPlaying = nowPlaying;
-      await user.save();
+    // Add now playing data if available
+    // if (nowPlaying) {
+    //   publicProfile.nowPlaying = nowPlaying;
+
+    //   user.cachedNowPlaying = nowPlaying;
+    //   await user.save();
+    // }
+
+    if (user.cachedNowPlaying) {
+      publicProfile.nowPlaying = user.cachedNowPlaying;
     }
 
     const response: APIResponse<PublicProfile> = {

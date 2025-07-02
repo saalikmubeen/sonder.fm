@@ -16,12 +16,21 @@ import {
   Calendar,
   Sun,
   Moon,
-  ArrowRight
+  ArrowRight,
+  PlayCircle,
+  Music as Music2,
 } from 'lucide-react';
 import { apiClient } from '@/lib/api';
 import { useAuth } from '@/lib/auth-context';
 import { formatDuration, timeAgo } from '@sonder/utils';
 import { profile } from 'console';
+
+function formatTime(ms: number): string {
+  const totalSeconds = Math.floor(ms / 1000);
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+}
 
 interface UserProfile {
   displayName: string;
@@ -53,7 +62,12 @@ interface UserProfile {
 }
 
 type TimeRange = 'short' | 'medium' | 'long';
-type Section = 'profile' | 'artists' | 'tracks' | 'recent' | 'playlists';
+type Section =
+  | 'profile'
+  | 'artists'
+  | 'tracks'
+  | 'recent'
+  | 'playlists';
 
 export default function UserProfilePage() {
   const { slug } = useParams<{ slug: string }>();
@@ -62,7 +76,8 @@ export default function UserProfilePage() {
   const { theme, setTheme } = useTheme();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeSection, setActiveSection] = useState<Section>('profile');
+  const [activeSection, setActiveSection] =
+    useState<Section>('profile');
   const [timeRange, setTimeRange] = useState<TimeRange>('long');
   const [mounted, setMounted] = useState(false);
 
@@ -96,7 +111,11 @@ export default function UserProfilePage() {
       <div className="min-h-screen bg-white dark:bg-black flex items-center justify-center">
         <motion.div
           animate={{ rotate: 360 }}
-          transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+          transition={{
+            duration: 1,
+            repeat: Infinity,
+            ease: 'linear',
+          }}
           className="w-8 h-8 border-2 border-green-500 border-t-transparent rounded-full"
         />
       </div>
@@ -107,8 +126,12 @@ export default function UserProfilePage() {
     return (
       <div className="min-h-screen bg-white dark:bg-black flex items-center justify-center text-gray-900 dark:text-white">
         <div className="text-center">
-          <h1 className="text-2xl font-bold mb-2">Profile not found</h1>
-          <p className="text-gray-600 dark:text-gray-400">This user doesn't exist or their profile is private.</p>
+          <h1 className="text-2xl font-bold mb-2">
+            Profile not found
+          </h1>
+          <p className="text-gray-600 dark:text-gray-400">
+            This user doesn't exist or their profile is private.
+          </p>
         </div>
       </div>
     );
@@ -117,12 +140,15 @@ export default function UserProfilePage() {
   const timeRangeLabels = {
     long: 'All Time',
     medium: 'Last 6 Months',
-    short: 'Last 4 Weeks'
+    short: 'Last 4 Weeks',
   };
 
-  const currentArtists = profile.spotifyProfile?.topArtists?.[timeRange] || [];
-  const currentTracks = profile.spotifyProfile?.topTracks?.[timeRange] || [];
-  const recentTracks = profile.spotifyProfile?.recentlyPlayedTracks?.items || [];
+  const currentArtists =
+    profile.spotifyProfile?.topArtists?.[timeRange] || [];
+  const currentTracks =
+    profile.spotifyProfile?.topTracks?.[timeRange] || [];
+  const recentTracks =
+    profile.spotifyProfile?.recentlyPlayedTracks?.items || [];
   const shortTracks = profile.spotifyProfile?.topTracks?.short || [];
   const longTracks = profile.spotifyProfile?.topTracks?.long || [];
   const longArtists = profile.spotifyProfile?.topArtists?.long || [];
@@ -144,7 +170,9 @@ export default function UserProfilePage() {
           {/* Sonder.fm logo at the top */}
           <div className="flex items-center gap-2 h-16 px-4 select-none">
             <div className="w-3 h-3 bg-green-500 rounded-full" />
-            <span className="text-lg font-bold text-black dark:text-white tracking-tight">Sonder.fm</span>
+            <span className="text-lg font-bold text-black dark:text-white tracking-tight">
+              Sonder.fm
+            </span>
           </div>
 
           {/* Centered Navigation */}
@@ -177,8 +205,17 @@ export default function UserProfilePage() {
 
           {/* Footer at the bottom (GitHub icon) */}
           <div className="mb-6 flex items-center justify-center w-full">
-            <a href="https://github.com" target="_blank" rel="noopener noreferrer" className="flex items-center justify-center w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-900 hover:bg-gray-300 dark:hover:bg-gray-800 transition-colors">
-              <svg viewBox="0 0 24 24" fill="currentColor" className="w-7 h-7 text-black dark:text-white">
+            <a
+              href="https://github.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-center w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-900 hover:bg-gray-300 dark:hover:bg-gray-800 transition-colors"
+            >
+              <svg
+                viewBox="0 0 24 24"
+                fill="currentColor"
+                className="w-7 h-7 text-black dark:text-white"
+              >
                 <path d="M12 0C5.37 0 0 5.373 0 12c0 5.303 3.438 9.8 8.205 11.387.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.726-4.042-1.61-4.042-1.61-.546-1.387-1.333-1.756-1.333-1.756-1.09-.745.083-.729.083-.729 1.205.085 1.84 1.237 1.84 1.237 1.07 1.834 2.807 1.304 3.492.997.108-.775.418-1.305.762-1.605-2.665-.305-5.466-1.334-5.466-5.931 0-1.31.468-2.381 1.236-3.221-.124-.303-.535-1.523.117-3.176 0 0 1.008-.322 3.3 1.23a11.52 11.52 0 0 1 3.003-.404c1.018.005 2.045.138 3.003.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.873.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.803 5.624-5.475 5.921.43.372.823 1.102.823 2.222 0 1.606-.014 2.898-.014 3.293 0 .321.218.694.825.576C20.565 21.796 24 17.299 24 12c0-6.627-5.373-12-12-12z" />
               </svg>
             </a>
@@ -201,7 +238,9 @@ export default function UserProfilePage() {
               {mounted && (
                 <motion.button
                   whileTap={{ scale: 0.95 }}
-                  onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                  onClick={() =>
+                    setTheme(theme === 'dark' ? 'light' : 'dark')
+                  }
                   className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
                 >
                   {theme === 'dark' ? (
@@ -254,7 +293,9 @@ export default function UserProfilePage() {
               )}
               {activeSection === 'playlists' && (
                 <PlaylistsSection
-                  playlists={profile.spotifyProfile?.playlists?.items || []}
+                  playlists={
+                    profile.spotifyProfile?.playlists?.items || []
+                  }
                   openSpotifyUrl={openSpotifyUrl}
                 />
               )}
@@ -280,7 +321,9 @@ export default function UserProfilePage() {
               {mounted && (
                 <motion.button
                   whileTap={{ scale: 0.95 }}
-                  onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                  onClick={() =>
+                    setTheme(theme === 'dark' ? 'light' : 'dark')
+                  }
                   className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
                 >
                   {theme === 'dark' ? (
@@ -334,7 +377,9 @@ export default function UserProfilePage() {
             )}
             {activeSection === 'playlists' && (
               <PlaylistsSection
-                playlists={profile.spotifyProfile?.playlists?.items || []}
+                playlists={
+                  profile.spotifyProfile?.playlists?.items || []
+                }
                 openSpotifyUrl={openSpotifyUrl}
               />
             )}
@@ -373,7 +418,16 @@ export default function UserProfilePage() {
 }
 
 // Profile Section Component
-function ProfileSection({ profile, recentTracks, shortTracks, longTracks, longArtists, setActiveSection, openSpotifyUrl }: any) {
+function ProfileSection({
+  profile,
+  recentTracks,
+  shortTracks,
+  longTracks,
+  longArtists,
+  setActiveSection,
+  openSpotifyUrl,
+}: any) {
+  console.log(profile);
   return (
     <motion.div
       key="profile"
@@ -416,22 +470,117 @@ function ProfileSection({ profile, recentTracks, shortTracks, longTracks, longAr
             <div className="text-2xl font-bold text-green-500">
               {profile.spotifyProfile?.followers || 0}
             </div>
-            <div className="text-sm text-gray-500 dark:text-gray-400 uppercase tracking-wide">Followers</div>
+            <div className="text-sm text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+              Followers
+            </div>
           </div>
           <div className="text-center">
             <div className="text-2xl font-bold text-green-500">
               {profile.spotifyProfile?.following || 0}
             </div>
-            <div className="text-sm text-gray-500 dark:text-gray-400 uppercase tracking-wide">Following</div>
+            <div className="text-sm text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+              Following
+            </div>
           </div>
           <div className="text-center">
             <div className="text-2xl font-bold text-green-500">
               {profile.spotifyProfile?.playlists?.total || 0}
             </div>
-            <div className="text-sm text-gray-500 dark:text-gray-400 uppercase tracking-wide">Playlists</div>
+            <div className="text-sm text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+              Playlists
+            </div>
           </div>
         </motion.div>
       </div>
+
+      {/* Now Playing Section */}
+
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.5 }}
+        className="max-w-2xl mx-auto mb-12"
+      >
+        {profile.nowPlaying ? (
+          <div
+            onClick={() =>
+              openSpotifyUrl(profile.nowPlaying.spotifyUrl)
+            }
+            className="bg-white/10 backdrop-blur-lg rounded-lg p-4 hover:bg-white/20 transition-all cursor-pointer border border-gray-200 dark:border-gray-800"
+          >
+            <div className="flex items-center space-x-4">
+              <div className="relative">
+                <img
+                  src={profile.nowPlaying.albumArt}
+                  alt={profile.nowPlaying.album}
+                  className="w-16 h-16 rounded-md shadow-lg"
+                />
+                <div className="absolute -bottom-1 -right-1 bg-green-500 rounded-full p-1">
+                  <div className="w-3 h-3 bg-white rounded-full animate-pulse" />
+                </div>
+              </div>
+
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center space-x-2">
+                  <span className="text-xs text-green-500 font-medium animate-pulse">
+                    Now Playing
+                  </span>
+                </div>
+                <h3 className="text-lg font-semibold truncate mt-1">
+                  {profile.nowPlaying.song}
+                </h3>
+                <p className="text-sm text-gray-600 dark:text-gray-400 truncate">
+                  {profile.nowPlaying.artist} •{' '}
+                  {profile.nowPlaying.album}
+                </p>
+
+                {/* Progress Bar */}
+                <div className="mt-2 space-y-1">
+                  <div className="h-1 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-green-500 rounded-full transition-all duration-1000"
+                      style={{
+                        width: `${
+                          (profile.nowPlaying.progressMs /
+                            profile.nowPlaying.durationMs) *
+                          100
+                        }%`,
+                      }}
+                    />
+                  </div>
+                  <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400">
+                    <span>
+                      {formatTime(profile.nowPlaying.progressMs)}
+                    </span>
+                    <span>
+                      {formatTime(profile.nowPlaying.durationMs)}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {profile.nowPlaying.previewUrl && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    // Add preview play functionality here
+                  }}
+                  className="p-2 rounded-full hover:bg-white/10 transition-colors"
+                >
+                  <PlayCircle className="w-6 h-6 text-green-500" />
+                </button>
+              )}
+            </div>
+          </div>
+        ) : (
+          <div className="bg-white/5 backdrop-blur-lg rounded-lg p-3 hover:bg-white/10 transition-all border border-gray-200 dark:border-gray-800 flex items-center justify-center gap-2">
+            <Music2 className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+            <span className="text-sm text-gray-500 dark:text-gray-400">
+              Music on pause.
+            </span>
+          </div>
+        )}
+      </motion.div>
 
       {/* Recently Played Section */}
       <motion.div
@@ -476,8 +625,12 @@ function ProfileSection({ profile, recentTracks, shortTracks, longTracks, longAr
               )}
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
               <div className="absolute bottom-2 left-2 right-2 text-white opacity-0 group-hover:opacity-100 transition-opacity">
-                <h3 className="text-xs font-semibold truncate">{item.trackName}</h3>
-                <p className="text-xs opacity-80">{timeAgo(new Date(item.playedAt))}</p>
+                <h3 className="text-xs font-semibold truncate">
+                  {item.trackName}
+                </h3>
+                <p className="text-xs opacity-80">
+                  {timeAgo(new Date(item.playedAt))}
+                </p>
               </div>
               <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
                 <ExternalLink className="w-4 h-4 text-white" />
@@ -486,7 +639,6 @@ function ProfileSection({ profile, recentTracks, shortTracks, longTracks, longAr
           ))}
         </div>
       </motion.div>
-
       {/* Songs I Love Right Now Section */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -495,7 +647,9 @@ function ProfileSection({ profile, recentTracks, shortTracks, longTracks, longAr
         className="space-y-6"
       >
         <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-bold">Songs I love right now</h2>
+          <h2 className="text-2xl font-bold">
+            Songs I love right now
+          </h2>
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
@@ -524,8 +678,12 @@ function ProfileSection({ profile, recentTracks, shortTracks, longTracks, longAr
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
               <div className="absolute bottom-2 left-2 right-2 text-white opacity-0 group-hover:opacity-100 transition-opacity">
-                <h3 className="text-xs font-semibold truncate">{track.name}</h3>
-                <p className="text-xs opacity-80 truncate">{track.artists.map(a => a.name).join(', ')}</p>
+                <h3 className="text-xs font-semibold truncate">
+                  {track.name}
+                </h3>
+                <p className="text-xs opacity-80 truncate">
+                  {track.artists.map((a) => a.name).join(', ')}
+                </p>
               </div>
               <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
                 <ExternalLink className="w-4 h-4 text-white" />
@@ -534,7 +692,6 @@ function ProfileSection({ profile, recentTracks, shortTracks, longTracks, longAr
           ))}
         </div>
       </motion.div>
-
       {/* My All Time Fav Tracks Section */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -543,7 +700,9 @@ function ProfileSection({ profile, recentTracks, shortTracks, longTracks, longAr
         className="space-y-6"
       >
         <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-bold">My All Time fav tracks</h2>
+          <h2 className="text-2xl font-bold">
+            My All Time fav tracks
+          </h2>
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
@@ -572,8 +731,12 @@ function ProfileSection({ profile, recentTracks, shortTracks, longTracks, longAr
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
               <div className="absolute bottom-2 left-2 right-2 text-white opacity-0 group-hover:opacity-100 transition-opacity">
-                <h3 className="text-xs font-semibold truncate">{track.name}</h3>
-                <p className="text-xs opacity-80 truncate">{track.artists.map(a => a.name).join(', ')}</p>
+                <h3 className="text-xs font-semibold truncate">
+                  {track.name}
+                </h3>
+                <p className="text-xs opacity-80 truncate">
+                  {track.artists.map((a) => a.name).join(', ')}
+                </p>
               </div>
               <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
                 <ExternalLink className="w-4 h-4 text-white" />
@@ -582,7 +745,6 @@ function ProfileSection({ profile, recentTracks, shortTracks, longTracks, longAr
           ))}
         </div>
       </motion.div>
-
       {/* Playlists Section */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -603,40 +765,45 @@ function ProfileSection({ profile, recentTracks, shortTracks, longTracks, longAr
         </div>
 
         <div className="grid grid-cols-3 lg:grid-cols-4 gap-4">
-          {profile.spotifyProfile?.playlists?.items?.slice(0, 12).map((playlist, index) => (
-            <motion.div
-              key={playlist.id}
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 1.1 + index * 0.05 }}
-              whileHover={{ scale: 1.05 }}
-              onClick={() => openSpotifyUrl(playlist.url)}
-              className="relative group cursor-pointer overflow-hidden rounded-2xl aspect-square"
-            >
-              <div className="w-full h-full bg-gradient-to-br from-gray-300 to-gray-400 dark:from-gray-700 dark:to-gray-800 flex items-center justify-center overflow-hidden">
-                {playlist.imageUrl ? (
-                  <img
-                    src={playlist.imageUrl}
-                    alt={playlist.name}
-                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
-                  />
-                ) : (
-                  <List className="w-8 h-8 text-gray-500 dark:text-gray-400" />
-                )}
-              </div>
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-              <div className="absolute bottom-2 left-2 right-2 text-white opacity-0 group-hover:opacity-100 transition-opacity">
-                <h3 className="text-xs font-semibold truncate">{playlist.name}</h3>
-                <p className="text-xs opacity-80">{playlist.tracks} tracks</p>
-              </div>
-              <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                <ExternalLink className="w-4 h-4 text-white" />
-              </div>
-            </motion.div>
-          ))}
+          {profile.spotifyProfile?.playlists?.items
+            ?.slice(0, 12)
+            .map((playlist, index) => (
+              <motion.div
+                key={playlist.id}
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 1.1 + index * 0.05 }}
+                whileHover={{ scale: 1.05 }}
+                onClick={() => openSpotifyUrl(playlist.url)}
+                className="relative group cursor-pointer overflow-hidden rounded-2xl aspect-square"
+              >
+                <div className="w-full h-full bg-gradient-to-br from-gray-300 to-gray-400 dark:from-gray-700 dark:to-gray-800 flex items-center justify-center overflow-hidden">
+                  {playlist.imageUrl ? (
+                    <img
+                      src={playlist.imageUrl}
+                      alt={playlist.name}
+                      className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+                    />
+                  ) : (
+                    <List className="w-8 h-8 text-gray-500 dark:text-gray-400" />
+                  )}
+                </div>
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                <div className="absolute bottom-2 left-2 right-2 text-white opacity-0 group-hover:opacity-100 transition-opacity">
+                  <h3 className="text-xs font-semibold truncate">
+                    {playlist.name}
+                  </h3>
+                  <p className="text-xs opacity-80">
+                    {playlist.tracks} tracks
+                  </p>
+                </div>
+                <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <ExternalLink className="w-4 h-4 text-white" />
+                </div>
+              </motion.div>
+            ))}
         </div>
       </motion.div>
-
       {/* My All Time Fav Artists Section */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -645,7 +812,9 @@ function ProfileSection({ profile, recentTracks, shortTracks, longTracks, longAr
         className="space-y-6"
       >
         <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-bold">My All Time fav artists</h2>
+          <h2 className="text-2xl font-bold">
+            My All Time fav artists
+          </h2>
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
@@ -674,8 +843,12 @@ function ProfileSection({ profile, recentTracks, shortTracks, longTracks, longAr
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
               <div className="absolute bottom-2 left-2 right-2 text-white opacity-0 group-hover:opacity-100 transition-opacity">
-                <h3 className="text-xs font-semibold truncate">{artist.name}</h3>
-                <p className="text-xs opacity-80">{artist.followers?.toLocaleString()} followers</p>
+                <h3 className="text-xs font-semibold truncate">
+                  {artist.name}
+                </h3>
+                <p className="text-xs opacity-80">
+                  {artist.followers?.toLocaleString()} followers
+                </p>
               </div>
               <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
                 <ExternalLink className="w-4 h-4 text-white" />
@@ -689,7 +862,13 @@ function ProfileSection({ profile, recentTracks, shortTracks, longTracks, longAr
 }
 
 // Artists Section Component
-function ArtistsSection({ artists, timeRange, setTimeRange, timeRangeLabels, openSpotifyUrl }: any) {
+function ArtistsSection({
+  artists,
+  timeRange,
+  setTimeRange,
+  timeRangeLabels,
+  openSpotifyUrl,
+}: any) {
   return (
     <motion.div
       key="artists"
@@ -698,7 +877,9 @@ function ArtistsSection({ artists, timeRange, setTimeRange, timeRangeLabels, ope
       exit={{ opacity: 0, y: -20 }}
     >
       <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8 gap-4">
-        <h1 className="text-2xl lg:text-3xl font-bold mb-6 md:mb-0 text-center md:text-left w-full md:w-auto">Top Artists</h1>
+        <h1 className="text-2xl lg:text-3xl font-bold mb-6 md:mb-0 text-center md:text-left w-full md:w-auto">
+          Top Artists
+        </h1>
         {/* Time Range Tabs */}
         <div className="flex justify-center md:justify-end w-full md:w-auto">
           <div className="flex bg-gray-100 dark:bg-gray-800 rounded-full p-1">
@@ -745,7 +926,9 @@ function ArtistsSection({ artists, timeRange, setTimeRange, timeRangeLabels, ope
                 <ExternalLink className="w-6 h-6 text-white" />
               </motion.div>
             </div>
-            <h3 className="font-semibold text-sm truncate">{artist.name}</h3>
+            <h3 className="font-semibold text-sm truncate">
+              {artist.name}
+            </h3>
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
               {artist.followers?.toLocaleString()} followers
             </p>
@@ -757,7 +940,13 @@ function ArtistsSection({ artists, timeRange, setTimeRange, timeRangeLabels, ope
 }
 
 // Tracks Section Component
-function TracksSection({ tracks, timeRange, setTimeRange, timeRangeLabels, openSpotifyUrl }: any) {
+function TracksSection({
+  tracks,
+  timeRange,
+  setTimeRange,
+  timeRangeLabels,
+  openSpotifyUrl,
+}: any) {
   return (
     <motion.div
       key="tracks"
@@ -767,7 +956,9 @@ function TracksSection({ tracks, timeRange, setTimeRange, timeRangeLabels, openS
       className="space-y-6"
     >
       <div className="text-center">
-        <h1 className="text-2xl lg:text-3xl font-bold mb-6">Top Tracks</h1>
+        <h1 className="text-2xl lg:text-3xl font-bold mb-6">
+          Top Tracks
+        </h1>
 
         {/* Time Range Tabs */}
         <div className="flex justify-center mb-8">
@@ -815,9 +1006,12 @@ function TracksSection({ tracks, timeRange, setTimeRange, timeRangeLabels, openS
                 </motion.div>
               </div>
               <div className="flex-1 min-w-0 text-left">
-                <div className="font-medium truncate">{track.name}</div>
+                <div className="font-medium truncate">
+                  {track.name}
+                </div>
                 <div className="text-sm text-gray-500 dark:text-gray-400 truncate">
-                  {track.artists.map(a => a.name).join(', ')} • {track.album.name}
+                  {track.artists.map((a) => a.name).join(', ')} •{' '}
+                  {track.album.name}
                 </div>
               </div>
               <div className="text-sm text-gray-400">
@@ -845,7 +1039,9 @@ function RecentSection({ recentTracks, openSpotifyUrl }: any) {
       className="space-y-6"
     >
       <div className="text-center">
-        <h1 className="text-2xl lg:text-3xl font-bold mb-8">Recently Played Tracks</h1>
+        <h1 className="text-2xl lg:text-3xl font-bold mb-8">
+          Recently Played Tracks
+        </h1>
 
         {/* Recent Tracks List */}
         <div className="space-y-3">
@@ -871,7 +1067,9 @@ function RecentSection({ recentTracks, openSpotifyUrl }: any) {
                 </div>
               )}
               <div className="flex-1 min-w-0 text-left">
-                <div className="font-medium truncate">{item.trackName}</div>
+                <div className="font-medium truncate">
+                  {item.trackName}
+                </div>
                 <div className="text-sm text-gray-500 dark:text-gray-400 flex items-center space-x-2">
                   <Calendar className="w-3 h-3" />
                   <span>{timeAgo(new Date(item.playedAt))}</span>
@@ -902,7 +1100,9 @@ function PlaylistsSection({ playlists, openSpotifyUrl }: any) {
       className="space-y-6"
     >
       <div className="text-center">
-        <h1 className="text-2xl lg:text-3xl font-bold mb-8">Playlists</h1>
+        <h1 className="text-2xl lg:text-3xl font-bold mb-8">
+          Playlists
+        </h1>
 
         {/* Playlists Grid */}
         <div className="grid grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-6">
@@ -927,8 +1127,12 @@ function PlaylistsSection({ playlists, openSpotifyUrl }: any) {
                   <List className="w-8 h-8 text-gray-400" />
                 )}
               </div>
-              <h3 className="font-semibold text-sm truncate mb-1">{playlist.name}</h3>
-              <p className="text-xs text-gray-500 dark:text-gray-400">{playlist.tracks} tracks</p>
+              <h3 className="font-semibold text-sm truncate mb-1">
+                {playlist.name}
+              </h3>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                {playlist.tracks} tracks
+              </p>
               <div className="opacity-0 group-hover:opacity-100 transition-opacity mt-2">
                 <ExternalLink className="w-4 h-4 mx-auto" />
               </div>
