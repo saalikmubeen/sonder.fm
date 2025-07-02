@@ -2,14 +2,14 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, animate } from 'framer-motion';
 import { useTheme } from 'next-themes';
-import { 
-  User, 
-  Music, 
-  Clock, 
-  Users, 
-  List, 
+import {
+  User,
+  Music,
+  Clock,
+  Users,
+  List,
   ChevronRight,
   Play,
   ExternalLink,
@@ -21,6 +21,7 @@ import {
 import { apiClient } from '@/lib/api';
 import { useAuth } from '@/lib/auth-context';
 import { formatDuration, timeAgo } from '@sonder/utils';
+import { profile } from 'console';
 
 interface UserProfile {
   displayName: string;
@@ -115,7 +116,7 @@ export default function UserProfilePage() {
 
   const timeRangeLabels = {
     long: 'All Time',
-    medium: 'Last 6 Months', 
+    medium: 'Last 6 Months',
     short: 'Last 4 Weeks'
   };
 
@@ -137,44 +138,55 @@ export default function UserProfilePage() {
   return (
     <div className="min-h-screen bg-white dark:bg-black text-gray-900 dark:text-white transition-colors duration-300">
       {/* Desktop Layout */}
-      <div className="hidden lg:flex">
-        {/* Sidebar */}
-        <motion.div 
-          initial={{ x: -100, opacity: 0 }}
-          animate={{ x: 0, opacity: 1 }}
-          className="fixed left-0 top-0 h-full w-60 bg-white dark:bg-black border-r border-gray-100 dark:border-gray-900 z-50"
-        >
-          <div className="p-6">
-            {/* Logo */}
-            <div className="flex items-center gap-2 mb-12">
-              <div className="w-6 h-6 bg-green-500 rounded-full"></div>
-              <span className="text-lg font-semibold">Spotify</span>
-            </div>
+      <div className="hidden md:flex">
+        {/* Side Navigation */}
+        <div className="w-28 bg-white dark:bg-black fixed left-0 top-0 h-full flex flex-col">
+          {/* Sonder.fm logo at the top */}
+          <div className="flex items-center gap-2 h-16 px-4 select-none">
+            <div className="w-3 h-3 bg-green-500 rounded-full" />
+            <span className="text-lg font-bold text-black dark:text-white tracking-tight">Sonder.fm</span>
+          </div>
 
-            {/* Navigation */}
-            <nav className="space-y-1">
-              {sidebarItems.map(({ id, icon: Icon, label }) => (
+          {/* Centered Navigation */}
+          <div className="flex-1 flex flex-col justify-center items-center w-full">
+            <nav className="flex flex-col items-center gap-y-6 w-full">
+              {[
+                { id: 'profile', icon: User, label: 'Profile' },
+                { id: 'artists', icon: Users, label: 'Top Artists' },
+                { id: 'tracks', icon: Music, label: 'Top Tracks' },
+                { id: 'recent', icon: Clock, label: 'Recent' },
+                { id: 'playlists', icon: List, label: 'Playlists' },
+              ].map(({ id, icon: Icon, label }) => (
                 <motion.button
                   key={id}
-                  whileHover={{ x: 2 }}
-                  whileTap={{ scale: 0.98 }}
+                  whileTap={{ scale: 0.95 }}
                   onClick={() => setActiveSection(id as Section)}
-                  className={`w-full flex items-center gap-4 px-3 py-2 rounded-md text-left transition-all duration-200 ${
+                  className={`w-full flex flex-col items-center py-2 transition-all group text-black dark:text-gray-400 hover:text-black dark:hover:text-white focus:outline-none ${
                     activeSection === id
-                      ? 'bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-white font-medium'
-                      : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                      ? 'border-l-4 border-green-500 bg-gray-200 dark:bg-[#181818] text-black dark:text-white'
+                      : 'border-l-4 border-transparent'
                   }`}
+                  style={{ minWidth: '100%' }}
                 >
-                  <Icon className="w-5 h-5" />
-                  <span className="text-sm">{label}</span>
+                  <Icon className="w-5 h-5 mb-1" />
+                  <span className="text-sm font-normal">{label}</span>
                 </motion.button>
               ))}
             </nav>
           </div>
-        </motion.div>
+
+          {/* Footer at the bottom (GitHub icon) */}
+          <div className="mb-6 flex items-center justify-center w-full">
+            <a href="https://github.com" target="_blank" rel="noopener noreferrer" className="flex items-center justify-center w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-900 hover:bg-gray-300 dark:hover:bg-gray-800 transition-colors">
+              <svg viewBox="0 0 24 24" fill="currentColor" className="w-7 h-7 text-black dark:text-white">
+                <path d="M12 0C5.37 0 0 5.373 0 12c0 5.303 3.438 9.8 8.205 11.387.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.726-4.042-1.61-4.042-1.61-.546-1.387-1.333-1.756-1.333-1.756-1.09-.745.083-.729.083-.729 1.205.085 1.84 1.237 1.84 1.237 1.07 1.834 2.807 1.304 3.492.997.108-.775.418-1.305.762-1.605-2.665-.305-5.466-1.334-5.466-5.931 0-1.31.468-2.381 1.236-3.221-.124-.303-.535-1.523.117-3.176 0 0 1.008-.322 3.3 1.23a11.52 11.52 0 0 1 3.003-.404c1.018.005 2.045.138 3.003.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.873.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.803 5.624-5.475 5.921.43.372.823 1.102.823 2.222 0 1.606-.014 2.898-.014 3.293 0 .321.218.694.825.576C20.565 21.796 24 17.299 24 12c0-6.627-5.373-12-12-12z" />
+              </svg>
+            </a>
+          </div>
+        </div>
 
         {/* Main Content */}
-        <div className="ml-60 flex-1">
+        <div className="ml-28 flex-1">
           {/* Header */}
           <div className="sticky top-0 bg-white/80 dark:bg-black/80 backdrop-blur-md border-b border-gray-100 dark:border-gray-900 z-40">
             <div className="px-8 py-4 flex items-center justify-between">
@@ -185,7 +197,7 @@ export default function UserProfilePage() {
               >
                 <ChevronRight className="w-5 h-5 rotate-180" />
               </motion.button>
-              
+
               {mounted && (
                 <motion.button
                   whileTap={{ scale: 0.95 }}
@@ -206,8 +218,8 @@ export default function UserProfilePage() {
           <div className="p-8">
             <AnimatePresence mode="wait">
               {activeSection === 'profile' && (
-                <ProfileSection 
-                  profile={profile} 
+                <ProfileSection
+                  profile={profile}
                   recentTracks={recentTracks}
                   shortTracks={shortTracks}
                   longTracks={longTracks}
@@ -217,7 +229,7 @@ export default function UserProfilePage() {
                 />
               )}
               {activeSection === 'artists' && (
-                <ArtistsSection 
+                <ArtistsSection
                   artists={currentArtists}
                   timeRange={timeRange}
                   setTimeRange={setTimeRange}
@@ -226,7 +238,7 @@ export default function UserProfilePage() {
                 />
               )}
               {activeSection === 'tracks' && (
-                <TracksSection 
+                <TracksSection
                   tracks={currentTracks}
                   timeRange={timeRange}
                   setTimeRange={setTimeRange}
@@ -235,13 +247,13 @@ export default function UserProfilePage() {
                 />
               )}
               {activeSection === 'recent' && (
-                <RecentSection 
+                <RecentSection
                   recentTracks={recentTracks}
                   openSpotifyUrl={openSpotifyUrl}
                 />
               )}
               {activeSection === 'playlists' && (
-                <PlaylistsSection 
+                <PlaylistsSection
                   playlists={profile.spotifyProfile?.playlists?.items || []}
                   openSpotifyUrl={openSpotifyUrl}
                 />
@@ -264,7 +276,7 @@ export default function UserProfilePage() {
               >
                 <ChevronRight className="w-6 h-6 rotate-180" />
               </motion.button>
-              
+
               {mounted && (
                 <motion.button
                   whileTap={{ scale: 0.95 }}
@@ -286,8 +298,8 @@ export default function UserProfilePage() {
         <div className="px-4 py-6 pb-24">
           <AnimatePresence mode="wait">
             {activeSection === 'profile' && (
-              <ProfileSection 
-                profile={profile} 
+              <ProfileSection
+                profile={profile}
                 recentTracks={recentTracks}
                 shortTracks={shortTracks}
                 longTracks={longTracks}
@@ -297,7 +309,7 @@ export default function UserProfilePage() {
               />
             )}
             {activeSection === 'artists' && (
-              <ArtistsSection 
+              <ArtistsSection
                 artists={currentArtists}
                 timeRange={timeRange}
                 setTimeRange={setTimeRange}
@@ -306,7 +318,7 @@ export default function UserProfilePage() {
               />
             )}
             {activeSection === 'tracks' && (
-              <TracksSection 
+              <TracksSection
                 tracks={currentTracks}
                 timeRange={timeRange}
                 setTimeRange={setTimeRange}
@@ -315,13 +327,13 @@ export default function UserProfilePage() {
               />
             )}
             {activeSection === 'recent' && (
-              <RecentSection 
+              <RecentSection
                 recentTracks={recentTracks}
                 openSpotifyUrl={openSpotifyUrl}
               />
             )}
             {activeSection === 'playlists' && (
-              <PlaylistsSection 
+              <PlaylistsSection
                 playlists={profile.spotifyProfile?.playlists?.items || []}
                 openSpotifyUrl={openSpotifyUrl}
               />
@@ -439,7 +451,7 @@ function ProfileSection({ profile, recentTracks, shortTracks, longTracks, longAr
             See more
           </motion.button>
         </div>
-        
+
         <div className="grid grid-cols-3 lg:grid-cols-4 gap-4">
           {recentTracks.slice(0, 12).map((item, index) => (
             <motion.div
@@ -449,7 +461,7 @@ function ProfileSection({ profile, recentTracks, shortTracks, longTracks, longAr
               transition={{ delay: 0.5 + index * 0.05 }}
               whileHover={{ scale: 1.05 }}
               onClick={() => openSpotifyUrl(item.trackUrl)}
-              className="relative group cursor-pointer overflow-hidden rounded-lg aspect-square bg-gray-200 dark:bg-gray-800"
+              className="relative group cursor-pointer overflow-hidden rounded-2xl aspect-square bg-gray-200 dark:bg-gray-800"
             >
               <div className="w-full h-full bg-gradient-to-br from-gray-300 to-gray-400 dark:from-gray-700 dark:to-gray-800 flex items-center justify-center">
                 <Music className="w-8 h-8 text-gray-500 dark:text-gray-400" />
@@ -485,7 +497,7 @@ function ProfileSection({ profile, recentTracks, shortTracks, longTracks, longAr
             See more
           </motion.button>
         </div>
-        
+
         <div className="grid grid-cols-3 lg:grid-cols-4 gap-4">
           {shortTracks.slice(0, 12).map((track, index) => (
             <motion.div
@@ -495,7 +507,7 @@ function ProfileSection({ profile, recentTracks, shortTracks, longTracks, longAr
               transition={{ delay: 0.7 + index * 0.05 }}
               whileHover={{ scale: 1.05 }}
               onClick={() => openSpotifyUrl(track.url)}
-              className="relative group cursor-pointer overflow-hidden rounded-lg aspect-square"
+              className="relative group cursor-pointer overflow-hidden rounded-2xl aspect-square"
             >
               <img
                 src={track.album.imageUrl}
@@ -533,7 +545,7 @@ function ProfileSection({ profile, recentTracks, shortTracks, longTracks, longAr
             See more
           </motion.button>
         </div>
-        
+
         <div className="grid grid-cols-3 lg:grid-cols-4 gap-4">
           {longTracks.slice(0, 12).map((track, index) => (
             <motion.div
@@ -543,7 +555,7 @@ function ProfileSection({ profile, recentTracks, shortTracks, longTracks, longAr
               transition={{ delay: 0.9 + index * 0.05 }}
               whileHover={{ scale: 1.05 }}
               onClick={() => openSpotifyUrl(track.url)}
-              className="relative group cursor-pointer overflow-hidden rounded-lg aspect-square"
+              className="relative group cursor-pointer overflow-hidden rounded-2xl aspect-square"
             >
               <img
                 src={track.album.imageUrl}
@@ -581,7 +593,7 @@ function ProfileSection({ profile, recentTracks, shortTracks, longTracks, longAr
             See more
           </motion.button>
         </div>
-        
+
         <div className="grid grid-cols-3 lg:grid-cols-4 gap-4">
           {profile.spotifyProfile?.playlists?.items?.slice(0, 12).map((playlist, index) => (
             <motion.div
@@ -591,7 +603,7 @@ function ProfileSection({ profile, recentTracks, shortTracks, longTracks, longAr
               transition={{ delay: 1.1 + index * 0.05 }}
               whileHover={{ scale: 1.05 }}
               onClick={() => openSpotifyUrl(playlist.url)}
-              className="relative group cursor-pointer overflow-hidden rounded-lg aspect-square"
+              className="relative group cursor-pointer overflow-hidden rounded-2xl aspect-square"
             >
               <div className="w-full h-full bg-gradient-to-br from-gray-300 to-gray-400 dark:from-gray-700 dark:to-gray-800 flex items-center justify-center overflow-hidden">
                 {playlist.imageUrl ? (
@@ -635,7 +647,7 @@ function ProfileSection({ profile, recentTracks, shortTracks, longTracks, longAr
             See more
           </motion.button>
         </div>
-        
+
         <div className="grid grid-cols-3 lg:grid-cols-4 gap-4">
           {longArtists.slice(0, 12).map((artist, index) => (
             <motion.div
@@ -645,7 +657,7 @@ function ProfileSection({ profile, recentTracks, shortTracks, longTracks, longAr
               transition={{ delay: 1.3 + index * 0.05 }}
               whileHover={{ scale: 1.05 }}
               onClick={() => openSpotifyUrl(artist.url)}
-              className="relative group cursor-pointer overflow-hidden rounded-lg aspect-square"
+              className="relative group cursor-pointer overflow-hidden rounded-2xl aspect-square"
             >
               <img
                 src={artist.imageUrl}
@@ -676,13 +688,11 @@ function ArtistsSection({ artists, timeRange, setTimeRange, timeRangeLabels, ope
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
-      className="space-y-6"
     >
-      <div className="text-center">
-        <h1 className="text-2xl lg:text-3xl font-bold mb-6">Top Artists</h1>
-        
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8 gap-4">
+        <h1 className="text-2xl lg:text-3xl font-bold mb-6 md:mb-0 text-center md:text-left w-full md:w-auto">Top Artists</h1>
         {/* Time Range Tabs */}
-        <div className="flex justify-center mb-8">
+        <div className="flex justify-center md:justify-end w-full md:w-auto">
           <div className="flex bg-gray-100 dark:bg-gray-800 rounded-full p-1">
             {(Object.keys(timeRangeLabels) as any[]).map((range) => (
               <motion.button
@@ -700,39 +710,39 @@ function ArtistsSection({ artists, timeRange, setTimeRange, timeRangeLabels, ope
             ))}
           </div>
         </div>
+      </div>
 
-        {/* Artists Grid */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-          {artists.map((artist, index) => (
-            <motion.div
-              key={artist.id}
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: index * 0.05 }}
-              whileHover={{ scale: 1.05 }}
-              onClick={() => openSpotifyUrl(artist.url)}
-              className="text-center cursor-pointer group"
-            >
-              <div className="relative mb-3">
-                <img
-                  src={artist.imageUrl}
-                  alt={artist.name}
-                  className="w-full aspect-square rounded-full object-cover shadow-lg"
-                />
-                <motion.div
-                  whileHover={{ scale: 1.1 }}
-                  className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                >
-                  <ExternalLink className="w-6 h-6 text-white" />
-                </motion.div>
-              </div>
-              <h3 className="font-semibold text-sm truncate">{artist.name}</h3>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                {artist.followers?.toLocaleString()} followers
-              </p>
-            </motion.div>
-          ))}
-        </div>
+      {/* Artists Grid */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+        {artists.map((artist, index) => (
+          <motion.div
+            key={artist.id}
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: index * 0.05 }}
+            whileHover={{ scale: 1.05 }}
+            onClick={() => openSpotifyUrl(artist.url)}
+            className="text-center cursor-pointer group"
+          >
+            <div className="relative mb-3">
+              <img
+                src={artist.imageUrl}
+                alt={artist.name}
+                className="w-full aspect-square rounded-full object-cover shadow-lg"
+              />
+              <motion.div
+                whileHover={{ scale: 1.1 }}
+                className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+              >
+                <ExternalLink className="w-6 h-6 text-white" />
+              </motion.div>
+            </div>
+            <h3 className="font-semibold text-sm truncate">{artist.name}</h3>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              {artist.followers?.toLocaleString()} followers
+            </p>
+          </motion.div>
+        ))}
       </div>
     </motion.div>
   );
@@ -750,7 +760,7 @@ function TracksSection({ tracks, timeRange, setTimeRange, timeRangeLabels, openS
     >
       <div className="text-center">
         <h1 className="text-2xl lg:text-3xl font-bold mb-6">Top Tracks</h1>
-        
+
         {/* Time Range Tabs */}
         <div className="flex justify-center mb-8">
           <div className="flex bg-gray-100 dark:bg-gray-800 rounded-full p-1">
@@ -781,7 +791,7 @@ function TracksSection({ tracks, timeRange, setTimeRange, timeRangeLabels, openS
               transition={{ delay: index * 0.03 }}
               whileHover={{ scale: 1.01 }}
               onClick={() => openSpotifyUrl(track.url)}
-              className="flex items-center space-x-4 p-4 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors cursor-pointer group"
+              className="flex items-center space-x-4 p-4 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors cursor-pointer group"
             >
               <div className="relative">
                 <img
@@ -828,7 +838,7 @@ function RecentSection({ recentTracks, openSpotifyUrl }: any) {
     >
       <div className="text-center">
         <h1 className="text-2xl lg:text-3xl font-bold mb-8">Recently Played Tracks</h1>
-        
+
         {/* Recent Tracks List */}
         <div className="space-y-3">
           {recentTracks.map((item, index) => (
@@ -839,7 +849,7 @@ function RecentSection({ recentTracks, openSpotifyUrl }: any) {
               transition={{ delay: index * 0.03 }}
               whileHover={{ scale: 1.01 }}
               onClick={() => openSpotifyUrl(item.trackUrl)}
-              className="flex items-center space-x-4 p-4 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors cursor-pointer group"
+              className="flex items-center space-x-4 p-4 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors cursor-pointer group"
             >
               <div className="w-12 h-12 bg-gray-200 dark:bg-gray-700 rounded-lg flex items-center justify-center">
                 <Music className="w-6 h-6 text-gray-400" />
@@ -877,7 +887,7 @@ function PlaylistsSection({ playlists, openSpotifyUrl }: any) {
     >
       <div className="text-center">
         <h1 className="text-2xl lg:text-3xl font-bold mb-8">Playlists</h1>
-        
+
         {/* Playlists Grid */}
         <div className="grid grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-6">
           {playlists.map((playlist, index) => (
@@ -888,7 +898,7 @@ function PlaylistsSection({ playlists, openSpotifyUrl }: any) {
               transition={{ delay: index * 0.05 }}
               whileHover={{ scale: 1.05 }}
               onClick={() => openSpotifyUrl(playlist.url)}
-              className="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-4 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors cursor-pointer group"
+              className="bg-gray-50 dark:bg-gray-800/50 rounded-2xl p-4 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors cursor-pointer group"
             >
               <div className="aspect-square bg-gray-200 dark:bg-gray-700 rounded-lg mb-3 flex items-center justify-center overflow-hidden">
                 {playlist.imageUrl ? (
