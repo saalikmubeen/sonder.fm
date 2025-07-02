@@ -2,7 +2,6 @@ import express from 'express';
 import { User } from '../models/User';
 import { Follow } from '../models/Follow';
 import { auth, AuthRequest } from '../middleware/auth';
-import { forceUpdateUser } from '../services/nowPlayingUpdater';
 import type { APIResponse } from '@sonder/types';
 
 const router = express.Router();
@@ -75,7 +74,7 @@ router.post('/me/refresh', auth, async (req: AuthRequest, res) => {
   try {
     const userId = req.userId!;
 
-    await forceUpdateUser(userId);
+    // await forceUpdateUser(userId);
 
     const updatedUser = await User.findById(userId).select(
       '-refreshTokenEncrypted'
