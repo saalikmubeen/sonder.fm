@@ -1,6 +1,9 @@
 "use client";
 import { motion } from "framer-motion";
 
+// Disable static generation for this dynamic route
+export const dynamic = 'force-dynamic';
+
 export default function FeedPage() {
   // TODO: Fetch feed data by slug
   return (

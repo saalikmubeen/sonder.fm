@@ -1,3 +1,5 @@
+'use client';
+
 import React from 'react';
 import { motion } from 'framer-motion';
 
@@ -12,11 +14,12 @@ export const Card: React.FC<CardProps> = ({
   children,
   className = '',
   hover = true,
-  gradient = false
+  gradient = false,
 }) => {
-  const baseClasses = 'rounded-2xl shadow-lg backdrop-blur-sm border border-white/20';
-  const gradientClasses = gradient 
-    ? 'bg-gradient-to-br from-white/10 to-white/5' 
+  const baseClasses =
+    'rounded-2xl shadow-lg backdrop-blur-sm border border-white/20';
+  const gradientClasses = gradient
+    ? 'bg-gradient-to-br from-white/10 to-white/5'
     : 'bg-white/80 dark:bg-gray-800/80';
 
   return (

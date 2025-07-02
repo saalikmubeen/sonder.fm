@@ -21,13 +21,22 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [mounted, setMounted] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
-    checkAuth();
+    setMounted(true);
   }, []);
 
+  useEffect(() => {
+    if (mounted) {
+      checkAuth();
+    }
+  }, [mounted]);
+
   const checkAuth = async () => {
+    if (!mounted) return;
+    
     try {
       const token = localStorage.getItem('sonder_token');
       if (!token) {
@@ -88,6 +97,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Handle auth success from URL params (after Spotify redirect)
   useEffect(() => {
+    if (!mounted) return;
+    
     const urlParams = new URLSearchParams(window.location.search);
     const token = urlParams.get('token');
     const slug = urlParams.get('slug');
@@ -101,7 +112,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       toast.success('Welcome to Sonder.fm! 🎵');
       router.push(`/u/${slug}`);
     }
-  }, [router]);
+  }, [router, mounted]);
 
   const value = {
     user,

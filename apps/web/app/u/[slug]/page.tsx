@@ -1,6 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+
+// Disable static generation for this dynamic route
+export const dynamic = 'force-dynamic';
 import { useParams, useRouter } from 'next/navigation';
 import { motion, AnimatePresence, animate } from 'framer-motion';
 import { useTheme } from 'next-themes';
