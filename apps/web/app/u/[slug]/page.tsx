@@ -122,6 +122,9 @@ export default function UserProfilePage() {
   const currentArtists = profile.spotifyProfile?.topArtists?.[timeRange] || [];
   const currentTracks = profile.spotifyProfile?.topTracks?.[timeRange] || [];
   const recentTracks = profile.spotifyProfile?.recentlyPlayedTracks?.items || [];
+  const shortTracks = profile.spotifyProfile?.topTracks?.short || [];
+  const longTracks = profile.spotifyProfile?.topTracks?.long || [];
+  const longArtists = profile.spotifyProfile?.topArtists?.long || [];
 
   const sidebarItems = [
     { id: 'profile', icon: User, label: 'Profile' },
@@ -139,31 +142,31 @@ export default function UserProfilePage() {
         <motion.div 
           initial={{ x: -100, opacity: 0 }}
           animate={{ x: 0, opacity: 1 }}
-          className="fixed left-0 top-0 h-full w-64 bg-white dark:bg-black border-r border-gray-200 dark:border-gray-800 z-50"
+          className="fixed left-0 top-0 h-full w-60 bg-white dark:bg-black border-r border-gray-100 dark:border-gray-900 z-50"
         >
           <div className="p-6">
-            <div className="flex items-center gap-3 mb-8">
-              <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
-                <Music className="w-4 h-4 text-black" />
-              </div>
-              <span className="text-xl font-bold">Sonder.fm</span>
+            {/* Logo */}
+            <div className="flex items-center gap-2 mb-12">
+              <div className="w-6 h-6 bg-green-500 rounded-full"></div>
+              <span className="text-lg font-semibold">Spotify</span>
             </div>
 
-            <nav className="space-y-2">
+            {/* Navigation */}
+            <nav className="space-y-1">
               {sidebarItems.map(({ id, icon: Icon, label }) => (
                 <motion.button
                   key={id}
-                  whileHover={{ x: 4 }}
+                  whileHover={{ x: 2 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={() => setActiveSection(id as Section)}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${
+                  className={`w-full flex items-center gap-4 px-3 py-2 rounded-md text-left transition-all duration-200 ${
                     activeSection === id
-                      ? 'bg-gray-100 dark:bg-gray-900 text-green-500'
-                      : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-900/50'
+                      ? 'bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-white font-medium'
+                      : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
                   }`}
                 >
                   <Icon className="w-5 h-5" />
-                  <span className="font-medium">{label}</span>
+                  <span className="text-sm">{label}</span>
                 </motion.button>
               ))}
             </nav>
@@ -171,16 +174,16 @@ export default function UserProfilePage() {
         </motion.div>
 
         {/* Main Content */}
-        <div className="ml-64 flex-1">
+        <div className="ml-60 flex-1">
           {/* Header */}
-          <div className="sticky top-0 bg-white/80 dark:bg-black/80 backdrop-blur-md border-b border-gray-200 dark:border-gray-800 z-40">
+          <div className="sticky top-0 bg-white/80 dark:bg-black/80 backdrop-blur-md border-b border-gray-100 dark:border-gray-900 z-40">
             <div className="px-8 py-4 flex items-center justify-between">
               <motion.button
                 whileTap={{ scale: 0.95 }}
                 onClick={() => router.back()}
                 className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
               >
-                <ChevronRight className="w-6 h-6 rotate-180" />
+                <ChevronRight className="w-5 h-5 rotate-180" />
               </motion.button>
               
               {mounted && (
@@ -190,9 +193,9 @@ export default function UserProfilePage() {
                   className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
                 >
                   {theme === 'dark' ? (
-                    <Sun className="w-5 h-5" />
+                    <Sun className="w-4 h-4" />
                   ) : (
-                    <Moon className="w-5 h-5" />
+                    <Moon className="w-4 h-4" />
                   )}
                 </motion.button>
               )}
@@ -205,9 +208,10 @@ export default function UserProfilePage() {
               {activeSection === 'profile' && (
                 <ProfileSection 
                   profile={profile} 
-                  currentArtists={currentArtists}
-                  currentTracks={currentTracks}
                   recentTracks={recentTracks}
+                  shortTracks={shortTracks}
+                  longTracks={longTracks}
+                  longArtists={longArtists}
                   setActiveSection={setActiveSection}
                   openSpotifyUrl={openSpotifyUrl}
                 />
@@ -284,9 +288,10 @@ export default function UserProfilePage() {
             {activeSection === 'profile' && (
               <ProfileSection 
                 profile={profile} 
-                currentArtists={currentArtists}
-                currentTracks={currentTracks}
                 recentTracks={recentTracks}
+                shortTracks={shortTracks}
+                longTracks={longTracks}
+                longArtists={longArtists}
                 setActiveSection={setActiveSection}
                 openSpotifyUrl={openSpotifyUrl}
               />
@@ -356,14 +361,14 @@ export default function UserProfilePage() {
 }
 
 // Profile Section Component
-function ProfileSection({ profile, currentArtists, currentTracks, recentTracks, setActiveSection, openSpotifyUrl }: any) {
+function ProfileSection({ profile, recentTracks, shortTracks, longTracks, longArtists, setActiveSection, openSpotifyUrl }: any) {
   return (
     <motion.div
       key="profile"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
-      className="space-y-8"
+      className="space-y-12"
     >
       {/* Profile Header */}
       <div className="text-center">
@@ -376,11 +381,8 @@ function ProfileSection({ profile, currentArtists, currentTracks, recentTracks, 
           <img
             src={profile.avatarUrl}
             alt={profile.displayName}
-            className="w-32 h-32 lg:w-40 lg:h-40 rounded-full object-cover ring-4 ring-gray-200 dark:ring-gray-800 shadow-xl"
+            className="w-32 h-32 lg:w-40 lg:h-40 rounded-full object-cover shadow-xl"
           />
-          <div className="absolute -bottom-2 -right-2 w-8 h-8 bg-green-500 rounded-full flex items-center justify-center shadow-lg">
-            <Music className="w-4 h-4 text-black" />
-          </div>
         </motion.div>
 
         <motion.h1
@@ -402,169 +404,261 @@ function ProfileSection({ profile, currentArtists, currentTracks, recentTracks, 
             <div className="text-2xl font-bold text-green-500">
               {profile.spotifyProfile?.followers || 0}
             </div>
-            <div className="text-sm text-gray-500 dark:text-gray-400">FOLLOWERS</div>
+            <div className="text-sm text-gray-500 dark:text-gray-400 uppercase tracking-wide">Followers</div>
           </div>
           <div className="text-center">
             <div className="text-2xl font-bold text-green-500">
               {profile.spotifyProfile?.following || 0}
             </div>
-            <div className="text-sm text-gray-500 dark:text-gray-400">FOLLOWING</div>
+            <div className="text-sm text-gray-500 dark:text-gray-400 uppercase tracking-wide">Following</div>
           </div>
           <div className="text-center">
             <div className="text-2xl font-bold text-green-500">
               {profile.spotifyProfile?.playlists?.total || 0}
             </div>
-            <div className="text-sm text-gray-500 dark:text-gray-400">PLAYLISTS</div>
+            <div className="text-sm text-gray-500 dark:text-gray-400 uppercase tracking-wide">Playlists</div>
           </div>
         </motion.div>
       </div>
-
-      {/* Top Artists Section */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.4 }}
-        className="space-y-4"
-      >
-        <div className="flex items-center justify-between">
-          <h2 className="text-xl lg:text-2xl font-bold">Top Artists of All Time</h2>
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={() => setActiveSection('artists')}
-            className="flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-800 rounded-full text-sm font-medium hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-          >
-            SEE MORE
-            <ArrowRight className="w-4 h-4" />
-          </motion.button>
-        </div>
-        
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          {currentArtists.slice(0, 2).map((artist, index) => (
-            <motion.div
-              key={artist.id}
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.5 + index * 0.1 }}
-              whileHover={{ scale: 1.02 }}
-              onClick={() => openSpotifyUrl(artist.url)}
-              className="relative group cursor-pointer overflow-hidden rounded-xl aspect-[3/2]"
-            >
-              <img
-                src={artist.imageUrl}
-                alt={artist.name}
-                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-              <div className="absolute bottom-4 left-4 text-white">
-                <h3 className="text-lg font-bold">{artist.name}</h3>
-                <p className="text-sm opacity-80">{artist.followers?.toLocaleString()} followers</p>
-              </div>
-              <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
-                <ExternalLink className="w-5 h-5 text-white" />
-              </div>
-            </motion.div>
-          ))}
-        </div>
-      </motion.div>
-
-      {/* Top Tracks Section */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.6 }}
-        className="space-y-4"
-      >
-        <div className="flex items-center justify-between">
-          <h2 className="text-xl lg:text-2xl font-bold">Top Tracks of All Time</h2>
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={() => setActiveSection('tracks')}
-            className="flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-800 rounded-full text-sm font-medium hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-          >
-            SEE MORE
-            <ArrowRight className="w-4 h-4" />
-          </motion.button>
-        </div>
-        
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          {currentTracks.slice(0, 2).map((track, index) => (
-            <motion.div
-              key={track.id}
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.7 + index * 0.1 }}
-              whileHover={{ scale: 1.02 }}
-              onClick={() => openSpotifyUrl(track.url)}
-              className="relative group cursor-pointer overflow-hidden rounded-xl aspect-[3/2]"
-            >
-              <img
-                src={track.album.imageUrl}
-                alt={track.album.name}
-                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-              <div className="absolute bottom-4 left-4 text-white">
-                <h3 className="text-lg font-bold truncate">{track.name}</h3>
-                <p className="text-sm opacity-80 truncate">
-                  {track.artists.map(a => a.name).join(', ')} • {track.album.name}
-                </p>
-              </div>
-              <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
-                <ExternalLink className="w-5 h-5 text-white" />
-              </div>
-            </motion.div>
-          ))}
-        </div>
-      </motion.div>
 
       {/* Recently Played Section */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.8 }}
-        className="space-y-4"
+        transition={{ delay: 0.4 }}
+        className="space-y-6"
       >
         <div className="flex items-center justify-between">
-          <h2 className="text-xl lg:text-2xl font-bold">Recently Played</h2>
+          <h2 className="text-2xl font-bold">Recently Played</h2>
           <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
             onClick={() => setActiveSection('recent')}
-            className="flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-800 rounded-full text-sm font-medium hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+            className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
           >
-            SEE MORE
-            <ArrowRight className="w-4 h-4" />
+            See more
           </motion.button>
         </div>
         
-        <div className="space-y-3">
-          {recentTracks.slice(0, 3).map((item, index) => (
+        <div className="grid grid-cols-3 lg:grid-cols-4 gap-4">
+          {recentTracks.slice(0, 12).map((item, index) => (
             <motion.div
               key={`${item.trackId}-${index}`}
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.9 + index * 0.1 }}
-              whileHover={{ scale: 1.01 }}
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.5 + index * 0.05 }}
+              whileHover={{ scale: 1.05 }}
               onClick={() => openSpotifyUrl(item.trackUrl)}
-              className="flex items-center space-x-4 p-4 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors cursor-pointer group"
+              className="relative group cursor-pointer overflow-hidden rounded-lg aspect-square bg-gray-200 dark:bg-gray-800"
             >
-              <div className="w-12 h-12 bg-gray-200 dark:bg-gray-700 rounded-lg flex items-center justify-center">
-                <Music className="w-6 h-6 text-gray-400" />
+              <div className="w-full h-full bg-gradient-to-br from-gray-300 to-gray-400 dark:from-gray-700 dark:to-gray-800 flex items-center justify-center">
+                <Music className="w-8 h-8 text-gray-500 dark:text-gray-400" />
               </div>
-              <div className="flex-1 min-w-0">
-                <div className="font-medium truncate">{item.trackName}</div>
-                <div className="text-sm text-gray-500 dark:text-gray-400 flex items-center space-x-2">
-                  <Calendar className="w-3 h-3" />
-                  <span>{timeAgo(new Date(item.playedAt))}</span>
-                </div>
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+              <div className="absolute bottom-2 left-2 right-2 text-white opacity-0 group-hover:opacity-100 transition-opacity">
+                <h3 className="text-xs font-semibold truncate">{item.trackName}</h3>
+                <p className="text-xs opacity-80">{timeAgo(new Date(item.playedAt))}</p>
               </div>
-              <div className="text-sm text-gray-400">
-                {formatDuration(item.durationMs)}
+              <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                <ExternalLink className="w-4 h-4 text-white" />
               </div>
-              <div className="opacity-0 group-hover:opacity-100 transition-opacity">
-                <ExternalLink className="w-4 h-4" />
+            </motion.div>
+          ))}
+        </div>
+      </motion.div>
+
+      {/* Songs I Love Right Now Section */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.6 }}
+        className="space-y-6"
+      >
+        <div className="flex items-center justify-between">
+          <h2 className="text-2xl font-bold">Songs I love right now</h2>
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={() => setActiveSection('tracks')}
+            className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+          >
+            See more
+          </motion.button>
+        </div>
+        
+        <div className="grid grid-cols-3 lg:grid-cols-4 gap-4">
+          {shortTracks.slice(0, 12).map((track, index) => (
+            <motion.div
+              key={track.id}
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.7 + index * 0.05 }}
+              whileHover={{ scale: 1.05 }}
+              onClick={() => openSpotifyUrl(track.url)}
+              className="relative group cursor-pointer overflow-hidden rounded-lg aspect-square"
+            >
+              <img
+                src={track.album.imageUrl}
+                alt={track.album.name}
+                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+              <div className="absolute bottom-2 left-2 right-2 text-white opacity-0 group-hover:opacity-100 transition-opacity">
+                <h3 className="text-xs font-semibold truncate">{track.name}</h3>
+                <p className="text-xs opacity-80 truncate">{track.artists.map(a => a.name).join(', ')}</p>
+              </div>
+              <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                <ExternalLink className="w-4 h-4 text-white" />
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      </motion.div>
+
+      {/* My All Time Fav Tracks Section */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.8 }}
+        className="space-y-6"
+      >
+        <div className="flex items-center justify-between">
+          <h2 className="text-2xl font-bold">My All Time fav tracks</h2>
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={() => setActiveSection('tracks')}
+            className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+          >
+            See more
+          </motion.button>
+        </div>
+        
+        <div className="grid grid-cols-3 lg:grid-cols-4 gap-4">
+          {longTracks.slice(0, 12).map((track, index) => (
+            <motion.div
+              key={track.id}
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.9 + index * 0.05 }}
+              whileHover={{ scale: 1.05 }}
+              onClick={() => openSpotifyUrl(track.url)}
+              className="relative group cursor-pointer overflow-hidden rounded-lg aspect-square"
+            >
+              <img
+                src={track.album.imageUrl}
+                alt={track.album.name}
+                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+              <div className="absolute bottom-2 left-2 right-2 text-white opacity-0 group-hover:opacity-100 transition-opacity">
+                <h3 className="text-xs font-semibold truncate">{track.name}</h3>
+                <p className="text-xs opacity-80 truncate">{track.artists.map(a => a.name).join(', ')}</p>
+              </div>
+              <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                <ExternalLink className="w-4 h-4 text-white" />
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      </motion.div>
+
+      {/* Playlists Section */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 1.0 }}
+        className="space-y-6"
+      >
+        <div className="flex items-center justify-between">
+          <h2 className="text-2xl font-bold">Playlists</h2>
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={() => setActiveSection('playlists')}
+            className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+          >
+            See more
+          </motion.button>
+        </div>
+        
+        <div className="grid grid-cols-3 lg:grid-cols-4 gap-4">
+          {profile.spotifyProfile?.playlists?.items?.slice(0, 12).map((playlist, index) => (
+            <motion.div
+              key={playlist.id}
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 1.1 + index * 0.05 }}
+              whileHover={{ scale: 1.05 }}
+              onClick={() => openSpotifyUrl(playlist.url)}
+              className="relative group cursor-pointer overflow-hidden rounded-lg aspect-square"
+            >
+              <div className="w-full h-full bg-gradient-to-br from-gray-300 to-gray-400 dark:from-gray-700 dark:to-gray-800 flex items-center justify-center overflow-hidden">
+                {playlist.imageUrl ? (
+                  <img
+                    src={playlist.imageUrl}
+                    alt={playlist.name}
+                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+                  />
+                ) : (
+                  <List className="w-8 h-8 text-gray-500 dark:text-gray-400" />
+                )}
+              </div>
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+              <div className="absolute bottom-2 left-2 right-2 text-white opacity-0 group-hover:opacity-100 transition-opacity">
+                <h3 className="text-xs font-semibold truncate">{playlist.name}</h3>
+                <p className="text-xs opacity-80">{playlist.tracks} tracks</p>
+              </div>
+              <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                <ExternalLink className="w-4 h-4 text-white" />
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      </motion.div>
+
+      {/* My All Time Fav Artists Section */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 1.2 }}
+        className="space-y-6"
+      >
+        <div className="flex items-center justify-between">
+          <h2 className="text-2xl font-bold">My All Time fav artists</h2>
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={() => setActiveSection('artists')}
+            className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+          >
+            See more
+          </motion.button>
+        </div>
+        
+        <div className="grid grid-cols-3 lg:grid-cols-4 gap-4">
+          {longArtists.slice(0, 12).map((artist, index) => (
+            <motion.div
+              key={artist.id}
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 1.3 + index * 0.05 }}
+              whileHover={{ scale: 1.05 }}
+              onClick={() => openSpotifyUrl(artist.url)}
+              className="relative group cursor-pointer overflow-hidden rounded-lg aspect-square"
+            >
+              <img
+                src={artist.imageUrl}
+                alt={artist.name}
+                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+              <div className="absolute bottom-2 left-2 right-2 text-white opacity-0 group-hover:opacity-100 transition-opacity">
+                <h3 className="text-xs font-semibold truncate">{artist.name}</h3>
+                <p className="text-xs opacity-80">{artist.followers?.toLocaleString()} followers</p>
+              </div>
+              <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                <ExternalLink className="w-4 h-4 text-white" />
               </div>
             </motion.div>
           ))}
@@ -608,7 +702,7 @@ function ArtistsSection({ artists, timeRange, setTimeRange, timeRangeLabels, ope
         </div>
 
         {/* Artists Grid */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-6">
           {artists.map((artist, index) => (
             <motion.div
               key={artist.id}
@@ -785,7 +879,7 @@ function PlaylistsSection({ playlists, openSpotifyUrl }: any) {
         <h1 className="text-2xl lg:text-3xl font-bold mb-8">Playlists</h1>
         
         {/* Playlists Grid */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-6">
           {playlists.map((playlist, index) => (
             <motion.div
               key={playlist.id}
