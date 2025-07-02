@@ -28,6 +28,10 @@ const UserSchema = new Schema<UserDocument>({
   email: { type: String, required: true },
   refreshTokenEncrypted: { type: String, required: true },
   accessToken: { type: String, required: true },
+  accessTokenExpiresAt: {
+    type: Date,
+    required: true,
+  },
   publicSlug: { type: String, required: true, unique: true },
   profileTheme: {
     type: String,
@@ -44,7 +48,7 @@ const UserSchema = new Schema<UserDocument>({
   },
   vibeSummary: { type: String, default: '' },
 
-  // cachedNowPlaying: { type: NowPlayingSchema },
+  cachedNowPlaying: { type: NowPlayingSchema },
 
   cachedUpdatedAt: { type: Date },
 

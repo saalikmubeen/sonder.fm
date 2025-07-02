@@ -88,8 +88,10 @@ const UserSpotifyProfileSchema = new Schema<SpotifyProfileDocument>({
         trackUrl: String,
         durationMs: Number,
         playedAt: String,
+        imageUrl: String,
       },
     ],
+    lastUpdated: { type: Date, default: Date.now },
   },
 
   followedArtists: {

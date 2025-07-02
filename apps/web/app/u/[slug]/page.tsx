@@ -463,9 +463,17 @@ function ProfileSection({ profile, recentTracks, shortTracks, longTracks, longAr
               onClick={() => openSpotifyUrl(item.trackUrl)}
               className="relative group cursor-pointer overflow-hidden rounded-2xl aspect-square bg-gray-200 dark:bg-gray-800"
             >
-              <div className="w-full h-full bg-gradient-to-br from-gray-300 to-gray-400 dark:from-gray-700 dark:to-gray-800 flex items-center justify-center">
-                <Music className="w-8 h-8 text-gray-500 dark:text-gray-400" />
-              </div>
+              {item.imageUrl ? (
+                <img
+                  src={item.imageUrl}
+                  alt={item.trackName}
+                  className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+                />
+              ) : (
+                <div className="w-full h-full bg-gradient-to-br from-gray-300 to-gray-400 dark:from-gray-700 dark:to-gray-800 flex items-center justify-center">
+                  <Music className="w-8 h-8 text-gray-500 dark:text-gray-400" />
+                </div>
+              )}
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
               <div className="absolute bottom-2 left-2 right-2 text-white opacity-0 group-hover:opacity-100 transition-opacity">
                 <h3 className="text-xs font-semibold truncate">{item.trackName}</h3>
@@ -851,9 +859,17 @@ function RecentSection({ recentTracks, openSpotifyUrl }: any) {
               onClick={() => openSpotifyUrl(item.trackUrl)}
               className="flex items-center space-x-4 p-4 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors cursor-pointer group"
             >
-              <div className="w-12 h-12 bg-gray-200 dark:bg-gray-700 rounded-lg flex items-center justify-center">
-                <Music className="w-6 h-6 text-gray-400" />
-              </div>
+              {item.imageUrl ? (
+                <img
+                  src={item.imageUrl}
+                  alt={item.trackName}
+                  className="w-12 h-12 rounded-lg object-cover"
+                />
+              ) : (
+                <div className="w-12 h-12 bg-gray-200 dark:bg-gray-700 rounded-lg flex items-center justify-center">
+                  <Music className="w-6 h-6 text-gray-400" />
+                </div>
+              )}
               <div className="flex-1 min-w-0 text-left">
                 <div className="font-medium truncate">{item.trackName}</div>
                 <div className="text-sm text-gray-500 dark:text-gray-400 flex items-center space-x-2">

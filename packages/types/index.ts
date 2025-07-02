@@ -8,6 +8,7 @@ export interface User {
   email: string;
   refreshTokenEncrypted: string;
   accessToken: string;
+  accessTokenExpiresAt: Date;
   publicSlug: string;
   profileTheme: ProfileTheme;
   vibeSummary: string;
@@ -15,6 +16,7 @@ export interface User {
   cachedUpdatedAt?: Date;
   createdAt: Date;
   updatedAt: Date;
+  cachedNowPlaying: NowPlaying | null;
 }
 
 export interface NowPlaying {
@@ -84,7 +86,7 @@ export type ProfileTheme =
 export interface SpotifyTokens {
   accessToken: string;
   refreshToken: string;
-  expiresIn: number;
+  expiresIn: number; // in seconds
 }
 
 export interface SpotifyArtist {
@@ -130,7 +132,9 @@ export interface RecentlyPlayedTracks {
     trackUrl: string;
     durationMs: number;
     playedAt: string;
+    imageUrl: string;
   }[];
+  lastUpdated: Date;
 }
 
 export interface AudioFeatureSummary {

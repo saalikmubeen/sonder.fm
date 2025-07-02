@@ -6,8 +6,18 @@ import { Reaction } from '../models/Reaction';
 import { VibeNote } from '../models/VibeNote';
 import { auth } from '../middleware/auth';
 import type { APIResponse, PublicProfile } from '@sonder/types';
+import { buildSpotifyProfile } from '../services/spotify';
+import { CryptoUtils, SpotifyAPI } from '@sonder/utils';
+
+import { getRecentlyPlayed } from '../services/spotify';
 
 const router = express.Router();
+
+const spotifyAPI = new SpotifyAPI(
+  process.env.SPOTIFY_CLIENT_ID!,
+  process.env.SPOTIFY_CLIENT_SECRET!,
+  process.env.SPOTIFY_REDIRECT_URI!
+);
 
 // Get public profile by slug
 router.get('/:slug', async (req, res) => {
@@ -17,7 +27,7 @@ router.get('/:slug', async (req, res) => {
       ? await getCurrentUserId(req.headers.authorization)
       : null;
 
-    const user = await User.findOne({ publicSlug: slug }).populate('spotifyProfile');
+    const user = await User.findOne({ publicSlug: slug });
 
     if (!user) {
       return res.status(404).json({
@@ -25,6 +35,132 @@ router.get('/:slug', async (req, res) => {
         error: 'Profile not found',
       });
     }
+
+    // Refresh the spotify profile if it's been more than 1 day since the last update
+
+    // If the access token is expired, refresh it
+    // Add a delta of 5 minutes to ensure we refresh before it expires
+    // Is the token going to expire within the next 5 minutes?
+    // If yes, you refresh it ahead of time — which is a standard and reliable pattern.
+    if (
+      user.accessTokenExpiresAt &&
+      user.accessTokenExpiresAt.getTime() < Date.now() + 5 * 60 * 1000
+    ) {
+      // Decrypt the refresh token
+      const refreshToken = CryptoUtils.decrypt(
+        user.refreshTokenEncrypted
+      );
+      const { accessToken, expiresIn } =
+        await spotifyAPI.refreshAccessToken(refreshToken);
+      user.accessToken = accessToken;
+      user.accessTokenExpiresAt = new Date(
+        Date.now() + expiresIn * 1000
+      ); // 1 hour
+      await user.save();
+    }
+
+    // Build the spotify profile if last updated is more than 1 day ago
+    const userSpotifyProfile = await UserSpotifyProfile.findOne({
+      userId: user._id.toString(),
+    });
+
+    let oneDay = 1000 * 60 * 60 * 24;
+    let oneHour = 1000 * 60 * 60;
+    let oneMin = 1000 * 60;
+    if (
+      userSpotifyProfile &&
+      userSpotifyProfile.lastUpdated &&
+      userSpotifyProfile.lastUpdated.getTime() + oneHour < Date.now()
+    ) {
+      console.log('Updating Spotify profile for user:', user._id);
+
+      const {
+        userInfo,
+        playlistsInfo,
+        topArtistsInfo,
+        topTracksInfo,
+        recentlyPlayedInfo,
+        followedArtistsInfo,
+      } = await buildSpotifyProfile({
+        Authorization: `Bearer ${user.accessToken}`,
+        'Content-Type': 'application/json',
+      });
+
+      // Update the spotify profile
+
+      if (userSpotifyProfile) {
+        userSpotifyProfile.spotifyId = userInfo.spotifyId;
+        userSpotifyProfile.country = userInfo.country;
+        userSpotifyProfile.displayName = userInfo.displayName;
+        userSpotifyProfile.spotifyProfileUrl =
+          userInfo.spotifyProfileUrl;
+        userSpotifyProfile.avatarUrl = userInfo.avatarUrl;
+        userSpotifyProfile.email = userInfo.email;
+        userSpotifyProfile.followers = userInfo.followers;
+        userSpotifyProfile.following = userInfo.following;
+        userSpotifyProfile.premium = userInfo.premium;
+
+        userSpotifyProfile.playlists = playlistsInfo;
+        userSpotifyProfile.topArtists = topArtistsInfo;
+        userSpotifyProfile.topTracks = topTracksInfo;
+        userSpotifyProfile.recentlyPlayedTracks = {
+          ...recentlyPlayedInfo,
+          lastUpdated: new Date(),
+        };
+        userSpotifyProfile.followedArtists = followedArtistsInfo;
+        userSpotifyProfile.lastUpdated = new Date();
+
+        await userSpotifyProfile.save();
+      }
+      user.displayName = userInfo.displayName;
+      user.avatarUrl = userInfo.avatarUrl;
+      user.email = userInfo.email;
+      await user.save();
+    } else {
+      // Update the recentlyPlayedTracks if it's been more than 1 hour
+      if (
+        userSpotifyProfile &&
+        userSpotifyProfile.recentlyPlayedTracks &&
+        userSpotifyProfile.recentlyPlayedTracks.lastUpdated &&
+        userSpotifyProfile.recentlyPlayedTracks.lastUpdated.getTime() +
+          oneMin <
+          Date.now()
+      ) {
+        console.log(
+          'Updating recently played tracks for user:',
+          user._id
+        );
+        const recentlyPlayed = await getRecentlyPlayed({
+          Authorization: `Bearer ${user.accessToken}`,
+          'Content-Type': 'application/json',
+        });
+
+        const recentlyPlayedInfo = {
+          total: recentlyPlayed.data.limit,
+          items: recentlyPlayed.data.items.map((item: any) => ({
+            trackName: item.track.name,
+            trackId: item.track.id,
+            trackUrl: item.track.external_urls.spotify,
+            durationMs: item.track.duration_ms,
+            playedAt: new Date(item.played_at),
+            imageUrl: item.track.album.images?.[0]?.url,
+          })),
+        };
+
+        if (userSpotifyProfile) {
+          userSpotifyProfile.recentlyPlayedTracks = {
+            total: recentlyPlayedInfo.total,
+            items: recentlyPlayedInfo.items,
+            lastUpdated: new Date(),
+          };
+          await userSpotifyProfile.save();
+        }
+      }
+    }
+
+    const nowPlaying = await spotifyAPI.getCurrentlyPlaying(
+      user.accessToken
+    );
 
     // Get reactions count
     const reactions = await Reaction.aggregate([
@@ -38,7 +174,9 @@ router.get('/:slug', async (req, res) => {
     });
 
     // Get recent vibe notes
-    const vibeNotes = await VibeNote.find({ targetUserId: user._id.toString() })
+    const vibeNotes = await VibeNote.find({
+      targetUserId: user._id.toString(),
+    })
       .populate('authorId', 'displayName avatarUrl')
       .sort({ createdAt: -1 })
       .limit(10);
@@ -68,8 +206,16 @@ router.get('/:slug', async (req, res) => {
     };
 
     // Add spotify profile data if available
-    if (user.spotifyProfile) {
-      (publicProfile as any).spotifyProfile = user.spotifyProfile;
+    if (userSpotifyProfile) {
+      (publicProfile as any).spotifyProfile = userSpotifyProfile;
+    }
+
+    // Add now playing data if available
+    if (nowPlaying) {
+      publicProfile.nowPlaying = nowPlaying;
+
+      user.cachedNowPlaying = nowPlaying;
+      await user.save();
     }
 
     const response: APIResponse<PublicProfile> = {

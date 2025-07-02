@@ -7,6 +7,7 @@ import type { APIResponse } from '@sonder/types';
 import { RefreshToken } from '../models/RefreshToken';
 
 import {
+  buildSpotifyProfile,
   getAudioFeaturesForTracks,
   getUserInfo,
 } from '../services/spotify';
@@ -73,6 +74,7 @@ router.get('/callback', async (req, res) => {
 
     // Check if user exists
     let user = await User.findOne({ spotifyId: profile.id });
+    console.log('User:', user);
 
     if (!user) {
       // Create new user
@@ -88,6 +90,10 @@ router.get('/callback', async (req, res) => {
         email: profile.email,
         refreshTokenEncrypted: encryptedRefreshToken,
         accessToken: tokens.accessToken,
+        // tokens.expiresIn > is in seconds | 36000 seconds = 1 hour
+        accessTokenExpiresAt: new Date(
+          Date.now() + tokens.expiresIn * 1000
+        ), // 1 hour
         publicSlug,
         profileTheme: 'default',
         vibeSummary: `${
@@ -98,6 +104,7 @@ router.get('/callback', async (req, res) => {
       await user.save();
     } else {
       // Update existing user
+      console.log('Updating existing user');
       user.displayName = profile.display_name || user.displayName;
       user.avatarUrl = profile.images?.[0]?.url || user.avatarUrl;
       user.email = profile.email;
@@ -105,6 +112,9 @@ router.get('/callback', async (req, res) => {
         tokens.refreshToken
       );
       user.accessToken = tokens.accessToken;
+      user.accessTokenExpiresAt = new Date(
+        Date.now() + tokens.expiresIn * 1000
+      ); // 1 hour
 
       await user.save();
     }
@@ -114,196 +124,19 @@ router.get('/callback', async (req, res) => {
     console.log('Spotify ID:', user.spotifyId);
 
     // Fetch Spotify stats
-    let stats = null;
+
     try {
-      const spotifyStats = await getUserInfo({
+      const {
+        userInfo,
+        playlistsInfo,
+        topArtistsInfo,
+        topTracksInfo,
+        recentlyPlayedInfo,
+        followedArtistsInfo,
+      } = await buildSpotifyProfile({
         Authorization: `Bearer ${tokens.accessToken}`,
         'Content-Type': 'application/json',
       });
-
-      const spotifyUser = spotifyStats.user;
-      const userInfo = {
-        spotifyId: spotifyUser.id,
-        country: spotifyUser.country,
-        displayName: spotifyUser.display_name,
-        spotifyProfileUrl: spotifyUser.external_urls.spotify,
-        avatarUrl: spotifyUser.images?.[0]?.url,
-        email: spotifyUser.email,
-        followers: spotifyUser.followers?.total,
-        following: spotifyStats.followedArtists.artists.total || 0,
-        premium: spotifyUser.product === 'premium' ? true : false, // if premium, user.product is premium, else free
-      };
-
-      const playlists = spotifyStats.playlists;
-      const playlistsInfo = {
-        total: playlists.total,
-        items: playlists.items.map((playlist: any) => ({
-          id: playlist.id,
-          name: playlist.name,
-          description: playlist.description,
-          imageUrl: playlist.images?.[0]?.url,
-          tracks: playlist.tracks?.total || 0,
-          url: playlist.external_urls.spotify,
-          public: playlist.public || false,
-        })),
-      };
-
-      const topArtistsLong = spotifyStats.topArtistsLong;
-      const topArtistsShort = spotifyStats.topArtistsShort;
-      const topArtistsMedium = spotifyStats.topArtistsMedium;
-      const topArtistsInfo = {
-        long: topArtistsLong.items.map((artist: any) => {
-          return {
-            id: artist.id,
-            name: artist.name,
-            imageUrl: artist.images?.[0]?.url,
-            popularity: artist.popularity,
-            url: artist.external_urls.spotify,
-            followers: artist.followers?.total || 0,
-          };
-        }),
-        short: topArtistsShort.items.map((artist: any) => {
-          return {
-            id: artist.id,
-            name: artist.name,
-            imageUrl: artist.images?.[0]?.url,
-            popularity: artist.popularity,
-            url: artist.external_urls.spotify,
-            followers: artist.followers?.total || 0,
-          };
-        }),
-        medium: topArtistsMedium.items.map((artist: any) => {
-          return {
-            id: artist.id,
-            name: artist.name,
-            imageUrl: artist.images?.[0]?.url,
-            popularity: artist.popularity,
-            url: artist.external_urls.spotify,
-            followers: artist.followers?.total || 0,
-          };
-        }),
-      };
-
-      const topTracksLong = spotifyStats.topTracksLong;
-      const topTracksShort = spotifyStats.topTracksShort;
-      const topTracksMedium = spotifyStats.topTracksMedium;
-      const topTracksInfo = {
-        long: topTracksLong.items.map((track: any) => {
-          return {
-            id: track.id,
-            name: track.name,
-            artists: track.artists.map((artist: any) => ({
-              id: artist.id,
-              name: artist.name,
-              url: artist.external_urls.spotify,
-            })),
-            album: {
-              id: track.album.id,
-              name: track.album.name,
-              imageUrl: track.album.images?.[0]?.url,
-              url: track.album.external_urls.spotify,
-              releaseDate: track.album.release_date,
-            },
-            popularity: track.popularity,
-            durationMs: track.duration_ms,
-            url: track.external_urls.spotify,
-          };
-        }),
-        short: topTracksShort.items.map((track: any) => {
-          return {
-            id: track.id,
-            name: track.name,
-            artists: track.artists.map((artist: any) => ({
-              id: artist.id,
-              name: artist.name,
-              url: artist.external_urls.spotify,
-            })),
-            album: {
-              id: track.album.id,
-              name: track.album.name,
-              imageUrl: track.album.images?.[0]?.url,
-              url: track.album.external_urls.spotify,
-              releaseDate: track.album.release_date,
-            },
-            popularity: track.popularity,
-            durationMs: track.duration_ms,
-            url: track.external_urls.spotify,
-          };
-        }),
-        medium: topTracksMedium.items.map((track: any) => {
-          return {
-            id: track.id,
-            name: track.name,
-            artists: track.artists.map((artist: any) => ({
-              id: artist.id,
-              name: artist.name,
-              url: artist.external_urls.spotify,
-            })),
-            album: {
-              id: track.album.id,
-              name: track.album.name,
-              imageUrl: track.album.images?.[0]?.url,
-              url: track.album.external_urls.spotify,
-              releaseDate: track.album.release_date,
-            },
-            popularity: track.popularity,
-            durationMs: track.duration_ms,
-            url: track.external_urls.spotify,
-          };
-        }),
-      };
-
-      const recentlyPlayed = spotifyStats.recentlyPlayed;
-      const recentlyPlayedInfo = {
-        total: recentlyPlayed.limit,
-        items: recentlyPlayed.items.map((item: any) => ({
-          trackName: item.track.name,
-          trackId: item.track.id,
-          trackUrl: item.track.external_urls.spotify,
-          durationMs: item.track.duration_ms,
-          playedAt: new Date(item.played_at),
-        })),
-      };
-
-      const followedArtists = spotifyStats.followedArtists.artists;
-      const followedArtistsInfo = {
-        total: followedArtists.total,
-        items: followedArtists.items.map((artist: any) => ({
-          id: artist.id,
-          name: artist.name,
-          imageUrl: artist.images?.[0]?.url,
-          url: artist.external_urls.spotify,
-          followers: artist.followers?.total || 0,
-          popularity: artist.popularity,
-        })),
-      };
-
-      // const audioFeaturesLong = await getAudioFeaturesForTracks(
-      //   topTracksInfo.long.slice(0, 3),
-      //   {
-      //     Authorization: `Bearer ${tokens.accessToken}`,
-      //     'Content-Type': 'application/json',
-      //   }
-      // );
-      // const audioFeaturesShort = await getAudioFeaturesForTracks(
-      //   topTracksInfo.short,
-      //   {
-      //     Authorization: `Bearer ${tokens.accessToken}`,
-      //     'Content-Type': 'application/json',
-      //   }
-      // );
-      // const audioFeaturesMedium = await getAudioFeaturesForTracks(
-      //   topTracksInfo.medium,
-      //   {
-      //     Authorization: `Bearer ${tokens.accessToken}`,
-      //     'Content-Type': 'application/json',
-      //   }
-      // );
-
-      // console.log(
-      //   'Audio Features Long:',
-      //   JSON.stringify(audioFeaturesLong)
-      // );
 
       // check if userSpotifyProfile exists
 
@@ -352,8 +185,12 @@ router.get('/callback', async (req, res) => {
         userSpotifyProfile.playlists = playlistsInfo;
         userSpotifyProfile.topArtists = topArtistsInfo;
         userSpotifyProfile.topTracks = topTracksInfo;
-        userSpotifyProfile.recentlyPlayedTracks = recentlyPlayedInfo;
+        userSpotifyProfile.recentlyPlayedTracks = {
+          ...recentlyPlayedInfo,
+          lastUpdated: new Date(),
+        };
         userSpotifyProfile.followedArtists = followedArtistsInfo;
+        userSpotifyProfile.lastUpdated = new Date();
 
         await userSpotifyProfile.save();
       }

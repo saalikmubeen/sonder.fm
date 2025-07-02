@@ -150,7 +150,7 @@ export class SpotifyAPI {
   ): Promise<NowPlaying | null> {
     try {
       const response = await axios.get(
-        'https://api.spotify.com/v1/me/player/currently-playing',
+        'https://api.spotify.com/v1/me/player/currently-playing?market=PT',
         {
           headers: {
             Authorization: `Bearer ${accessToken}`,
