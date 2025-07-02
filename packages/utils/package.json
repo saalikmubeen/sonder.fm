@@ -1,4 +1,3 @@
-
 {
   "name": "@sonder/utils",
   "version": "1.0.0",
@@ -6,8 +5,10 @@
   "types": "dist/index.d.ts",
   "dependencies": {
     "@sonder/types": "*",
-    "crypto": "^1.0.1",
-    "axios": "^1.6.0"
+    "@types/axios": "^0.14.4",
+    "@types/node": "^24.0.10",
+    "axios": "^1.6.0",
+    "crypto": "^1.0.1"
   },
   "scripts": {
     "build": "tsc"
