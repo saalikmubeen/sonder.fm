@@ -23,9 +23,7 @@
     "mongoose": "^7.6.3",
     "morgan": "^1.10.0",
     "node-cron": "^3.0.3",
-    "socket.io": "^4.7.4"
-  },
-  "devDependencies": {
+    "socket.io": "^4.7.4",
     "@types/bcryptjs": "^2.4.6",
     "@types/compression": "^1.8.1",
     "@types/cors": "^2.8.19",
