@@ -1,7 +1,23 @@
+// {
+//   "extends": "../../tsconfig.json",
+//   "compilerOptions": {
+//     "outDir": "dist"
+//   },
+//   "include": ["*.ts"]
+// }
+
+
 {
-  "extends": "../../tsconfig.json",
   "compilerOptions": {
-    "outDir": "dist"
+    "target": "ES2020",
+    "module": "CommonJS",             // 👈 Crucial for Node.js compatibility
+    "declaration": true,
+    "outDir": "dist",
+    "rootDir": "./",
+    "esModuleInterop": true,
+    "moduleResolution": "node",
+    "skipLibCheck": true,
+    "strict": true
   },
   "include": ["*.ts"]
 }
