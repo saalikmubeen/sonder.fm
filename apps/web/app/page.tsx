@@ -23,7 +23,6 @@ import { useState } from 'react';
 const NAV_LINKS = [
   { label: 'Features', href: '#features' },
   { label: 'How it Works', href: '#how' },
-  { label: 'Pricing', href: '#pricing' },
 ];
 
 export default function HomePage() {
@@ -76,19 +75,21 @@ export default function HomePage() {
             <Button
               variant="ghost"
               size="sm"
-              className="border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-800 px-4 py-2 transition-colors"
-              onClick={handleLogin}
+              className="text-gray-700 dark:text-gray-200 hover:text-green-600 dark:hover:text-green-400 px-3 py-2 transition-colors"
+              onClick={() =>
+                setTheme(theme === 'dark' ? 'light' : 'dark')
+              }
+              aria-label="Toggle theme"
             >
-              <LogIn className="w-4 h-4 mr-2" /> Log in
+              <Moon className="w-4 h-4" />
             </Button>
             <Button
               variant="ghost"
               size="sm"
-              className="border border-green-600 text-green-700 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 px-6 py-2 ml-2 transition-colors font-medium"
+              className="border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-800 px-4 py-2 transition-colors"
               onClick={handleLogin}
             >
-              Get Started
-              <ArrowRight className="w-4 h-4 ml-2" />
+              <LogIn className="w-4 h-4 mr-2" /> Log in
             </Button>
           </div>
           {/* Hamburger (Mobile) */}
@@ -151,18 +152,6 @@ export default function HomePage() {
                 >
                   <LogIn className="w-4 h-4 mr-2" /> Log in
                 </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="w-full justify-start border border-green-600 text-green-700 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 px-3 py-2 transition-colors font-medium"
-                  onClick={() => {
-                    handleLogin();
-                    setIsMenuOpen(false);
-                  }}
-                >
-                  Get Started
-                  <ArrowRight className="w-4 h-4 ml-2" />
-                </Button>
               </div>
             )}
           </div>
@@ -198,14 +187,7 @@ export default function HomePage() {
                 size="lg"
                 className="bg-green-600 hover:bg-green-700 text-white font-semibold px-8 py-4 text-lg shadow rounded-full"
               >
-                Start Free Trial
-              </Button>
-              <Button
-                variant="ghost"
-                size="lg"
-                className="text-lg border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-800 px-8 py-4 rounded-full"
-              >
-                Book a Demo
+                Connect Spotify
               </Button>
             </div>
           </div>
@@ -309,12 +291,6 @@ export default function HomePage() {
               className="hover:text-green-600 dark:hover:text-green-400"
             >
               How it Works
-            </a>
-            <a
-              href="#pricing"
-              className="hover:text-green-600 dark:hover:text-green-400"
-            >
-              Pricing
             </a>
           </div>
         </div>
