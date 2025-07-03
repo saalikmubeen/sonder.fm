@@ -88,9 +88,7 @@ sonder.fm/
   /types      → shared interfaces for User, Message, etc.
 ```
 
----
 
-## 📝 Key Features & Endpoints
 
 - **Spotify OAuth:** `/auth/login`, `/auth/callback` (secure, encrypted refresh tokens)
 - **User Profiles:** `/u/:slug` (public, themeable, real-time now playing)
@@ -100,6 +98,23 @@ sonder.fm/
 - **Theme Picker:** `/theme/:slug` (choose your vibe)
 - **Messaging:** Real-time chat via Socket.IO
 - **Background Worker:** Refreshes now playing, updates GPT-4 vibe summaries
+
+
+### Security and Auth
+
+Sonder.fm implements a robust, production-grade refresh token rotation system for maximum security:
+
+- **Backend:**
+  - Refresh tokens are AES-256 encrypted and stored securely in the database.
+  - On every refresh, the old token is invalidated (rotated) and a new one is issued.
+  - If a refresh token is leaked or reused, it is immediately invalidated, preventing replay attacks.
+  - All sensitive operations use short-lived JWTs and long-lived, rotating refresh tokens.
+
+- **Frontend:**
+  - JWTs are stored in memory/localStorage and used for API requests.
+  - When a JWT expires, the frontend automatically and silently requests a new one using the refresh token (silent refresh).
+  - Only one refresh request is made at a time; all other requests are queued and retried after a successful refresh, ensuring seamless UX and preventing race conditions.
+  - If refresh fails (e.g., token is invalid/expired), the user is securely logged out and all sensitive data is cleared.
 
 ---
 
@@ -133,7 +148,6 @@ npm install
 cd apps/backend
 yarn dev
 ```
-
 ### 5. Run the web app
 ```bash
 cd ../web

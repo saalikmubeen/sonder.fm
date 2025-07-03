@@ -327,6 +327,7 @@ router.post('/refresh', async (req, res) => {
     { userId: stored.userId._id, spotifyId: user.spotifyId },
     process.env.JWT_SECRET!,
     { expiresIn: '15m' }
+    //  { expiresIn: '7d' }
   );
 
   // res.cookie('access_token', newAccess, {

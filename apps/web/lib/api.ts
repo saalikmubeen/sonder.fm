@@ -20,12 +20,110 @@ if (typeof window !== 'undefined') {
     return config;
   });
 
-  // Handle auth errors
+  // Handle auth errors with silent refresh
+  let isRefreshing = false;
+  let failedQueue: any[] = [];
+
+
+  // When the refresh finishes (success or failure), processQueue is called with refreshTokenError or accessToken
+  const processQueue = (error: any, token: string | null = null) => {
+    failedQueue.forEach(prom => {
+      if (error) {
+        // If refresh failed, all are rejected with the error.
+        prom.reject(error);
+      } else {
+        // If refresh succeeded, all queued requests’ Promises are resolved with the new token.
+        prom.resolve(token);
+      }
+    });
+
+    // The queue is cleared.
+    failedQueue = [];
+  };
+
   api.interceptors.response.use(
     (response) => response,
-    (error) => {
-      if (error.response?.status === 401) {
+    async (error) => {
+      const originalRequest = error.config;
+
+      // If a response is a 401 and the request hasn’t already been retried
+      if (error.response?.status === 401 && !originalRequest._retry) {
+        const refreshToken = localStorage.getItem('sonder_refresh_token');
+
+        // The first request that gets a 401 and finds a refresh token, and isRefreshing is false, triggers the refresh.
+        if (refreshToken && !isRefreshing) { // This runs for the first request that encounters 401
+          console.log('[Auth] Starting token refresh...');
+          originalRequest._retry = true;
+
+          // isRefreshing is set to true so no other refreshes start. We only want any one request to refresh the access token.
+          isRefreshing = true;
+          try {
+            const res = await axios.post(
+              `${API_URL}/auth/refresh`,
+              { refreshToken },
+              { withCredentials: true }
+            );
+            const { accessToken, refreshToken: newRefreshToken } = res.data;
+            localStorage.setItem('sonder_token', accessToken);
+            if (newRefreshToken) {
+              localStorage.setItem('sonder_refresh_token', newRefreshToken);
+              console.log('[Auth] Received new refresh token.');
+            }
+            api.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
+
+
+            // All queued requests that failed due to expired access token are resolved with the new token (processQueue).
+            processQueue(null, accessToken);
+            isRefreshing = false;
+            originalRequest.headers['Authorization'] = `Bearer ${accessToken}`;
+            console.log('[Auth] Token refresh successful. Retrying original request.');
+
+            // The original request is retried with the new token.
+            return api(originalRequest);
+          } catch (refreshError) {
+            // If fetching new access token fails:
+            // All queued requests are rejected.
+            // User is logged out.
+            console.error('[Auth] Token refresh failed:', refreshError);
+            processQueue(refreshError, null);
+            localStorage.removeItem('sonder_token');
+            localStorage.removeItem('sonder_refresh_token');
+            window.location.href = '/';
+            isRefreshing = false;
+            return Promise.reject(refreshError);
+          }
+        }
+        // This runs for the subsequent  request that encounters 401 during the similar time frame.
+        else if (isRefreshing) { // Other requests that get 401 while refresh is in progress are
+          // Queue requests while refreshing
+          // If another request gets a 401 while isRefreshing is true, it does not trigger another refresh.
+          // Instead, it creates a new Promise and pushes its resolve and reject functions to failedQueue.
+          // This request is “paused” until the refresh finishes.
+          console.log('[Auth] Token refresh in progress. Queuing request.');
+          return new Promise(function(resolve, reject) {
+            failedQueue.push({ resolve, reject });
+          })
+            .then((token) => {
+              // Queued requests are retried
+              if (typeof token === 'string') {
+                console.log('[Auth] Retrying request after token refresh.');
+                originalRequest.headers['Authorization'] = `Bearer ${token}`;
+                // When the Promise for a queued request is resolved (with the new token) in the processQueue function, the request is retried with the new Authorization header.
+                console.log("[Auth] Token refresh successful. Retrying subsequent requests...")
+                return api(originalRequest);
+              } else {
+                // If rejected, the request fails and the user is logged out.
+                return Promise.reject(new Error('Token refresh failed'));
+              }
+            })
+            .catch((err) => {
+              return Promise.reject(err);
+            });
+        }
+        // If no refresh token, log out
+        console.warn('[Auth] No refresh token found. Logging out.');
         localStorage.removeItem('sonder_token');
+        localStorage.removeItem('sonder_refresh_token');
         window.location.href = '/';
       }
       return Promise.reject(error);

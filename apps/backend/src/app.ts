@@ -9,6 +9,8 @@ import { Server } from 'socket.io';
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import cron from 'node-cron';
+import cookieParser from 'cookie-parser';
+
 
 dotenv.config();
 
@@ -54,6 +56,7 @@ app.use(cors({
   origin: process.env.FRONTEND_URL || 'http://localhost:3000',
   credentials: true
 }));
+app.use(cookieParser());
 
 // Rate limiting
 const limiter = rateLimit({
