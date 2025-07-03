@@ -14,6 +14,8 @@
     "@sonder/types": "*",
     "@sonder/ui": "*",
     "@sonder/utils": "*",
+    "@tanstack/react-query": "^5.81.5",
+    "@tanstack/react-query-devtools": "^5.81.5",
     "axios": "^1.6.0",
     "chart.js": "^4.5.0",
     "framer-motion": "^10.16.4",

@@ -14,15 +14,13 @@ export default function AuthSuccessPage() {
 
     if (token && slug) {
       localStorage.setItem('sonder_token', token);
-      // Clean up the URL
-      window.history.replaceState({}, document.title, '/');
       // Redirect to user profile
       router.replace(`/u/${slug}`);
     } else {
       // If missing, redirect to home
       router.replace('/');
     }
-  }, [router]);
+  }, []);
 
   return (
     <div className="min-h-screen flex items-center justify-center">

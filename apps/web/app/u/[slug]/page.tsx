@@ -1,9 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-
-// Disable static generation for this dynamic route
-export const dynamic = 'force-dynamic';
+import { useQuery } from '@tanstack/react-query';
 import { useParams, useRouter } from 'next/navigation';
 import { motion, AnimatePresence, animate } from 'framer-motion';
 import { useTheme } from 'next-themes';
@@ -23,10 +21,9 @@ import {
   PlayCircle,
   Music as Music2,
 } from 'lucide-react';
-import { apiClient } from '@/lib/api';
 import { useAuth } from '@/lib/auth-context';
 import { formatDuration, timeAgo } from '@sonder/utils';
-import { profile } from 'console';
+import { profileApi } from '@/lib/api';
 
 function formatTime(ms: number): string {
   const totalSeconds = Math.floor(ms / 1000);
@@ -77,8 +74,6 @@ export default function UserProfilePage() {
   const router = useRouter();
   const { user } = useAuth();
   const { theme, setTheme } = useTheme();
-  const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [loading, setLoading] = useState(true);
   const [activeSection, setActiveSection] =
     useState<Section>('profile');
   const [timeRange, setTimeRange] = useState<TimeRange>('long');
@@ -88,28 +83,26 @@ export default function UserProfilePage() {
 
   useEffect(() => {
     setMounted(true);
-    fetchProfile();
-  }, [slug]);
+  }, []);
 
-  const fetchProfile = async () => {
-    try {
-      setLoading(true);
-      const response = await apiClient.get(`/profile/${slug}`);
-      if (response.data.success) {
-        setProfile(response.data.data);
-      }
-    } catch (error) {
-      console.error('Error fetching profile:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  // React Query for profile data
+  const {
+    data: profileData,
+    isLoading,
+    isError,
+  } = useQuery({
+    queryKey: ['profile', slug],
+    queryFn: () => profileApi.getProfile(slug),
+    enabled: !!slug,
+  });
+
+  const profile = profileData?.data;
 
   const openSpotifyUrl = (url: string) => {
     window.open(url, '_blank');
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-white dark:bg-black flex items-center justify-center">
         <motion.div
@@ -125,7 +118,7 @@ export default function UserProfilePage() {
     );
   }
 
-  if (!profile) {
+  if (isError || !profile) {
     return (
       <div className="min-h-screen bg-white dark:bg-black flex items-center justify-center text-gray-900 dark:text-white">
         <div className="text-center">
@@ -605,7 +598,7 @@ function ProfileSection({
         </div>
 
         <div className="grid grid-cols-3 lg:grid-cols-4 gap-4">
-          {recentTracks.slice(0, 12).map((item, index) => (
+          {recentTracks.slice(0, 12).map((item: any, index: number) => (
             <motion.div
               key={`${item.trackId}-${index}`}
               initial={{ opacity: 0, scale: 0.8 }}
@@ -664,7 +657,7 @@ function ProfileSection({
         </div>
 
         <div className="grid grid-cols-3 lg:grid-cols-4 gap-4">
-          {shortTracks.slice(0, 12).map((track, index) => (
+          {shortTracks.slice(0, 12).map((track: any, index: number) => (
             <motion.div
               key={track.id}
               initial={{ opacity: 0, scale: 0.8 }}
@@ -685,7 +678,7 @@ function ProfileSection({
                   {track.name}
                 </h3>
                 <p className="text-xs opacity-80 truncate">
-                  {track.artists.map((a) => a.name).join(', ')}
+                  {track.artists.map((a: any) => a.name).join(', ')}
                 </p>
               </div>
               <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -717,7 +710,7 @@ function ProfileSection({
         </div>
 
         <div className="grid grid-cols-3 lg:grid-cols-4 gap-4">
-          {longTracks.slice(0, 12).map((track, index) => (
+          {longTracks.slice(0, 12).map((track: any, index: number) => (
             <motion.div
               key={track.id}
               initial={{ opacity: 0, scale: 0.8 }}
@@ -738,7 +731,7 @@ function ProfileSection({
                   {track.name}
                 </h3>
                 <p className="text-xs opacity-80 truncate">
-                  {track.artists.map((a) => a.name).join(', ')}
+                  {track.artists.map((a: any) => a.name).join(', ')}
                 </p>
               </div>
               <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -770,7 +763,7 @@ function ProfileSection({
         <div className="grid grid-cols-3 lg:grid-cols-4 gap-4">
           {profile.spotifyProfile?.playlists?.items
             ?.slice(0, 12)
-            .map((playlist, index) => (
+            .map((playlist: any, index: number) => (
               <motion.div
                 key={playlist.id}
                 initial={{ opacity: 0, scale: 0.8 }}
@@ -829,7 +822,7 @@ function ProfileSection({
         </div>
 
         <div className="grid grid-cols-3 lg:grid-cols-4 gap-4">
-          {longArtists.slice(0, 12).map((artist, index) => (
+          {longArtists.slice(0, 12).map((artist: any, index: number) => (
             <motion.div
               key={artist.id}
               initial={{ opacity: 0, scale: 0.8 }}
@@ -906,7 +899,7 @@ function ArtistsSection({
 
       {/* Artists Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-        {artists.map((artist, index) => (
+        {artists.map((artist: any, index: number) => (
           <motion.div
             key={artist.id}
             initial={{ opacity: 0, scale: 0.8 }}
@@ -985,7 +978,7 @@ function TracksSection({
 
         {/* Tracks List */}
         <div className="space-y-3">
-          {tracks.map((track, index) => (
+          {tracks.map((track: any, index: number) => (
             <motion.div
               key={track.id}
               initial={{ opacity: 0, x: -20 }}
@@ -1013,7 +1006,7 @@ function TracksSection({
                   {track.name}
                 </div>
                 <div className="text-sm text-gray-500 dark:text-gray-400 truncate">
-                  {track.artists.map((a) => a.name).join(', ')} •{' '}
+                  {track.artists.map((a: any) => a.name).join(', ')} •{' '}
                   {track.album.name}
                 </div>
               </div>
@@ -1048,7 +1041,7 @@ function RecentSection({ recentTracks, openSpotifyUrl }: any) {
 
         {/* Recent Tracks List */}
         <div className="space-y-3">
-          {recentTracks.map((item, index) => (
+          {recentTracks.map((item: any, index: number) => (
             <motion.div
               key={`${item.trackId}-${index}`}
               initial={{ opacity: 0, x: -20 }}
@@ -1109,7 +1102,7 @@ function PlaylistsSection({ playlists, openSpotifyUrl }: any) {
 
         {/* Playlists Grid */}
         <div className="grid grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-          {playlists.map((playlist, index) => (
+          {playlists.map((playlist: any, index: number) => (
             <motion.div
               key={playlist.id}
               initial={{ opacity: 0, scale: 0.8 }}

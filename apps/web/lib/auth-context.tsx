@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import type { User, APIResponse } from '@sonder/types';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { userApi } from './api';
 
 interface AuthContextType {
   user: User | null;
@@ -19,58 +21,41 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
   const [mounted, setMounted] = useState(false);
   const router = useRouter();
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
+  // React Query for user auth
+  const {
+    data: userData,
+    isLoading,
+    isError,
+    refetch: refetchUser,
+  } = useQuery({
+    queryKey: ['me'],
+    queryFn: userApi.getMe,
+    enabled: mounted && !!localStorage.getItem('sonder_token'),
+    retry: false,
+  });
+
   useEffect(() => {
-    if (mounted) {
-      checkAuth();
-    }
-  }, [mounted]);
-
-  const checkAuth = async () => {
-    if (!mounted) return;
-    
-    try {
-      const token = localStorage.getItem('sonder_token');
-      if (!token) {
-        setLoading(false);
-        return;
-      }
-
-      const response = await axios.get<APIResponse<{ user: User }>>(
-        `${API_URL}/auth/verify`,
-        {
-          headers: { Authorization: `Bearer ${token}` }
-        }
-      );
-
-      if (response.data.success && response.data.data) {
-        setUser(response.data.data.user);
-      } else {
-        localStorage.removeItem('sonder_token');
-      }
-    } catch (error) {
+    if (isError) {
       localStorage.removeItem('sonder_token');
-      console.error('Auth check failed:', error);
-    } finally {
-      setLoading(false);
     }
-  };
+  }, [isError]);
+
+  const user = (userData as any)?.data || null;
+  const loading = isLoading;
 
   const login = async () => {
     try {
       const response = await axios.get<APIResponse<{ authUrl: string }>>(
         `${API_URL}/auth/login`
       );
-
-
       if (response.data.success && response.data.data) {
         window.location.href = response.data.data.authUrl;
       } else {
@@ -84,35 +69,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = () => {
     localStorage.removeItem('sonder_token');
-    setUser(null);
+    queryClient.removeQueries({ queryKey: ['me'] });
     router.push('/');
     toast.success('Logged out successfully');
   };
 
   const updateUser = (updates: Partial<User>) => {
     if (user) {
-      setUser({ ...user, ...updates });
+      // Optimistically update user in cache
+      queryClient.setQueryData(['me'], (old: any) => ({
+        ...old,
+        data: { ...old?.data, ...updates },
+      }));
     }
   };
-
-  // Handle auth success from URL params (after Spotify redirect)
-  useEffect(() => {
-    if (!mounted) return;
-    
-    const urlParams = new URLSearchParams(window.location.search);
-    const token = urlParams.get('token');
-    const slug = urlParams.get('slug');
-
-    if (token && slug) {
-      localStorage.setItem('sonder_token', token);
-      // Clean URL
-      window.history.replaceState({}, document.title, window.location.pathname);
-      // Check auth to get user data
-      checkAuth();
-      toast.success('Welcome to Sonder.fm! 🎵');
-      router.push(`/u/${slug}`);
-    }
-  }, [router, mounted]);
 
   const value = {
     user,
