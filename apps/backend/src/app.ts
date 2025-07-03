@@ -20,6 +20,7 @@ import feedRoutes from './routes/feed';
 import reactionRoutes from './routes/reaction';
 import noteRoutes from './routes/note';
 import messageRoutes from './routes/message';
+import bookmarkRoutes from './routes/bookmark';
 
 // Import services
 import { setupSocket } from './services/socket';
@@ -73,6 +74,7 @@ app.use('/feed', feedRoutes);
 app.use('/reaction', reactionRoutes);
 app.use('/note', noteRoutes);
 app.use('/message', messageRoutes);
+app.use('/bookmark', bookmarkRoutes);
 
 // Health check
 app.get('/health', (req, res) => {

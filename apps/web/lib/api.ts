@@ -186,3 +186,40 @@ export const messageApi = {
     return response.data;
   },
 };
+
+export const bookmarkApi = {
+  createBookmark: async (data: {
+    trackId: string;
+    timestampMs: number;
+    caption?: string;
+    metadata: {
+      name: string;
+      artists: { id: string; name: string }[];
+      album: { id: string; name: string; imageUrl: string };
+      spotifyUrl: string;
+    };
+  }) => {
+    const response = await api.post('/bookmark', data);
+    return response.data;
+  },
+
+  getBookmarksForUser: async (slug: string, limit: number = 20, offset: number = 0) => {
+    const response = await api.get(`/bookmark/${slug}?limit=${limit}&offset=${offset}`);
+    return response.data;
+  },
+
+  getMyBookmarks: async (limit: number = 20, offset: number = 0) => {
+    const response = await api.get(`/bookmark/my/bookmarks?limit=${limit}&offset=${offset}`);
+    return response.data;
+  },
+
+  updateBookmark: async (bookmarkId: string, caption: string) => {
+    const response = await api.put(`/bookmark/${bookmarkId}`, { caption });
+    return response.data;
+  },
+
+  deleteBookmark: async (bookmarkId: string) => {
+    const response = await api.delete(`/bookmark/${bookmarkId}`);
+    return response.data;
+  },
+};

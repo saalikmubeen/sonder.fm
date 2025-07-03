@@ -76,6 +76,21 @@ export interface Conversation {
   updatedAt: Date;
 }
 
+export interface Bookmark {
+  _id?: string;
+  userId: string;
+  trackId: string;
+  timestampMs: number;
+  caption?: string;
+  metadata: {
+    name: string;
+    artists: { id: string; name: string }[];
+    album: { id: string; name: string; imageUrl: string };
+    spotifyUrl: string;
+  };
+  createdAt: Date;
+}
+
 export type ProfileTheme =
   | 'default'
   | 'dark'

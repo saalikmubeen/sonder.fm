@@ -20,10 +20,16 @@ import {
   ArrowRight,
   PlayCircle,
   Music as Music2,
+  Bookmark,
+  BookmarkPlus,
+  Trash2,
+  Edit3,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 import { formatDuration, timeAgo } from '@sonder/utils';
-import { profileApi } from '@/lib/api';
+import { profileApi, bookmarkApi } from '@/lib/api';
+import BookmarkModal from '@/components/BookmarkModal';
+import toast from 'react-hot-toast';
 
 function formatTime(ms: number): string {
   const totalSeconds = Math.floor(ms / 1000);
@@ -67,7 +73,8 @@ type Section =
   | 'artists'
   | 'tracks'
   | 'recent'
-  | 'playlists';
+  | 'playlists'
+  | 'bookmarks';
 
 export default function UserProfilePage() {
   const { slug } = useParams<{ slug: string }>();
@@ -78,6 +85,8 @@ export default function UserProfilePage() {
     useState<Section>('profile');
   const [timeRange, setTimeRange] = useState<TimeRange>('long');
   const [mounted, setMounted] = useState(false);
+  const [showBookmarkModal, setShowBookmarkModal] = useState(false);
+  const [bookmarkLoading, setBookmarkLoading] = useState(false);
 
   const isOwnProfile = user?.publicSlug === slug;
 
@@ -96,10 +105,82 @@ export default function UserProfilePage() {
     enabled: !!slug,
   });
 
+  // React Query for bookmarks
+  const {
+    data: bookmarksData,
+    isLoading: bookmarksLoading,
+    refetch: refetchBookmarks,
+  } = useQuery({
+    queryKey: ['bookmarks', slug],
+    queryFn: () => bookmarkApi.getBookmarksForUser(slug),
+    enabled: !!slug && activeSection === 'bookmarks',
+  });
+
   const profile = profileData?.data;
+  const bookmarks = bookmarksData?.data?.bookmarks || [];
 
   const openSpotifyUrl = (url: string) => {
     window.open(url, '_blank');
+  };
+
+  const openSpotifyAtTimestamp = (spotifyUrl: string, timestampMs: number) => {
+    // Extract track ID from Spotify URL
+    const trackId = spotifyUrl.split('/track/')[1]?.split('?')[0];
+    if (trackId) {
+      const timestampSeconds = Math.floor(timestampMs / 1000);
+      const spotifyAppUrl = `spotify:track:${trackId}:${timestampSeconds}`;
+      const fallbackUrl = `${spotifyUrl}#${timestampSeconds}`;
+      
+      // Try to open in Spotify app first, fallback to web
+      window.location.href = spotifyAppUrl;
+      setTimeout(() => {
+        window.open(fallbackUrl, '_blank');
+      }, 1000);
+    } else {
+      window.open(spotifyUrl, '_blank');
+    }
+  };
+
+  const handleBookmarkMoment = async (caption: string) => {
+    if (!profile?.nowPlaying) return;
+
+    setBookmarkLoading(true);
+    try {
+      const bookmarkData = {
+        trackId: profile.nowPlaying.spotifyUrl.split('/track/')[1]?.split('?')[0] || '',
+        timestampMs: profile.nowPlaying.progressMs,
+        caption: caption.trim() || undefined,
+        metadata: {
+          name: profile.nowPlaying.song,
+          artists: [{ id: '', name: profile.nowPlaying.artist }],
+          album: {
+            id: '',
+            name: profile.nowPlaying.album,
+            imageUrl: profile.nowPlaying.albumArt,
+          },
+          spotifyUrl: profile.nowPlaying.spotifyUrl,
+        },
+      };
+
+      await bookmarkApi.createBookmark(bookmarkData);
+      toast.success('Moment bookmarked successfully! 📍');
+      setShowBookmarkModal(false);
+      refetchBookmarks();
+    } catch (error: any) {
+      toast.error(error.response?.data?.error || 'Failed to bookmark moment');
+    } finally {
+      setBookmarkLoading(false);
+    }
+  };
+
+  const handleDeleteBookmark = async (bookmarkId: string) => {
+    try {
+      await bookmarkApi.deleteBookmark(bookmarkId);
+      toast.success('Bookmark deleted');
+      refetchBookmarks();
+    } catch (error: any) {
+      toast.error(error.response?.data?.error || 'Failed to delete bookmark');
+    }
   };
 
   if (isLoading) {
@@ -155,6 +236,7 @@ export default function UserProfilePage() {
     { id: 'tracks', icon: Music, label: 'Top Tracks' },
     { id: 'recent', icon: Clock, label: 'Recent' },
     { id: 'playlists', icon: List, label: 'Playlists' },
+    { id: 'bookmarks', icon: Bookmark, label: 'Bookmarks' },
   ];
 
   return (
@@ -174,13 +256,7 @@ export default function UserProfilePage() {
           {/* Centered Navigation */}
           <div className="flex-1 flex flex-col justify-center items-center w-full">
             <nav className="flex flex-col items-center gap-y-6 w-full">
-              {[
-                { id: 'profile', icon: User, label: 'Profile' },
-                { id: 'artists', icon: Users, label: 'Top Artists' },
-                { id: 'tracks', icon: Music, label: 'Top Tracks' },
-                { id: 'recent', icon: Clock, label: 'Recent' },
-                { id: 'playlists', icon: List, label: 'Playlists' },
-              ].map(({ id, icon: Icon, label }) => (
+              {sidebarItems.map(({ id, icon: Icon, label }) => (
                 <motion.button
                   key={id}
                   whileTap={{ scale: 0.95 }}
@@ -261,6 +337,8 @@ export default function UserProfilePage() {
                   longArtists={longArtists}
                   setActiveSection={setActiveSection}
                   openSpotifyUrl={openSpotifyUrl}
+                  isOwnProfile={isOwnProfile}
+                  onBookmarkMoment={() => setShowBookmarkModal(true)}
                 />
               )}
               {activeSection === 'artists' && (
@@ -293,6 +371,15 @@ export default function UserProfilePage() {
                     profile.spotifyProfile?.playlists?.items || []
                   }
                   openSpotifyUrl={openSpotifyUrl}
+                />
+              )}
+              {activeSection === 'bookmarks' && (
+                <BookmarksSection
+                  bookmarks={bookmarks}
+                  loading={bookmarksLoading}
+                  isOwnProfile={isOwnProfile}
+                  onPlayAtTimestamp={openSpotifyAtTimestamp}
+                  onDeleteBookmark={handleDeleteBookmark}
                 />
               )}
             </AnimatePresence>
@@ -345,6 +432,8 @@ export default function UserProfilePage() {
                 longArtists={longArtists}
                 setActiveSection={setActiveSection}
                 openSpotifyUrl={openSpotifyUrl}
+                isOwnProfile={isOwnProfile}
+                onBookmarkMoment={() => setShowBookmarkModal(true)}
               />
             )}
             {activeSection === 'artists' && (
@@ -379,6 +468,15 @@ export default function UserProfilePage() {
                 openSpotifyUrl={openSpotifyUrl}
               />
             )}
+            {activeSection === 'bookmarks' && (
+              <BookmarksSection
+                bookmarks={bookmarks}
+                loading={bookmarksLoading}
+                isOwnProfile={isOwnProfile}
+                onPlayAtTimestamp={openSpotifyAtTimestamp}
+                onDeleteBookmark={handleDeleteBookmark}
+              />
+            )}
           </AnimatePresence>
         </div>
 
@@ -409,6 +507,23 @@ export default function UserProfilePage() {
           </div>
         </div>
       </div>
+
+      {/* Bookmark Modal */}
+      {profile?.nowPlaying && (
+        <BookmarkModal
+          isOpen={showBookmarkModal}
+          onClose={() => setShowBookmarkModal(false)}
+          onSave={handleBookmarkMoment}
+          loading={bookmarkLoading}
+          trackInfo={{
+            name: profile.nowPlaying.song,
+            artist: profile.nowPlaying.artist,
+            album: profile.nowPlaying.album,
+            albumArt: profile.nowPlaying.albumArt,
+            timestampMs: profile.nowPlaying.progressMs,
+          }}
+        />
+      )}
     </div>
   );
 }
@@ -422,8 +537,9 @@ function ProfileSection({
   longArtists,
   setActiveSection,
   openSpotifyUrl,
+  isOwnProfile,
+  onBookmarkMoment,
 }: any) {
-  console.log(profile);
   return (
     <motion.div
       key="profile"
@@ -490,7 +606,6 @@ function ProfileSection({
       </div>
 
       {/* Now Playing Section */}
-
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -498,12 +613,7 @@ function ProfileSection({
         className="max-w-2xl mx-auto mb-12"
       >
         {profile.nowPlaying ? (
-          <div
-            onClick={() =>
-              openSpotifyUrl(profile.nowPlaying.spotifyUrl)
-            }
-            className="bg-white/10 backdrop-blur-lg rounded-lg p-4 hover:bg-white/20 transition-all cursor-pointer border border-gray-200 dark:border-gray-800"
-          >
+          <div className="bg-white/10 backdrop-blur-lg rounded-lg p-4 hover:bg-white/20 transition-all border border-gray-200 dark:border-gray-800 relative">
             <div className="flex items-center space-x-4">
               <div className="relative">
                 <img
@@ -555,18 +665,40 @@ function ProfileSection({
                 </div>
               </div>
 
-              {profile.nowPlaying.previewUrl && (
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    // Add preview play functionality here
-                  }}
-                  className="p-2 rounded-full hover:bg-white/10 transition-colors"
-                >
-                  <PlayCircle className="w-6 h-6 text-green-500" />
-                </button>
-              )}
+              <div className="flex flex-col gap-2">
+                {profile.nowPlaying.previewUrl && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      // Add preview play functionality here
+                    }}
+                    className="p-2 rounded-full hover:bg-white/10 transition-colors"
+                  >
+                    <PlayCircle className="w-6 h-6 text-green-500" />
+                  </button>
+                )}
+                
+                {isOwnProfile && (
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onBookmarkMoment();
+                    }}
+                    className="p-2 rounded-full bg-purple-500/20 hover:bg-purple-500/30 transition-colors group"
+                    title="Bookmark this moment"
+                  >
+                    <BookmarkPlus className="w-5 h-5 text-purple-400 group-hover:text-purple-300" />
+                  </motion.button>
+                )}
+              </div>
             </div>
+
+            <button
+              onClick={() => openSpotifyUrl(profile.nowPlaying.spotifyUrl)}
+              className="absolute inset-0 w-full h-full"
+            />
           </div>
         ) : (
           <div className="bg-white/5 backdrop-blur-lg rounded-lg p-3 hover:bg-white/10 transition-all border border-gray-200 dark:border-gray-800 flex items-center justify-center gap-2">
@@ -635,6 +767,7 @@ function ProfileSection({
           ))}
         </div>
       </motion.div>
+
       {/* Songs I Love Right Now Section */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -688,6 +821,7 @@ function ProfileSection({
           ))}
         </div>
       </motion.div>
+
       {/* My All Time Fav Tracks Section */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -741,6 +875,7 @@ function ProfileSection({
           ))}
         </div>
       </motion.div>
+
       {/* Playlists Section */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -800,6 +935,7 @@ function ProfileSection({
             ))}
         </div>
       </motion.div>
+
       {/* My All Time Fav Artists Section */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -1135,6 +1271,145 @@ function PlaylistsSection({ playlists, openSpotifyUrl }: any) {
             </motion.div>
           ))}
         </div>
+      </div>
+    </motion.div>
+  );
+}
+
+// Bookmarks Section Component
+function BookmarksSection({
+  bookmarks,
+  loading,
+  isOwnProfile,
+  onPlayAtTimestamp,
+  onDeleteBookmark,
+}: any) {
+  if (loading) {
+    return (
+      <motion.div
+        key="bookmarks"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -20 }}
+        className="flex items-center justify-center py-20"
+      >
+        <motion.div
+          animate={{ rotate: 360 }}
+          transition={{
+            duration: 1,
+            repeat: Infinity,
+            ease: 'linear',
+          }}
+          className="w-8 h-8 border-2 border-purple-500 border-t-transparent rounded-full"
+        />
+      </motion.div>
+    );
+  }
+
+  return (
+    <motion.div
+      key="bookmarks"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -20 }}
+      className="space-y-6"
+    >
+      <div className="text-center">
+        <h1 className="text-2xl lg:text-3xl font-bold mb-8">
+          Bookmarked Moments
+        </h1>
+
+        {bookmarks.length === 0 ? (
+          <div className="py-20 text-center">
+            <div className="w-16 h-16 bg-purple-100 dark:bg-purple-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Bookmark className="w-8 h-8 text-purple-500" />
+            </div>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+              No bookmarks yet
+            </h3>
+            <p className="text-gray-500 dark:text-gray-400">
+              {isOwnProfile
+                ? 'Start bookmarking special moments in your favorite songs!'
+                : 'This user hasn\'t bookmarked any moments yet.'}
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {bookmarks.map((bookmark: any, index: number) => (
+              <motion.div
+                key={bookmark._id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.05 }}
+                className="bg-white/5 dark:bg-gray-800/50 rounded-2xl p-6 hover:bg-white/10 dark:hover:bg-gray-800/70 transition-all border border-gray-200 dark:border-gray-700"
+              >
+                <div className="flex items-start gap-4">
+                  <img
+                    src={bookmark.metadata.album.imageUrl}
+                    alt={bookmark.metadata.album.name}
+                    className="w-16 h-16 rounded-lg object-cover shadow-lg flex-shrink-0"
+                  />
+                  
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="min-w-0 flex-1">
+                        <h3 className="font-semibold text-lg text-gray-900 dark:text-white truncate">
+                          {bookmark.metadata.name}
+                        </h3>
+                        <p className="text-sm text-gray-600 dark:text-gray-400 truncate">
+                          {bookmark.metadata.artists.map((a: any) => a.name).join(', ')}
+                        </p>
+                        <div className="flex items-center gap-2 mt-2">
+                          <div className="flex items-center gap-1 px-2 py-1 bg-purple-100 dark:bg-purple-900/30 rounded-full">
+                            <Clock className="w-3 h-3 text-purple-600 dark:text-purple-400" />
+                            <span className="text-xs font-medium text-purple-700 dark:text-purple-300">
+                              {formatTime(bookmark.timestampMs)}
+                            </span>
+                          </div>
+                          <span className="text-xs text-gray-500 dark:text-gray-400">
+                            {timeAgo(new Date(bookmark.createdAt))}
+                          </span>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        <motion.button
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          onClick={() => onPlayAtTimestamp(bookmark.metadata.spotifyUrl, bookmark.timestampMs)}
+                          className="p-2 bg-green-500 hover:bg-green-600 text-white rounded-full transition-colors"
+                          title="Play on Spotify"
+                        >
+                          <Play className="w-4 h-4 fill-current" />
+                        </motion.button>
+                        
+                        {isOwnProfile && (
+                          <motion.button
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            onClick={() => onDeleteBookmark(bookmark._id)}
+                            className="p-2 bg-red-500 hover:bg-red-600 text-white rounded-full transition-colors"
+                            title="Delete bookmark"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </motion.button>
+                        )}
+                      </div>
+                    </div>
+                    
+                    {bookmark.caption && (
+                      <div className="mt-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                        <p className="text-sm text-gray-700 dark:text-gray-300 italic">
+                          "{bookmark.caption}"
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        )}
       </div>
     </motion.div>
   );
