@@ -125,20 +125,23 @@ export default function UserProfilePage() {
 
   const openSpotifyAtTimestamp = (spotifyUrl: string, timestampMs: number) => {
     // Extract track ID from Spotify URL
-    const trackId = spotifyUrl.split('/track/')[1]?.split('?')[0];
-    if (trackId) {
-      const timestampSeconds = Math.floor(timestampMs / 1000);
-      const spotifyAppUrl = `spotify:track:${trackId}:${timestampSeconds}`;
-      const fallbackUrl = `${spotifyUrl}#${timestampSeconds}`;
+    // const trackId = spotifyUrl.split('/track/')[1]?.split('?')[0];
+    // if (trackId) {
+    //   const timestampSeconds = Math.floor(timestampMs / 1000);
+    //   const spotifyAppUrl = `spotify:track:${trackId}:${timestampSeconds}`;
+    //   const fallbackUrl = `${spotifyUrl}#${timestampSeconds}`;
 
-      // Try to open in Spotify app first, fallback to web
-      window.location.href = spotifyAppUrl;
-      setTimeout(() => {
-        window.open(fallbackUrl, '_blank');
-      }, 1000);
-    } else {
-      window.open(spotifyUrl, '_blank');
-    }
+    //   // Try to open in Spotify app first, fallback to web
+    //   window.location.href = spotifyAppUrl;
+    //   setTimeout(() => {
+    //     window.open(fallbackUrl, '_blank');
+    //   }, 1000);
+    // } else {
+    //   window.open(spotifyUrl, '_blank');
+    // }
+
+    const timestampSeconds = Math.floor(timestampMs / 1000);
+    window.open(`${spotifyUrl}#${timestampSeconds}`, '_blank');
   };
 
   const handleBookmarkMoment = async (caption: string) => {
