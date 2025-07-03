@@ -80,7 +80,7 @@ router.get('/:slug', async (req, res) => {
 
     // Find target user
     const targetUser = await User.findOne({ publicSlug: slug });
-    
+
     if (!targetUser) {
       return res.status(404).json({
         success: false,

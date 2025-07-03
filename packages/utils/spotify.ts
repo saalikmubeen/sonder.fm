@@ -64,6 +64,8 @@ export class SpotifyAPI {
       'playlist-read-private',
       'playlist-read-collaborative',
       'playlist-modify-public',
+      'user-read-currently-playing',
+      'user-read-playback-state'
     ].join(' ');
 
     const params = new URLSearchParams({

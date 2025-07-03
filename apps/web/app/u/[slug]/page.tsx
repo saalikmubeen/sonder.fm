@@ -130,7 +130,7 @@ export default function UserProfilePage() {
       const timestampSeconds = Math.floor(timestampMs / 1000);
       const spotifyAppUrl = `spotify:track:${trackId}:${timestampSeconds}`;
       const fallbackUrl = `${spotifyUrl}#${timestampSeconds}`;
-      
+
       // Try to open in Spotify app first, fallback to web
       window.location.href = spotifyAppUrl;
       setTimeout(() => {
@@ -152,9 +152,8 @@ export default function UserProfilePage() {
         caption: caption.trim() || undefined,
         metadata: {
           name: profile.nowPlaying.song,
-          artists: [{ id: '', name: profile.nowPlaying.artist }],
+          artists: [{  name: profile.nowPlaying.artist }],
           album: {
-            id: '',
             name: profile.nowPlaying.album,
             imageUrl: profile.nowPlaying.albumArt,
           },
@@ -677,7 +676,7 @@ function ProfileSection({
                     <PlayCircle className="w-6 h-6 text-green-500" />
                   </button>
                 )}
-                
+
                 {isOwnProfile && (
                   <motion.button
                     whileHover={{ scale: 1.05 }}
@@ -695,10 +694,10 @@ function ProfileSection({
               </div>
             </div>
 
-            <button
+            {/* <button
               onClick={() => openSpotifyUrl(profile.nowPlaying.spotifyUrl)}
               className="absolute inset-0 w-full h-full"
-            />
+            /> */}
           </div>
         ) : (
           <div className="bg-white/5 backdrop-blur-lg rounded-lg p-3 hover:bg-white/10 transition-all border border-gray-200 dark:border-gray-800 flex items-center justify-center gap-2">
@@ -1349,7 +1348,7 @@ function BookmarksSection({
                     alt={bookmark.metadata.album.name}
                     className="w-16 h-16 rounded-lg object-cover shadow-lg flex-shrink-0"
                   />
-                  
+
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-4">
                       <div className="min-w-0 flex-1">
@@ -1371,7 +1370,7 @@ function BookmarksSection({
                           </span>
                         </div>
                       </div>
-                      
+
                       <div className="flex items-center gap-2 flex-shrink-0">
                         <motion.button
                           whileHover={{ scale: 1.05 }}
@@ -1382,7 +1381,7 @@ function BookmarksSection({
                         >
                           <Play className="w-4 h-4 fill-current" />
                         </motion.button>
-                        
+
                         {isOwnProfile && (
                           <motion.button
                             whileHover={{ scale: 1.05 }}
@@ -1396,7 +1395,7 @@ function BookmarksSection({
                         )}
                       </div>
                     </div>
-                    
+
                     {bookmark.caption && (
                       <div className="mt-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
                         <p className="text-sm text-gray-700 dark:text-gray-300 italic">

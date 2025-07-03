@@ -46,6 +46,7 @@ const NAV_LINKS = [
 
 export default function HomePage() {
   const { user, login, loading } = useAuth();
+  console.log(user)
   const router = useRouter();
   const { theme, setTheme } = useTheme();
   const [isMenuOpen, setIsMenuOpen] = useState(false);

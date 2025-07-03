@@ -194,8 +194,8 @@ export const bookmarkApi = {
     caption?: string;
     metadata: {
       name: string;
-      artists: { id: string; name: string }[];
-      album: { id: string; name: string; imageUrl: string };
+      artists: {  name: string }[];
+      album: { name: string; imageUrl: string };
       spotifyUrl: string;
     };
   }) => {

@@ -11,11 +11,9 @@ const BookmarkSchema = new Schema<BookmarkDocument>({
   metadata: {
     name: { type: String, required: true },
     artists: [{
-      id: { type: String, required: true },
       name: { type: String, required: true }
     }],
     album: {
-      id: { type: String, required: true },
       name: { type: String, required: true },
       imageUrl: { type: String, required: true }
     },

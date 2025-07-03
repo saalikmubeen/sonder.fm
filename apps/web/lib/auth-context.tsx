@@ -85,7 +85,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const value = {
-    user,
+    user: user ? user.user : null,
     loading,
     login,
     logout,
