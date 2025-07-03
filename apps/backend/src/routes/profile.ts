@@ -206,21 +206,21 @@ router.get('/:slug', async (req, res) => {
       (publicProfile as any).spotifyProfile = userSpotifyProfile;
     }
 
-    // const nowPlaying = await spotifyAPI.getCurrentlyPlaying(
-    //   user.accessToken
-    // );
+    const nowPlaying = await spotifyAPI.getCurrentlyPlaying(
+      user.accessToken
+    );
 
     // Add now playing data if available
-    // if (nowPlaying) {
-    //   publicProfile.nowPlaying = nowPlaying;
+    if (nowPlaying) {
+      publicProfile.nowPlaying = nowPlaying;
 
-    //   user.cachedNowPlaying = nowPlaying;
-    //   await user.save();
-    // }
-
-    if (user.cachedNowPlaying) {
-      publicProfile.nowPlaying = user.cachedNowPlaying;
+      user.cachedNowPlaying = nowPlaying;
+      await user.save();
     }
+
+    // if (user.cachedNowPlaying) {
+    //   publicProfile.nowPlaying = user.cachedNowPlaying;
+    // }
 
     const response: APIResponse<PublicProfile> = {
       success: true,
