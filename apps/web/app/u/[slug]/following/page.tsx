@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Users, MessageSquare, UserPlus, UserMinus } from 'lucide-react';
+import { ArrowLeft, Users, MessageSquare, UserPlus, UserMinus, MoreHorizontal } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 import { followApi } from '@/lib/api';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -21,7 +21,7 @@ export default function FollowingPage() {
   const params = useParams();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const queryClient = useQueryClient();
 
   const slug = params.slug as string;
@@ -32,11 +32,11 @@ export default function FollowingPage() {
 
   // Check if user is logged in
   useEffect(() => {
-    if (!user) {
+    if (!loading && !user) {
       toast.error('Please log in to view followers');
       router.push(`/u/${slug}`);
     }
-  }, [user, router, slug]);
+  }, [user, loading, router, slug]);
 
   // Fetch followers
   const { data: followersData, isLoading: followersLoading, error: followersError, refetch: refetchFollowers } = useQuery({
@@ -56,12 +56,27 @@ export default function FollowingPage() {
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
   });
 
+  const isOwnProfile = user?.publicSlug === slug;
+  const followers: User[] = followersData?.data?.followers || [];
+  const following: User[] = followingData?.data?.following || [];
+  const userList: User[] = activeTab === 'followers' ? followers : following;
+
+  // Fetch your own following list (as the logged-in user)
+  const { data: myFollowingData } = useQuery({
+    queryKey: ['myFollowing', user?.publicSlug],
+    queryFn: () => user?.publicSlug ? followApi.getFollowing(user.publicSlug) : Promise.resolve({ data: { following: [] } }),
+    enabled: !!user && !isOwnProfile && !!user?.publicSlug,
+  });
+  const myFollowing = myFollowingData?.data?.following || [];
+  const myFollowingSet = new Set(myFollowing.map((u: User) => u.publicSlug));
+
   // Follow/Unfollow mutations
   const followMutation = useMutation({
     mutationFn: (targetSlug: string) => followApi.follow(targetSlug),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['followers', slug] });
       queryClient.invalidateQueries({ queryKey: ['following', slug] });
+      queryClient.invalidateQueries({ queryKey: ['myFollowing', user?.publicSlug] });
       toast.success('Following user ✨');
     },
     onError: () => toast.error('Failed to follow user'),
@@ -72,14 +87,11 @@ export default function FollowingPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['followers', slug] });
       queryClient.invalidateQueries({ queryKey: ['following', slug] });
+      queryClient.invalidateQueries({ queryKey: ['myFollowing', user?.publicSlug] });
       toast.success('Unfollowed user');
     },
     onError: () => toast.error('Failed to unfollow user'),
   });
-
-  const followers: User[] = followersData?.data?.followers || [];
-  const following: User[] = followingData?.data?.following || [];
-  const isOwnProfile = user?.publicSlug === slug;
 
   const handleFollowToggle = (targetUser: User) => {
     if (!user) {
@@ -92,9 +104,8 @@ export default function FollowingPage() {
       return;
     }
 
-    // Use optimistic updates - assume current state and update immediately
-    // The mutation will handle the actual API call and rollback on error
-    const isCurrentlyFollowing = following.some(u => u._id === targetUser._id);
+    // Use the same logic as the UI for consistency
+    const isCurrentlyFollowing = myFollowingSet.has(targetUser.publicSlug);
 
     if (isCurrentlyFollowing) {
       unfollowMutation.mutate(targetUser.publicSlug);
@@ -111,7 +122,7 @@ export default function FollowingPage() {
     return null; // Will redirect in useEffect
   }
 
-  const currentList = activeTab === 'followers' ? followers : following;
+  const currentList = userList;
   const isLoading = activeTab === 'followers' ? followersLoading : followingLoading;
   const error = activeTab === 'followers' ? followersError : followingError;
   const refetch = activeTab === 'followers' ? refetchFollowers : refetchFollowing;
@@ -207,47 +218,95 @@ export default function FollowingPage() {
           ) : currentList.length > 0 ? (
             <div className="divide-y divide-gray-100 dark:divide-gray-800">
               <AnimatePresence>
-                {currentList.map((targetUser, index) => (
-                  <motion.div
-                    key={targetUser._id}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: index * 0.05 }}
-                    className="p-6 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors group"
-                  >
-                    <div className="flex items-center justify-between">
-                      {/* User Info */}
-                      <div
-                        className="flex items-center gap-4 flex-1 cursor-pointer"
-                        onClick={() => handleUserClick(targetUser.publicSlug)}
-                      >
-                        <motion.img
-                          whileHover={{ scale: 1.05 }}
-                          src={targetUser.avatarUrl}
-                          alt={targetUser.displayName}
-                          className="w-12 h-12 rounded-full object-cover shadow-sm"
-                        />
-                        <div className="flex-1 min-w-0">
-                          <h3 className="font-medium text-gray-900 dark:text-white truncate">
-                            {targetUser.displayName}
-                          </h3>
-                          <p className="text-sm text-gray-500 dark:text-gray-400">
-                            @{targetUser.publicSlug}
-                          </p>
+                {currentList.map((u: User, index: number) => {
+                  let showFollow = false;
+                  let isFollowing = false;
+                  // Don't show follow button for the current logged-in user
+                  if (u.publicSlug === user?.publicSlug) {
+                    showFollow = false;
+                  } else if (isOwnProfile) {
+                    // When viewing your own profile, don't show follow buttons (show Message instead)
+                    showFollow = false;
+                  } else {
+                    // When viewing another user's profile, show follow button for all other users
+                    showFollow = true;
+                    isFollowing = myFollowingSet.has(u.publicSlug);
+                  }
+                  return (
+                    <motion.div
+                      key={u._id}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: index * 0.05 }}
+                      className="p-6 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors group"
+                    >
+                      <div className="flex items-center justify-between">
+                        {/* User Info */}
+                        <div
+                          className="flex items-center gap-4 flex-1 cursor-pointer"
+                          onClick={() => handleUserClick(u.publicSlug)}
+                        >
+                          <motion.img
+                            whileHover={{ scale: 1.05 }}
+                            src={u.avatarUrl}
+                            alt={u.displayName}
+                            className="w-12 h-12 rounded-full object-cover shadow-sm"
+                          />
+                          <div className="flex-1 min-w-0">
+                            <h3 className="font-medium text-gray-900 dark:text-white truncate">
+                              {u.displayName}
+                            </h3>
+                            <p className="text-sm text-gray-500 dark:text-gray-400">
+                              @{u.publicSlug}
+                            </p>
+                          </div>
                         </div>
-                      </div>
 
-                      {/* Follow Button */}
-                      {isOwnProfile && targetUser.publicSlug !== user?.publicSlug && (
-                        <FollowButton
-                          user={targetUser}
-                          onToggle={() => handleFollowToggle(targetUser)}
-                          isLoading={followMutation.isPending || unfollowMutation.isPending}
-                        />
-                      )}
-                    </div>
-                  </motion.div>
-                ))}
+                        {/* Follow Button */}
+                        {isOwnProfile ? (
+                          <motion.button
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                            className="px-4 py-2 rounded-full font-medium transition-all flex items-center gap-2 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"
+                          >
+                            <MessageSquare className="w-4 h-4" />
+                            Message
+                          </motion.button>
+                        ) : showFollow ? (
+                          <motion.button
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                            onClick={() => handleFollowToggle(u)}
+                            disabled={followMutation.isPending || unfollowMutation.isPending}
+                            className={`px-4 py-2 rounded-full font-medium transition-all flex items-center gap-2 ${
+                              isFollowing
+                                ? 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+                                : 'bg-green-600 text-white hover:bg-green-700 shadow-lg hover:shadow-xl'
+                            }`}
+                          >
+                            {followMutation.isPending || unfollowMutation.isPending ? (
+                              <motion.div
+                                animate={{ rotate: 360 }}
+                                transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                                className="w-4 h-4 border-2 border-current border-t-transparent rounded-full"
+                              />
+                            ) : isFollowing ? (
+                              <>
+                                <UserMinus className="w-4 h-4" />
+                                Following
+                              </>
+                            ) : (
+                              <>
+                                <UserPlus className="w-4 h-4" />
+                                Follow
+                              </>
+                            )}
+                          </motion.button>
+                        ) : null}
+                      </div>
+                    </motion.div>
+                  );
+                })}
               </AnimatePresence>
             </div>
           ) : (
@@ -261,77 +320,5 @@ export default function FollowingPage() {
         </motion.div>
       </div>
     </div>
-  );
-}
-
-// Follow Button Component
-function FollowButton({
-  user,
-  onToggle,
-  isLoading
-}: {
-  user: User;
-  onToggle: () => void;
-  isLoading: boolean;
-}) {
-  const [isFollowing, setIsFollowing] = useState(false);
-  const [checkingStatus, setCheckingStatus] = useState(true);
-
-  useEffect(() => {
-    const checkFollowStatus = async () => {
-      try {
-        const response = await followApi.getFollowStatus(user.publicSlug);
-        setIsFollowing(response.data.isFollowing);
-      } catch (error) {
-        console.error('Error checking follow status:', error);
-      } finally {
-        setCheckingStatus(false);
-      }
-    };
-
-    checkFollowStatus();
-  }, [user.publicSlug]);
-
-  const handleClick = () => {
-    setIsFollowing(!isFollowing);
-    onToggle();
-  };
-
-  if (checkingStatus) {
-    return (
-      <div className="w-20 h-9 bg-gray-100 dark:bg-gray-800 rounded-full animate-pulse" />
-    );
-  }
-
-  return (
-    <motion.button
-      whileHover={{ scale: 1.02 }}
-      whileTap={{ scale: 0.98 }}
-      onClick={handleClick}
-      disabled={isLoading}
-      className={`px-4 py-2 rounded-full font-medium transition-all flex items-center gap-2 ${
-        isFollowing
-          ? 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
-          : 'bg-green-600 text-white hover:bg-green-700 shadow-lg hover:shadow-xl'
-      }`}
-    >
-      {isLoading ? (
-        <motion.div
-          animate={{ rotate: 360 }}
-          transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-          className="w-4 h-4 border-2 border-current border-t-transparent rounded-full"
-        />
-      ) : isFollowing ? (
-        <>
-          <UserMinus className="w-4 h-4" />
-          Following
-        </>
-      ) : (
-        <>
-          <UserPlus className="w-4 h-4" />
-          Follow
-        </>
-      )}
-    </motion.button>
   );
 }
