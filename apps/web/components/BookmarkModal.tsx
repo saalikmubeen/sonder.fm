@@ -68,7 +68,7 @@ export default function BookmarkModal({
                 </button>
 
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
+                  <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-500 rounded-full flex items-center justify-center">
                     <Bookmark className="w-6 h-6 text-white" />
                   </div>
                   <div>
@@ -98,8 +98,8 @@ export default function BookmarkModal({
                       {trackInfo.artist}
                     </p>
                     <div className="flex items-center gap-1 mt-1">
-                      <Clock className="w-3 h-3 text-purple-500" />
-                      <span className="text-xs font-medium text-purple-600 dark:text-purple-400">
+                      <Clock className="w-3 h-3 text-green-500" />
+                      <span className="text-xs font-medium text-green-600 dark:text-green-400">
                         {formatTime(trackInfo.timestampMs)}
                       </span>
                     </div>
@@ -119,7 +119,7 @@ export default function BookmarkModal({
                     placeholder="What makes this moment special? Share your thoughts..."
                     maxLength={500}
                     rows={4}
-                    className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl resize-none focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all placeholder-gray-400 dark:placeholder-gray-500 text-gray-900 dark:text-white"
+                    className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl resize-none focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all placeholder-gray-400 dark:placeholder-gray-500 text-gray-900 dark:text-white"
                   />
                   <div className="absolute bottom-3 right-3 text-xs text-gray-400">
                     {caption.length}/500
@@ -140,7 +140,7 @@ export default function BookmarkModal({
                   whileTap={{ scale: 0.98 }}
                   onClick={handleSave}
                   disabled={loading}
-                  className="flex-1 px-4 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-2xl font-medium hover:from-purple-600 hover:to-pink-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  className="flex-1 px-4 py-3 bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-2xl font-medium hover:from-green-600 hover:to-emerald-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                   {loading ? (
                     <motion.div
