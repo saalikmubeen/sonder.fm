@@ -66,7 +66,7 @@ export default function BookmarkModal({
                 >
                   <X className="w-5 h-5 text-gray-500" />
                 </button>
-                
+
                 <div className="flex items-center gap-3 mb-4">
                   <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
                     <Bookmark className="w-6 h-6 text-white" />
@@ -151,7 +151,7 @@ export default function BookmarkModal({
                   ) : (
                     <>
                       <Bookmark className="w-4 h-4" />
-                      Save Bookmark
+                      Bookmark
                     </>
                   )}
                 </motion.button>

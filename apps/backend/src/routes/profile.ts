@@ -123,7 +123,7 @@ router.get('/:slug', async (req, res) => {
         userSpotifyProfile.recentlyPlayedTracks &&
         userSpotifyProfile.recentlyPlayedTracks.lastUpdated &&
         userSpotifyProfile.recentlyPlayedTracks.lastUpdated.getTime() +
-          oneMin <
+          oneDay <
           Date.now()
       ) {
         console.log(
@@ -206,16 +206,20 @@ router.get('/:slug', async (req, res) => {
       (publicProfile as any).spotifyProfile = userSpotifyProfile;
     }
 
-    const nowPlaying = await spotifyAPI.getCurrentlyPlaying(
-      user.accessToken
-    );
+    try {
+      const nowPlaying = await spotifyAPI.getCurrentlyPlaying(
+        user.accessToken
+      );
 
-    // Add now playing data if available
-    if (nowPlaying) {
-      publicProfile.nowPlaying = nowPlaying;
+      // Add now playing data if available
+      if (nowPlaying) {
+        publicProfile.nowPlaying = nowPlaying;
 
-      user.cachedNowPlaying = nowPlaying;
-      await user.save();
+        user.cachedNowPlaying = nowPlaying;
+        await user.save();
+      }
+    } catch (err) {
+      console.log(err)
     }
 
     // if (user.cachedNowPlaying) {

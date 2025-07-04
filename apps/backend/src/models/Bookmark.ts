@@ -7,6 +7,7 @@ const BookmarkSchema = new Schema<BookmarkDocument>({
   userId: { type: String, required: true },
   trackId: { type: String, required: true },
   timestampMs: { type: Number, required: true },
+  durationMs:  { type: Number, required: true },
   caption: { type: String, maxlength: 500 },
   metadata: {
     name: { type: String, required: true },

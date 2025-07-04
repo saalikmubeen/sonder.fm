@@ -9,10 +9,10 @@ const router = express.Router();
 // Create a bookmark
 router.post('/', auth, async (req: AuthRequest, res) => {
   try {
-    const { trackId, timestampMs, caption, metadata } = req.body;
+    const { trackId, timestampMs,  durationMs,  caption, metadata } = req.body;
     const userId = req.userId!;
 
-    if (!trackId || timestampMs === undefined || !metadata) {
+    if (!trackId || timestampMs === undefined || !metadata || !durationMs) {
       return res.status(400).json({
         success: false,
         error: 'Track ID, timestamp, and metadata are required'
@@ -37,7 +37,7 @@ router.post('/', auth, async (req: AuthRequest, res) => {
     const existingBookmark = await Bookmark.findOne({
       userId,
       trackId,
-      timestampMs
+      timestampMs,
     });
 
     if (existingBookmark) {
@@ -52,6 +52,7 @@ router.post('/', auth, async (req: AuthRequest, res) => {
       userId,
       trackId,
       timestampMs,
+      durationMs,
       caption: caption?.trim(),
       metadata
     });

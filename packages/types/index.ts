@@ -81,6 +81,7 @@ export interface Bookmark {
   userId: string;
   trackId: string;
   timestampMs: number;
+  durationMs: number;
   caption?: string;
   metadata: {
     name: string;

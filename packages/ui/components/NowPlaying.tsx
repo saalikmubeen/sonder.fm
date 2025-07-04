@@ -71,7 +71,29 @@ export const NowPlaying: React.FC<NowPlayingProps> = ({
               compact ? 'text-sm' : 'text-base'
             }`}
           >
-            {nowPlaying.song}
+            <div className="flex items-center gap-2">
+              {nowPlaying.isPlaying && (
+                <span className="relative flex w-3 h-3">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
+                </span>
+              )}
+              <motion.span
+                animate={
+                  nowPlaying.isPlaying
+                    ? { scale: [1, 1.06, 1], backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'] }
+                    : { scale: 1 }
+                }
+                transition={{
+                  duration: 2,
+                  repeat: Infinity,
+                  ease: 'easeInOut',
+                }}
+                className="inline-block bg-gradient-to-r from-purple-500 via-pink-500 to-indigo-500 bg-[length:200%_200%] bg-clip-text text-transparent font-semibold"
+              >
+                {nowPlaying.song}
+              </motion.span>
+            </div>
           </motion.h3>
           <motion.p
             initial={{ x: -20 }}
@@ -100,10 +122,17 @@ export const NowPlaying: React.FC<NowPlayingProps> = ({
         <div className="space-y-1">
           <div className="h-1 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
             <motion.div
-              initial={{ width: 0 }}
-              animate={{ width: `${progressPercent}%` }}
-              transition={{ duration: 0.5 }}
-              className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full"
+              initial={{ width: 0, backgroundPosition: '0% 0%' }}
+              animate={{
+                width: `${progressPercent}%`,
+                backgroundPosition: nowPlaying.isPlaying ? ['0% 0%', '100% 0%', '0% 0%'] : '0% 0%',
+              }}
+              transition={{
+                width: { duration: 0.5 },
+                backgroundPosition: { duration: 2, repeat: Infinity, ease: 'linear' },
+              }}
+              className="h-full bg-gradient-to-r from-indigo-500 via-pink-500 to-purple-500 bg-[length:200%_100%] bg-clip-padding rounded-full shadow"
+              style={{ backgroundSize: '200% 100%' }}
             />
           </div>
           <div className="flex justify-between text-xs text-gray-500">
