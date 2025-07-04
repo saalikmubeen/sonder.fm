@@ -23,7 +23,7 @@ export default function FollowingPage() {
   const searchParams = useSearchParams();
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  
+
   const slug = params.slug as string;
   const initialTab = searchParams.get('tab') || 'followers';
   const [activeTab, setActiveTab] = useState<'followers' | 'following'>(
@@ -39,17 +39,21 @@ export default function FollowingPage() {
   }, [user, router, slug]);
 
   // Fetch followers
-  const { data: followersData, isLoading: followersLoading } = useQuery({
+  const { data: followersData, isLoading: followersLoading, error: followersError, refetch: refetchFollowers } = useQuery({
     queryKey: ['followers', slug],
     queryFn: () => followApi.getFollowers(slug),
     enabled: !!user && activeTab === 'followers',
+    retry: 3,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
   });
 
   // Fetch following
-  const { data: followingData, isLoading: followingLoading } = useQuery({
+  const { data: followingData, isLoading: followingLoading, error: followingError, refetch: refetchFollowing } = useQuery({
     queryKey: ['following', slug],
     queryFn: () => followApi.getFollowing(slug),
     enabled: !!user && activeTab === 'following',
+    retry: 3,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
   });
 
   // Follow/Unfollow mutations
@@ -77,7 +81,7 @@ export default function FollowingPage() {
   const following: User[] = followingData?.data?.following || [];
   const isOwnProfile = user?.publicSlug === slug;
 
-  const handleFollowToggle = async (targetUser: User) => {
+  const handleFollowToggle = (targetUser: User) => {
     if (!user) {
       toast.error('Please log in to follow users');
       return;
@@ -88,19 +92,14 @@ export default function FollowingPage() {
       return;
     }
 
-    try {
-      // Check if already following
-      const statusResponse = await followApi.getFollowStatus(targetUser.publicSlug);
-      const isFollowing = statusResponse.data.isFollowing;
+    // Use optimistic updates - assume current state and update immediately
+    // The mutation will handle the actual API call and rollback on error
+    const isCurrentlyFollowing = following.some(u => u._id === targetUser._id);
 
-      if (isFollowing) {
-        unfollowMutation.mutate(targetUser.publicSlug);
-      } else {
-        followMutation.mutate(targetUser.publicSlug);
-      }
-    } catch (error) {
-      console.error('Error checking follow status:', error);
-      toast.error('Failed to update follow status');
+    if (isCurrentlyFollowing) {
+      unfollowMutation.mutate(targetUser.publicSlug);
+    } else {
+      followMutation.mutate(targetUser.publicSlug);
     }
   };
 
@@ -114,6 +113,31 @@ export default function FollowingPage() {
 
   const currentList = activeTab === 'followers' ? followers : following;
   const isLoading = activeTab === 'followers' ? followersLoading : followingLoading;
+  const error = activeTab === 'followers' ? followersError : followingError;
+  const refetch = activeTab === 'followers' ? refetchFollowers : refetchFollowing;
+
+  // Error fallback component
+  const ErrorFallback = ({ error, retry }: { error: any; retry: () => void }) => (
+    <div className="text-center py-12">
+      <div className="w-16 h-16 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+        <svg className="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+        </svg>
+      </div>
+      <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+        Something went wrong
+      </h3>
+      <p className="text-gray-500 dark:text-gray-400 text-sm mb-4 max-w-sm mx-auto">
+        {error?.message || 'Failed to load data. Please try again.'}
+      </p>
+      <button
+        onClick={retry}
+        className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+      >
+        Try Again
+      </button>
+    </div>
+  );
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
@@ -178,6 +202,8 @@ export default function FollowingPage() {
                 className="w-8 h-8 border-2 border-green-500 border-t-transparent rounded-full"
               />
             </div>
+          ) : error ? (
+            <ErrorFallback error={error} retry={refetch} />
           ) : currentList.length > 0 ? (
             <div className="divide-y divide-gray-100 dark:divide-gray-800">
               <AnimatePresence>
@@ -191,7 +217,7 @@ export default function FollowingPage() {
                   >
                     <div className="flex items-center justify-between">
                       {/* User Info */}
-                      <div 
+                      <div
                         className="flex items-center gap-4 flex-1 cursor-pointer"
                         onClick={() => handleUserClick(targetUser.publicSlug)}
                       >
@@ -199,60 +225,36 @@ export default function FollowingPage() {
                           whileHover={{ scale: 1.05 }}
                           src={targetUser.avatarUrl}
                           alt={targetUser.displayName}
-                          className="w-12 h-12 rounded-full object-cover shadow-md ring-2 ring-gray-100 dark:ring-gray-800"
+                          className="w-12 h-12 rounded-full object-cover shadow-sm"
                         />
                         <div className="flex-1 min-w-0">
-                          <h3 className="font-semibold text-gray-900 dark:text-white truncate">
+                          <h3 className="font-medium text-gray-900 dark:text-white truncate">
                             {targetUser.displayName}
                           </h3>
-                          <p className="text-sm text-gray-500 dark:text-gray-400 truncate">
+                          <p className="text-sm text-gray-500 dark:text-gray-400">
                             @{targetUser.publicSlug}
                           </p>
                         </div>
                       </div>
 
-                      {/* Action Buttons */}
-                      <div className="flex items-center gap-2">
-                        {isOwnProfile ? (
-                          // Show message button for own profile
-                          <motion.button
-                            whileHover={{ scale: 1.02 }}
-                            whileTap={{ scale: 0.98 }}
-                            className="px-4 py-2 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-full font-medium hover:bg-gray-200 dark:hover:bg-gray-700 transition-all flex items-center gap-2"
-                          >
-                            <MessageSquare className="w-4 h-4" />
-                            Message
-                          </motion.button>
-                        ) : targetUser.publicSlug !== user?.publicSlug ? (
-                          // Show follow/unfollow button for other users (not self)
-                          <FollowButton
-                            user={targetUser}
-                            onToggle={() => handleFollowToggle(targetUser)}
-                            isLoading={followMutation.isPending || unfollowMutation.isPending}
-                          />
-                        ) : null}
-                      </div>
+                      {/* Follow Button */}
+                      {isOwnProfile && targetUser.publicSlug !== user?.publicSlug && (
+                        <FollowButton
+                          user={targetUser}
+                          onToggle={() => handleFollowToggle(targetUser)}
+                          isLoading={followMutation.isPending || unfollowMutation.isPending}
+                        />
+                      )}
                     </div>
                   </motion.div>
                 ))}
               </AnimatePresence>
             </div>
           ) : (
-            <div className="text-center py-16">
-              <div className="w-16 h-16 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Users className="w-8 h-8 text-gray-400" />
-              </div>
-              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-                No {activeTab} yet
-              </h3>
-              <p className="text-gray-500 dark:text-gray-400 text-sm max-w-sm mx-auto leading-relaxed">
-                {activeTab === 'followers'
-                  ? isOwnProfile
-                    ? "When people follow you, they'll appear here"
-                    : "This user doesn't have any followers yet"
-                  : isOwnProfile
-                  ? "Start following people to see them here"
-                  : "This user isn't following anyone yet"}
+            <div className="text-center py-12">
+              <Users className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+              <p className="text-gray-500 dark:text-gray-400">
+                No {activeTab} found
               </p>
             </div>
           )}
@@ -263,13 +265,13 @@ export default function FollowingPage() {
 }
 
 // Follow Button Component
-function FollowButton({ 
-  user, 
-  onToggle, 
-  isLoading 
-}: { 
-  user: User; 
-  onToggle: () => void; 
+function FollowButton({
+  user,
+  onToggle,
+  isLoading
+}: {
+  user: User;
+  onToggle: () => void;
   isLoading: boolean;
 }) {
   const [isFollowing, setIsFollowing] = useState(false);

@@ -13,6 +13,7 @@ import {
   List,
   ChevronRight,
   Play,
+  Pause,
   ExternalLink,
   Calendar,
   Sun,
@@ -29,6 +30,7 @@ import {
   X,
   UserMinus,
   UserPlus,
+  MessageSquare,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 import { formatDuration, timeAgo } from '@sonder/utils';
@@ -689,195 +691,198 @@ function ProfileSection({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
-      className="space-y-12"
+      className="space-y-8"
     >
       {/* Profile Header */}
-      <div className="text-center">
-        <motion.div
-          initial={{ scale: 0.8, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ delay: 0.1 }}
-          className="relative inline-block mb-6"
-        >
-          <img
-            src={profile.avatarUrl}
-            alt={profile.displayName}
-            className="w-32 h-32 lg:w-40 lg:h-40 rounded-full object-cover shadow-xl"
-          />
-        </motion.div>
-
-        <motion.h1
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="text-3xl lg:text-4xl font-bold mb-4"
-        >
-          {profile.displayName}
-        </motion.h1>
-
-        {/* Follow Button */}
-        {!isOwnProfile && user && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.25 }}
-            className="mb-4"
-          >
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={handleFollowToggle}
-              disabled={followMutation.isPending || unfollowMutation.isPending}
-              className={`px-6 py-2 rounded-full font-medium transition-all flex items-center gap-2 mx-auto ${
-                profile.isFollowing
-                  ? 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
-                  : 'bg-green-600 text-white hover:bg-green-700 shadow-lg hover:shadow-xl'
-              }`}
-            >
-              {profile.isFollowing ? (
-                <>
-                  <UserMinus className="w-4 h-4" />
-                  Following
-                </>
-              ) : (
-                <>
-                  <UserPlus className="w-4 h-4" />
-                  Follow
-                </>
-              )}
-            </motion.button>
-          </motion.div>
-        )}
-
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className="flex justify-center space-x-8 mb-6"
-        >
-          {/* Spotify Followers (subtle) */}
-          {profile.spotifyProfile?.followers && (
-            <div className="text-center">
-              <div className="text-lg font-medium text-gray-500 dark:text-gray-400">
-                {profile.spotifyProfile.followers.toLocaleString()}
-              </div>
-              <div className="text-xs text-gray-400 dark:text-gray-500 uppercase tracking-wide">
-                Spotify followers
-              </div>
-            </div>
-          )}
-
-          {/* Sonder Followers (prominent) */}
-          <div className="text-center">
-            <button
-              onClick={() => handleFollowCountClick('followers')}
-              className="hover:text-green-600 dark:hover:text-green-400 transition-colors cursor-pointer"
-            >
-              <div className="text-2xl font-bold text-green-500">
-                {followCounts.followerCount}
-              </div>
-              <div className="text-sm text-gray-500 dark:text-gray-400 uppercase tracking-wide">
-                Followers
-              </div>
-            </button>
-          </div>
-          <div className="text-center">
-            <button
-              onClick={() => handleFollowCountClick('following')}
-              className="hover:text-green-600 dark:hover:text-green-400 transition-colors cursor-pointer"
-            >
-              <div className="text-2xl font-bold text-green-500">
-                {followCounts.followingCount}
-              </div>
-              <div className="text-sm text-gray-500 dark:text-gray-400 uppercase tracking-wide">
-                Following
-              </div>
-            </button>
-          </div>
-          <div className="text-center">
-            <div className="text-2xl font-bold text-green-500">
-              {profile.spotifyProfile?.playlists?.total || 0}
-            </div>
-            <div className="text-sm text-gray-500 dark:text-gray-400 uppercase tracking-wide">
-              Playlists
-            </div>
-          </div>
-        </motion.div>
-      </div>
-
-      {/* Now Playing Section */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.5 }}
-        className="max-w-2xl mx-auto mb-12"
+        className="bg-white dark:bg-gray-900 rounded-2xl shadow p-4 mb-4"
       >
-        {profile.nowPlaying ? (
-          <div className="bg-white/10 backdrop-blur-lg rounded-lg p-4 hover:bg-white/20 transition-all border border-gray-200 dark:border-gray-800 relative">
-            <div className="flex items-center space-x-4">
-              <div className="relative">
-                <img
-                  src={profile.nowPlaying.albumArt}
-                  alt={profile.nowPlaying.album}
-                  className="w-16 h-16 rounded-md shadow-lg"
-                />
-                <div className="absolute -bottom-1 -right-1 bg-green-500 rounded-full p-1">
-                  <div className="w-3 h-3 bg-white rounded-full animate-pulse" />
-                </div>
-              </div>
+        <div className="flex flex-col md:flex-row items-start md:items-center gap-4">
+          {/* Avatar */}
+          <motion.img
+            whileHover={{ scale: 1.04 }}
+            src={profile.avatarUrl}
+            alt={profile.displayName}
+            className="w-14 h-14 rounded-full object-cover shadow ring-2 ring-green-100 dark:ring-green-900 mb-2 md:mb-0"
+          />
 
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center space-x-2">
-                  <span className="text-xs text-green-500 font-medium animate-pulse">
+          {/* Profile Info */}
+          <div className="flex-1">
+            <div className="flex flex-col md:flex-row md:items-center gap-2 mb-2">
+              <h1 className="text-lg font-bold text-gray-900 dark:text-white">
+                {profile.displayName}
+              </h1>
+              {/* Follow Button */}
+              {!isOwnProfile && user && (
+                <motion.button
+                  whileHover={{ scale: 1.01 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={handleFollowToggle}
+                  disabled={followMutation.isPending || unfollowMutation.isPending}
+                  className={`px-3 py-1.5 rounded-full font-medium text-xs transition-all flex items-center gap-1.5 ${
+                    profile.isFollowing
+                      ? 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+                      : 'bg-green-600 text-white hover:bg-green-700 shadow-lg hover:shadow-xl'
+                  }`}
+                >
+                  {profile.isFollowing ? (
+                    <>
+                      <UserMinus className="w-3 h-3" />
+                      Following
+                    </>
+                  ) : (
+                    <>
+                      <UserPlus className="w-3 h-3" />
+                      Follow
+                    </>
+                  )}
+                </motion.button>
+              )}
+              {/* Message Button for own profile */}
+              {isOwnProfile && (
+                <motion.button
+                  whileHover={{ scale: 1.01 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="px-3 py-1.5 rounded-full font-medium text-xs bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-all flex items-center gap-1.5"
+                >
+                  <MessageSquare className="w-3 h-3" />
+                  Messages
+                </motion.button>
+              )}
+            </div>
+            {/* Follow Counts */}
+            <div className="flex items-center gap-4 mb-2">
+              {/* Spotify Followers (subtle) */}
+              {profile.spotifyProfile?.followers && (
+                <div className="text-xs text-gray-500 dark:text-gray-400">
+                  <span className="font-medium">{profile.spotifyProfile.followers.toLocaleString()}</span>
+                  <span className="ml-1">Spotify followers</span>
+                </div>
+              )}
+              {/* Sonder Followers (prominent) */}
+              <button
+                onClick={() => handleFollowCountClick('followers')}
+                className="text-gray-900 dark:text-white hover:text-green-600 dark:hover:text-green-400 transition-colors text-xs"
+              >
+                <span className="font-semibold">{followCounts.followerCount}</span>
+                <span className="ml-1">followers</span>
+              </button>
+              <button
+                onClick={() => handleFollowCountClick('following')}
+                className="text-gray-900 dark:text-white hover:text-green-600 dark:hover:text-green-400 transition-colors text-xs"
+              >
+                <span className="font-semibold">{followCounts.followingCount}</span>
+                <span className="ml-1">following</span>
+              </button>
+            </div>
+            {/* Vibe Summary */}
+            <p className="text-xs text-gray-600 dark:text-gray-400 italic leading-snug">
+              {profile.vibeSummary}
+            </p>
+          </div>
+        </div>
+        {/* Now Playing */}
+        <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+          {profile.nowPlaying ? (
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <motion.div
+                  className="relative"
+                  animate={{
+                    rotate: [0, 5, -5, 0],
+                    scale: [1, 1.02, 1]
+                  }}
+                  transition={{
+                    duration: 4,
+                    repeat: Infinity,
+                    ease: "easeInOut"
+                  }}
+                >
+                  <img
+                    src={profile.nowPlaying.albumArt}
+                    alt={profile.nowPlaying.album}
+                    className="w-12 h-12 rounded-md shadow-lg"
+                  />
+                  <div className="absolute inset-0 bg-black/60 rounded-md flex items-center justify-center">
+                    {profile.nowPlaying.isPlaying ? (
+                      <Pause className="w-4 h-4 text-white" />
+                    ) : (
+                      <Play className="w-4 h-4 text-white" />
+                    )}
+                  </div>
+                </motion.div>
+
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center space-x-2">
+                    <motion.span
+                      animate={
+                  profile.nowPlaying.isPlaying
+                    ? { scale: [1, 1.06, 1], backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'] }
+                    : { scale: 1 }
+                }
+                  transition={{
+                    duration: 2,
+                    repeat: Infinity,
+                    ease: 'easeInOut',
+                  }}
+                className="inline-block bg-gradient-to-r from-purple-500 via-pink-500 to-indigo-500 bg-[length:200%_200%] bg-clip-text text-transparent font-semibold text-xs"
+                  >
                     Now Playing
-                  </span>
-                </div>
-                <h3 className="text-lg font-semibold truncate mt-1">
-                  {profile.nowPlaying.song}
-                </h3>
-                <p className="text-sm text-gray-600 dark:text-gray-400 truncate">
-                  {profile.nowPlaying.artist} •{' '}
-                  {profile.nowPlaying.album}
-                </p>
-
-                {/* Progress Bar */}
-                <div className="mt-2 space-y-1">
-                  <div className="h-1 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-green-500 rounded-full transition-all duration-1000"
-                      style={{
-                        width: `${
-                          (profile.nowPlaying.progressMs /
-                            profile.nowPlaying.durationMs) *
-                          100
-                        }%`,
-                      }}
-                    />
+                  </motion.span>
                   </div>
-                  <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400">
-                    <span>
-                      {formatTime(profile.nowPlaying.progressMs)}
-                    </span>
-                    <span>
-                      {formatTime(profile.nowPlaying.durationMs)}
-                    </span>
+                  <h3 className="text-sm font-semibold truncate mt-1">
+                    {profile.nowPlaying.song}
+                  </h3>
+                  <p className="text-xs text-gray-600 dark:text-gray-400 truncate">
+                    {profile.nowPlaying.artist} •{' '}
+                    {profile.nowPlaying.album}
+                  </p>
+
+                  {/* Progress Bar */}
+                  <div className="mt-1 space-y-1">
+                    <div className="h-1 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                      <motion.div
+                        className="h-full bg-green-500 rounded-full"
+                        initial={{ width: 0 }}
+                        animate={{
+                          width: `${(profile.nowPlaying.progressMs / profile.nowPlaying.durationMs) * 100}%`
+                        }}
+                        transition={{
+                          duration: 1,
+                          ease: "easeOut"
+                        }}
+                      />
+                    </div>
+                    <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400">
+                      <span>
+                        {formatTime(profile.nowPlaying.progressMs)}
+                      </span>
+                      <span>
+                        {formatTime(profile.nowPlaying.durationMs)}
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
 
-              <div className="flex flex-col gap-2">
+              <div className="flex flex-col gap-1">
                 {profile.nowPlaying.previewUrl && (
-                  <button
+                  <motion.button
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
                     onClick={(e) => {
                       e.stopPropagation();
                       // Add preview play functionality here
                     }}
-                    className="p-2 rounded-full hover:bg-white/10 transition-colors"
+                    className="p-1.5 rounded-full hover:bg-white/10 transition-colors"
                   >
-                    <PlayCircle className="w-6 h-6 text-green-500" />
-                  </button>
+                    <PlayCircle className="w-5 h-5 text-green-500" />
+                  </motion.button>
                 )}
 
+                {/* Bookmark Button */}
                 {isOwnProfile && (
                   <motion.button
                     whileHover={{ scale: 1.05 }}
@@ -886,28 +891,32 @@ function ProfileSection({
                       e.stopPropagation();
                       onBookmarkMoment();
                     }}
-                    className="p-2 rounded-full bg-purple-500/20 hover:bg-purple-500/30 transition-colors group"
+                    className="p-1.5 rounded-full bg-purple-500/20 hover:bg-purple-500/30 transition-colors group"
                     title="Bookmark this moment"
                   >
-                    <BookmarkPlus className="w-5 h-5 text-purple-400 group-hover:text-purple-300" />
+                    <BookmarkPlus className="w-4 h-4 text-purple-400 group-hover:text-purple-300" />
                   </motion.button>
                 )}
               </div>
             </div>
-
-            {/* <button
-              onClick={() => openSpotifyUrl(profile.nowPlaying.spotifyUrl)}
-              className="absolute inset-0 w-full h-full"
-            /> */}
-          </div>
-        ) : (
-          <div className="bg-white/5 backdrop-blur-lg rounded-lg p-3 hover:bg-white/10 transition-all border border-gray-200 dark:border-gray-800 flex items-center justify-center gap-2">
-            <Music2 className="w-4 h-4 text-gray-500 dark:text-gray-400" />
-            <span className="text-sm text-gray-500 dark:text-gray-400">
-              Music on pause.
-            </span>
-          </div>
-        )}
+          ) : (
+            <div className="flex items-center space-x-3">
+              <div className="w-12 h-12 bg-gray-200 dark:bg-gray-700 rounded-md flex items-center justify-center">
+                <Music2 className="w-6 h-6 text-gray-400" />
+              </div>
+              <div className="flex-1">
+                <div className="flex items-center space-x-2">
+                  <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">
+                    Music Paused
+                  </span>
+                </div>
+                <h3 className="text-sm font-medium text-gray-400 dark:text-gray-500 mt-1">
+                  No music currently playing
+                </h3>
+              </div>
+            </div>
+          )}
+        </div>
       </motion.div>
 
       {/* Recently Played Section */}
@@ -915,21 +924,21 @@ function ProfileSection({
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.4 }}
-        className="space-y-6"
+        className="space-y-4"
       >
         <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-bold">Recently Played</h2>
+          <h2 className="text-xl font-bold">Recently Played</h2>
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={() => setActiveSection('recent')}
-            className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+            className="text-xs text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
           >
             See more
           </motion.button>
         </div>
 
-        <div className="grid grid-cols-3 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-3 lg:grid-cols-4 gap-3">
           {recentTracks.slice(0, 12).map((item: any, index: number) => (
             <motion.div
               key={`${item.trackId}-${index}`}
@@ -938,7 +947,7 @@ function ProfileSection({
               transition={{ delay: 0.5 + index * 0.05 }}
               whileHover={{ scale: 1.05 }}
               onClick={() => openSpotifyUrl(item.trackUrl)}
-              className="relative group cursor-pointer overflow-hidden rounded-2xl aspect-square bg-gray-200 dark:bg-gray-800"
+              className="relative group cursor-pointer overflow-hidden rounded-xl aspect-square bg-gray-200 dark:bg-gray-800"
             >
               {item.imageUrl ? (
                 <img
@@ -948,7 +957,7 @@ function ProfileSection({
                 />
               ) : (
                 <div className="w-full h-full bg-gradient-to-br from-gray-300 to-gray-400 dark:from-gray-700 dark:to-gray-800 flex items-center justify-center">
-                  <Music className="w-8 h-8 text-gray-500 dark:text-gray-400" />
+                  <Music className="w-6 h-6 text-gray-500 dark:text-gray-400" />
                 </div>
               )}
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -961,7 +970,7 @@ function ProfileSection({
                 </p>
               </div>
               <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                <ExternalLink className="w-4 h-4 text-white" />
+                <ExternalLink className="w-3 h-3 text-white" />
               </div>
             </motion.div>
           ))}
@@ -973,23 +982,23 @@ function ProfileSection({
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.6 }}
-        className="space-y-6"
+        className="space-y-4"
       >
         <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-bold">
+          <h2 className="text-xl font-bold">
             Songs I love right now
           </h2>
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={() => setActiveSection('tracks')}
-            className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+            className="text-xs text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
           >
             See more
           </motion.button>
         </div>
 
-        <div className="grid grid-cols-3 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-3 lg:grid-cols-4 gap-3">
           {shortTracks.slice(0, 12).map((track: any, index: number) => (
             <motion.div
               key={track.id}
@@ -998,7 +1007,7 @@ function ProfileSection({
               transition={{ delay: 0.7 + index * 0.05 }}
               whileHover={{ scale: 1.05 }}
               onClick={() => openSpotifyUrl(track.url)}
-              className="relative group cursor-pointer overflow-hidden rounded-2xl aspect-square"
+              className="relative group cursor-pointer overflow-hidden rounded-xl aspect-square"
             >
               <img
                 src={track.album.imageUrl}
@@ -1015,7 +1024,7 @@ function ProfileSection({
                 </p>
               </div>
               <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                <ExternalLink className="w-4 h-4 text-white" />
+                <ExternalLink className="w-3 h-3 text-white" />
               </div>
             </motion.div>
           ))}
@@ -1027,23 +1036,23 @@ function ProfileSection({
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.8 }}
-        className="space-y-6"
+        className="space-y-4"
       >
         <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-bold">
+          <h2 className="text-xl font-bold">
             My All Time fav tracks
           </h2>
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={() => setActiveSection('tracks')}
-            className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+            className="text-xs text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
           >
             See more
           </motion.button>
         </div>
 
-        <div className="grid grid-cols-3 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-3 lg:grid-cols-4 gap-3">
           {longTracks.slice(0, 12).map((track: any, index: number) => (
             <motion.div
               key={track.id}
@@ -1052,7 +1061,7 @@ function ProfileSection({
               transition={{ delay: 0.9 + index * 0.05 }}
               whileHover={{ scale: 1.05 }}
               onClick={() => openSpotifyUrl(track.url)}
-              className="relative group cursor-pointer overflow-hidden rounded-2xl aspect-square"
+              className="relative group cursor-pointer overflow-hidden rounded-xl aspect-square"
             >
               <img
                 src={track.album.imageUrl}
@@ -1069,7 +1078,7 @@ function ProfileSection({
                 </p>
               </div>
               <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                <ExternalLink className="w-4 h-4 text-white" />
+                <ExternalLink className="w-3 h-3 text-white" />
               </div>
             </motion.div>
           ))}
@@ -1081,21 +1090,21 @@ function ProfileSection({
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 1.0 }}
-        className="space-y-6"
+        className="space-y-4"
       >
         <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-bold">Playlists</h2>
+          <h2 className="text-xl font-bold">Playlists</h2>
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={() => setActiveSection('playlists')}
-            className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+            className="text-xs text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
           >
             See more
           </motion.button>
         </div>
 
-        <div className="grid grid-cols-3 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-3 lg:grid-cols-4 gap-3">
           {profile.spotifyProfile?.playlists?.items
             ?.slice(0, 12)
             .map((playlist: any, index: number) => (
@@ -1106,7 +1115,7 @@ function ProfileSection({
                 transition={{ delay: 1.1 + index * 0.05 }}
                 whileHover={{ scale: 1.05 }}
                 onClick={() => openSpotifyUrl(playlist.url)}
-                className="relative group cursor-pointer overflow-hidden rounded-2xl aspect-square"
+                className="relative group cursor-pointer overflow-hidden rounded-xl aspect-square"
               >
                 <div className="w-full h-full bg-gradient-to-br from-gray-300 to-gray-400 dark:from-gray-700 dark:to-gray-800 flex items-center justify-center overflow-hidden">
                   {playlist.imageUrl ? (
@@ -1116,7 +1125,7 @@ function ProfileSection({
                       className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
                     />
                   ) : (
-                    <List className="w-8 h-8 text-gray-500 dark:text-gray-400" />
+                    <List className="w-6 h-6 text-gray-500 dark:text-gray-400" />
                   )}
                 </div>
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -1129,7 +1138,7 @@ function ProfileSection({
                   </p>
                 </div>
                 <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <ExternalLink className="w-4 h-4 text-white" />
+                  <ExternalLink className="w-3 h-3 text-white" />
                 </div>
               </motion.div>
             ))}
@@ -1141,23 +1150,23 @@ function ProfileSection({
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 1.2 }}
-        className="space-y-6"
+        className="space-y-4"
       >
         <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-bold">
+          <h2 className="text-xl font-bold">
             My All Time fav artists
           </h2>
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={() => setActiveSection('artists')}
-            className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+            className="text-xs text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
           >
             See more
           </motion.button>
         </div>
 
-        <div className="grid grid-cols-3 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-3 lg:grid-cols-4 gap-3">
           {longArtists.slice(0, 12).map((artist: any, index: number) => (
             <motion.div
               key={artist.id}
@@ -1166,7 +1175,7 @@ function ProfileSection({
               transition={{ delay: 1.3 + index * 0.05 }}
               whileHover={{ scale: 1.05 }}
               onClick={() => openSpotifyUrl(artist.url)}
-              className="relative group cursor-pointer overflow-hidden rounded-2xl aspect-square"
+              className="relative group cursor-pointer overflow-hidden rounded-xl aspect-square"
             >
               <img
                 src={artist.imageUrl}
@@ -1183,7 +1192,7 @@ function ProfileSection({
                 </p>
               </div>
               <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                <ExternalLink className="w-4 h-4 text-white" />
+                <ExternalLink className="w-3 h-3 text-white" />
               </div>
             </motion.div>
           ))}

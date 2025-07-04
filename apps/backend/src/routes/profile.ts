@@ -1,13 +1,15 @@
 import express from 'express';
+import { param, validationResult } from 'express-validator';
+import { auth, AuthRequest } from '../middleware/auth';
 import { User } from '../models/User';
 import { UserSpotifyProfile } from '../models/UserSpotifyProfile';
 import { Follow } from '../models/Follow';
 import { Reaction } from '../models/Reaction';
 import { VibeNote } from '../models/VibeNote';
-import { auth } from '../middleware/auth';
 import type { APIResponse, PublicProfile } from '@sonder/types';
 import { buildSpotifyProfile } from '../services/spotify';
 import { CryptoUtils, SpotifyAPI } from '@sonder/utils';
+import mongoose from 'mongoose';
 
 import { getRecentlyPlayed } from '../services/spotify';
 
@@ -19,8 +21,34 @@ const spotifyAPI = new SpotifyAPI(
   process.env.SPOTIFY_REDIRECT_URI!
 );
 
+// Validation middleware using express-validator
+const validateSlug = [
+  param('slug')
+    .isString()
+    .withMessage('Slug must be a string')
+    .isLength({ min: 1, max: 50 })
+    .withMessage('Slug must be between 1 and 50 characters')
+    .matches(/^[a-zA-Z0-9_-]+$/)
+    .withMessage('Slug can only contain letters, numbers, hyphens, and underscores'),
+];
+
+const handleValidationErrors = (req: express.Request, res: express.Response, next: express.NextFunction) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({
+      success: false,
+      error: 'Validation failed',
+      details: errors.array()
+    });
+  }
+  next();
+};
+
+
+
+
 // Get public profile by slug
-router.get('/:slug', async (req, res) => {
+router.get('/:slug', validateSlug, handleValidationErrors, async (req: AuthRequest, res: express.Response) => {
   try {
     const { slug } = req.params;
     const currentUserId = req.headers.authorization
@@ -240,6 +268,168 @@ router.get('/:slug', async (req, res) => {
     });
   }
 });
+
+// Update theme
+router.put('/:slug/theme', auth, async (req, res) => {
+  try {
+    const { slug } = req.params;
+    const { theme } = req.body;
+    const userId = (req as any).userId;
+
+    const user = await User.findOne({ publicSlug: slug });
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        error: 'Profile not found',
+      });
+    }
+
+    // Check if user owns this profile
+    if (user._id.toString() !== userId) {
+      return res.status(403).json({
+        success: false,
+        error: 'Not authorized to update this profile',
+      });
+    }
+
+    const validThemes = [
+      'default',
+      'dark',
+      'pastel',
+      'grunge',
+      'sadcore',
+      'neon',
+      'forest',
+    ];
+    if (!validThemes.includes(theme)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid theme',
+      });
+    }
+
+    user.profileTheme = theme;
+    await user.save();
+
+    res.json({
+      success: true,
+      message: 'Theme updated successfully',
+    });
+  } catch (error) {
+    console.error('Error updating theme:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to update theme',
+    });
+  }
+});
+
+// // Get profile by slug
+// router.get('/:slug', validateSlug, handleValidationErrors, async (req: AuthRequest, res: express.Response) => {
+//   try {
+//     const { slug } = req.params;
+//     const userId = req.userId; // Will be undefined if not authenticated
+
+//     // Use aggregation pipeline to get profile with follow status in one query
+//     const profilePipeline = [
+//       { $match: { publicSlug: slug } },
+//       {
+//         $lookup: {
+//           from: 'userspotifyprofiles',
+//           localField: 'spotifyProfile',
+//           foreignField: '_id',
+//           as: 'spotifyProfileData'
+//         }
+//       },
+//       { $unwind: { path: '$spotifyProfileData', preserveNullAndEmptyArrays: true } },
+//       {
+//         $lookup: {
+//           from: 'follows',
+//           let: { userId: '$_id' },
+//           pipeline: [
+//             {
+//               $match: {
+//                 $expr: {
+//                   $and: [
+//                     { $eq: ['$followerId', userId ? new mongoose.Types.ObjectId(userId) : null] },
+//                     { $eq: ['$followingId', '$$userId'] }
+//                   ]
+//                 }
+//               }
+//             }
+//           ],
+//           as: 'followStatus'
+//         }
+//       },
+//       {
+//         $addFields: {
+//           isFollowing: { $gt: [{ $size: '$followStatus' }, 0] },
+//           spotifyProfile: '$spotifyProfileData'
+//         }
+//       },
+//       {
+//         $project: {
+//           displayName: 1,
+//           avatarUrl: 1,
+//           publicSlug: 1,
+//           profileTheme: 1,
+//           vibeSummary: 1,
+//           cachedNowPlaying: 1,
+//           isFollowing: 1,
+//           spotifyProfile: 1,
+//           _id: 0
+//         }
+//       }
+//     ];
+
+//     const profiles = await User.aggregate(profilePipeline);
+//     const profile = profiles[0];
+
+//     if (!profile) {
+//       return res.status(404).json({
+//         success: false,
+//         error: 'Profile not found'
+//       });
+//     }
+
+//     // Get reactions count
+//     const reactions = await Reaction.aggregate([
+//       { $match: { targetUserId: profile._id } },
+//       { $group: { _id: '$emoji', count: { $sum: 1 } } },
+//       { $project: { emoji: '$_id', count: 1, _id: 0 } }
+//     ]);
+
+//     const reactionsMap = reactions.reduce((acc, reaction) => {
+//       acc[reaction.emoji] = reaction.count;
+//       return acc;
+//     }, {} as Record<string, number>);
+
+//     // Get vibe notes
+//     const vibeNotes = await VibeNote.find({ targetUserId: profile._id })
+//       .populate('authorId', 'displayName publicSlug')
+//       .sort({ createdAt: -1 })
+//       .limit(10);
+
+
+//     const response: APIResponse<PublicProfile> = {
+//       success: true,
+//       data: {
+//         ...profile,
+//         reactions: reactionsMap,
+//         vibeNotes
+//       }
+//     };
+
+//     res.json(response);
+//   } catch (error) {
+//     console.error('Error fetching profile:', error);
+//     res.status(500).json({
+//       success: false,
+//       error: 'Failed to fetch profile'
+//     });
+//   }
+// });
 
 // Update theme
 router.put('/:slug/theme', auth, async (req, res) => {
