@@ -23,6 +23,7 @@ import reactionRoutes from './routes/reaction';
 import noteRoutes from './routes/note';
 import messageRoutes from './routes/message';
 import bookmarkRoutes from './routes/bookmark';
+import followRoutes from './routes/follow';
 
 // Import services
 import { setupSocket } from './services/socket';
@@ -78,6 +79,7 @@ app.use('/reaction', reactionRoutes);
 app.use('/note', noteRoutes);
 app.use('/message', messageRoutes);
 app.use('/bookmark', bookmarkRoutes);
+app.use('/follow', followRoutes);
 
 // Health check
 app.get('/health', (req, res) => {

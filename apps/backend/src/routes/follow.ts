@@ -51,18 +51,6 @@ router.post('/:slug', auth, async (req: AuthRequest, res) => {
 
     await follow.save();
 
-    // Update follower count
-    const followerCount = await Follow.countDocuments({ followingId: targetUser._id });
-    await User.findByIdAndUpdate(targetUser._id, {
-      'stats.followers': followerCount
-    });
-
-    // Update following count for current user
-    const followingCount = await Follow.countDocuments({ followerId });
-    await User.findByIdAndUpdate(followerId, {
-      'stats.following': followingCount
-    });
-
     res.json({
       success: true,
       message: 'Successfully followed user'
@@ -105,18 +93,6 @@ router.delete('/:slug', auth, async (req: AuthRequest, res) => {
       });
     }
 
-    // Update follower count
-    const followerCount = await Follow.countDocuments({ followingId: targetUser._id });
-    await User.findByIdAndUpdate(targetUser._id, {
-      'stats.followers': followerCount
-    });
-
-    // Update following count for current user
-    const followingCount = await Follow.countDocuments({ followerId });
-    await User.findByIdAndUpdate(followerId, {
-      'stats.following': followingCount
-    });
-
     res.json({
       success: true,
       message: 'Successfully unfollowed user'
@@ -131,7 +107,7 @@ router.delete('/:slug', auth, async (req: AuthRequest, res) => {
 });
 
 // Get user's followers
-router.get('/:slug/followers', async (req, res) => {
+router.get('/:slug/followers', auth, async (req: AuthRequest, res) => {
   try {
     const { slug } = req.params;
     const { limit = 20, offset = 0 } = req.query;
@@ -171,7 +147,7 @@ router.get('/:slug/followers', async (req, res) => {
 });
 
 // Get users that a user is following
-router.get('/:slug/following', async (req, res) => {
+router.get('/:slug/following', auth, async (req: AuthRequest, res) => {
   try {
     const { slug } = req.params;
     const { limit = 20, offset = 0 } = req.query;
@@ -243,6 +219,40 @@ router.get('/:slug/status', auth, async (req: AuthRequest, res) => {
     res.status(500).json({
       success: false,
       error: 'Failed to check follow status'
+    });
+  }
+});
+
+// Get follower and following counts for a user
+router.get('/:slug/counts', async (req, res) => {
+  try {
+    const { slug } = req.params;
+
+    // Find target user
+    const targetUser = await User.findOne({ publicSlug: slug });
+    
+    if (!targetUser) {
+      return res.status(404).json({
+        success: false,
+        error: 'User not found'
+      });
+    }
+
+    // Get counts
+    const followerCount = await Follow.countDocuments({ followingId: targetUser._id });
+    const followingCount = await Follow.countDocuments({ followerId: targetUser._id });
+
+    const response: APIResponse<{ followerCount: number; followingCount: number }> = {
+      success: true,
+      data: { followerCount, followingCount }
+    };
+
+    res.json(response);
+  } catch (error) {
+    console.error('Error fetching follow counts:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch follow counts'
     });
   }
 });

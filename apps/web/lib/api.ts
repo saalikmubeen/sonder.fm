@@ -32,7 +32,7 @@ if (typeof window !== 'undefined') {
         // If refresh failed, all are rejected with the error.
         prom.reject(error);
       } else {
-        // If refresh succeeded, all queued requests’ Promises are resolved with the new token.
+        // If refresh succeeded, all queued requests' Promises are resolved with the new token.
         prom.resolve(token);
       }
     });
@@ -46,7 +46,7 @@ if (typeof window !== 'undefined') {
     async (error) => {
       const originalRequest = error.config;
 
-      // If a response is a 401 and the request hasn’t already been retried
+      // If a response is a 401 and the request hasn't already been retried
       if (error.response?.status === 401 && !originalRequest._retry) {
         const refreshToken = localStorage.getItem('sonder_refresh_token');
 
@@ -98,7 +98,7 @@ if (typeof window !== 'undefined') {
           // Queue requests while refreshing
           // If another request gets a 401 while isRefreshing is true, it does not trigger another refresh.
           // Instead, it creates a new Promise and pushes its resolve and reject functions to failedQueue.
-          // This request is “paused” until the refresh finishes.
+          // This request is "paused" until the refresh finishes.
           console.log('[Auth] Token refresh in progress. Queuing request.');
           return new Promise(function(resolve, reject) {
             failedQueue.push({ resolve, reject });
@@ -239,6 +239,11 @@ export const followApi = {
     const response = await api.get(`/follow/${slug}/status`);
     return response.data;
   },
+
+  getFollowCounts: async (slug: string) => {
+    const response = await api.get(`/follow/${slug}/counts`);
+    return response.data;
+  },
 };
 
 export const feedApi = {
@@ -289,6 +294,7 @@ export const bookmarkApi = {
   createBookmark: async (data: {
     trackId: string;
     timestampMs: number;
+    durationMs: number;
     caption?: string;
     metadata: {
       name: string;
