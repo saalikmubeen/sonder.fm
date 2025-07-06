@@ -102,6 +102,9 @@ export default function JammingRoomPage() {
   const socket = useJammingStore(state => state.socket);
   const hasJoinedRef = useRef(false);
 
+  // Add this state at the top of your component:
+  const [pendingSeek, setPendingSeek] = useState<number | null>(null);
+
   // Auto-scroll chat to bottom
   useEffect(() => {
     if (chatMessagesRef.current) {
@@ -179,7 +182,7 @@ export default function JammingRoomPage() {
     };
 
     const handleUserTyping = (data: { userId: string; displayName: string; isTyping: boolean }) => {
-      if (data.userId === user?.id) return; // Don't show own typing
+      if (data.userId === user?._id) return; // Don't show own typing
 
       setTypingUsers(prev => {
         const newSet = new Set(prev);
@@ -235,7 +238,7 @@ export default function JammingRoomPage() {
         );
       }
       setCurrentPosition(realPosition);
-      
+
       if (room.playbackState.isPlaying) {
         if (progressInterval.current) {
           clearInterval(progressInterval.current);
@@ -307,14 +310,14 @@ export default function JammingRoomPage() {
   const handlePlay = () => {
     if (!isHost || !room || !socket || !room.currentTrack) return;
     if (room.playbackState.isPlaying) return;
-    
+
     socket.emit('host_play', { roomId: room.roomId, trackId: room.currentTrack.id, positionMs: currentPosition });
   };
 
   const handlePause = () => {
     if (!isHost || !room || !socket) return;
     if (!room.playbackState.isPlaying) return;
-    
+
     let latestPosition = currentPosition;
     if (room.playbackState.isPlaying && room.playbackState.lastUpdated) {
       const lastUpdated = new Date(room.playbackState.lastUpdated).getTime();
@@ -326,12 +329,12 @@ export default function JammingRoomPage() {
       );
       setCurrentPosition(latestPosition);
     }
-    
+
     if (progressInterval.current) {
       clearInterval(progressInterval.current);
       progressInterval.current = null;
     }
-    
+
     socket.emit('host_pause', { roomId: room.roomId, positionMs: latestPosition });
   };
 
@@ -495,8 +498,8 @@ export default function JammingRoomPage() {
                 whileTap={{ scale: 0.95 }}
                 onClick={() => setIsChatOpen(!isChatOpen)}
                 className={`p-2 rounded-full transition-colors relative ${
-                  isChatOpen 
-                    ? 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400' 
+                  isChatOpen
+                    ? 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400'
                     : 'hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-400'
                 }`}
               >
@@ -546,17 +549,73 @@ export default function JammingRoomPage() {
 
                   {/* Progress Bar */}
                   <div className="mt-4 space-y-2">
-                    <div className="h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                      <motion.div
-                        initial={{ width: 0 }}
-                        animate={{ width: `${progressPercent}%` }}
-                        className="h-full bg-gradient-to-r from-green-500 to-emerald-500 rounded-full"
+                    {isHost ? (
+                      // Host: show only the seek slider
+                      <input
+                        type="range"
+                        min={0}
+                        max={room.currentTrack.durationMs}
+                        value={pendingSeek !== null ? pendingSeek : currentPosition}
+                        onChange={e => {
+                          const newPosition = Number(e.target.value);
+                          setPendingSeek(newPosition); // update UI immediately while dragging
+                        }}
+                        onMouseUp={e => {
+                          if (pendingSeek !== null && socket && room) {
+                            socket.emit('host_seek', { roomId: room.roomId, positionMs: pendingSeek });
+                            setCurrentPosition(pendingSeek);
+                            setPendingSeek(null);
+                            // If at end and not playing, also emit play
+                            if (
+                              room.currentTrack &&
+                              room.playbackState.positionMs === room.currentTrack.durationMs &&
+                              !room.playbackState.isPlaying
+                            ) {
+                              socket.emit('host_play', {
+                                roomId: room.roomId,
+                                trackId: room.currentTrack.id,
+                                positionMs: pendingSeek,
+                              });
+                            }
+                          }
+                        }}
+                        onTouchEnd={e => {
+                          if (pendingSeek !== null && socket && room) {
+                            socket.emit('host_seek', { roomId: room.roomId, positionMs: pendingSeek });
+                            setCurrentPosition(pendingSeek);
+                            setPendingSeek(null);
+                            // If at end and not playing, also emit play
+                            if (
+                              room.currentTrack &&
+                              room.playbackState.positionMs === room.currentTrack.durationMs &&
+                              !room.playbackState.isPlaying
+                            ) {
+                              socket.emit('host_play', {
+                                roomId: room.roomId,
+                                trackId: room.currentTrack.id,
+                                positionMs: pendingSeek,
+                              });
+                            }
+                          }
+                        }}
+                        className="w-full mt-2 accent-green-500"
                       />
-                    </div>
-                    <div className="flex justify-between text-xs text-gray-500">
-                      <span>{formatDuration(currentPosition)}</span>
-                      <span>{formatDuration(room.currentTrack.durationMs)}</span>
-                    </div>
+                    ) : (
+                      // Non-host: show only the progress bar
+                      <>
+                        <div className="h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                          <motion.div
+                            initial={{ width: 0 }}
+                            animate={{ width: `${progressPercent}%` }}
+                            className="h-full bg-gradient-to-r from-green-500 to-emerald-500 rounded-full"
+                          />
+                        </div>
+                        <div className="flex justify-between text-xs text-gray-500">
+                          <span>{formatDuration(currentPosition)}</span>
+                          <span>{formatDuration(room.currentTrack.durationMs)}</span>
+                        </div>
+                      </>
+                    )}
                   </div>
                 </div>
 
@@ -564,11 +623,21 @@ export default function JammingRoomPage() {
                   {/* Playback Controls (Host Only) */}
                   {isHost && room?.currentTrack && (
                     <button
-                      onClick={room.playbackState.isPlaying ? handlePause : handlePlay}
+                      onClick={
+                        (room.playbackState.isPlaying && currentPosition < room.currentTrack.durationMs)
+                          ? handlePause
+                          : handlePlay
+                      }
                       className="w-16 h-16 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full flex items-center justify-center text-white shadow-lg hover:shadow-xl transition-all"
-                      aria-label={room.playbackState.isPlaying ? 'Pause' : 'Play'}
+                      aria-label={
+                        (room.playbackState.isPlaying && currentPosition < room.currentTrack.durationMs)
+                          ? 'Pause'
+                          : 'Play'
+                      }
                     >
-                      {room.playbackState.isPlaying ? <Pause className="w-6 h-6" /> : <Play className="w-6 h-6 ml-1" />}
+                      {(room.playbackState.isPlaying && currentPosition < room.currentTrack.durationMs)
+                        ? <Pause className="w-6 h-6" />
+                        : <Play className="w-6 h-6 ml-1" />}
                     </button>
                   )}
 
@@ -773,28 +842,28 @@ export default function JammingRoomPage() {
                     key={message.id}
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className={`flex gap-3 ${message.userId === user?.id ? 'flex-row-reverse' : ''}`}
+                    className={`flex gap-3 ${message.userId === user?._id ? '' : ''}`}
                   >
                     <img
                       src={message.avatarUrl}
                       alt={message.displayName}
                       className="w-8 h-8 rounded-full object-cover flex-shrink-0"
                     />
-                    <div className={`flex-1 ${message.userId === user?.id ? 'text-right' : ''}`}>
+                    <div className={`flex-1 ${message.userId === user?._id ? '' : ''}`}>
                       <div className="flex items-center gap-2 mb-1">
                         <span className="text-xs font-medium text-gray-900 dark:text-white">
                           {message.displayName}
                         </span>
                         <span className="text-xs text-gray-500">
-                          {new Date(message.timestamp).toLocaleTimeString([], { 
-                            hour: '2-digit', 
-                            minute: '2-digit' 
+                          {new Date(message.timestamp).toLocaleTimeString([], {
+                            hour: '2-digit',
+                            minute: '2-digit'
                           })}
                         </span>
                       </div>
                       <div
                         className={`inline-block px-3 py-2 rounded-2xl text-sm max-w-[200px] break-words ${
-                          message.userId === user?.id
+                          message.userId === user?._id
                             ? 'bg-green-500 text-white'
                             : 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white'
                         }`}
