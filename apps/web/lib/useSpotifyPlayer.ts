@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { useJammingStore, type JammingState } from './jamming-store';
+import { refreshSpotifyToken } from './api';
 
 declare global {
   interface Window {
@@ -27,10 +28,15 @@ export function useSpotifyPlayer(accessToken: string | null) {
       document.body.appendChild(script);
     }
 
+    let currentToken = accessToken;
+
     window.onSpotifyWebPlaybackSDKReady = () => {
       const player = new window.Spotify.Player({
         name: 'Sonder.fm Web Player',
-        getOAuthToken: (cb: (token: string) => void) => { cb(accessToken); },
+        getOAuthToken: async (cb: (token: string) => void) => {
+          // Try the current token first
+          cb(currentToken);
+        },
         volume: 0.8,
       });
 
@@ -41,6 +47,18 @@ export function useSpotifyPlayer(accessToken: string | null) {
 
       player.addListener('not_ready', () => {
         setReady(false);
+      });
+
+      // Listen for authentication errors and refresh token if needed
+      player.addListener('authentication_error', async (e: any) => {
+        try {
+          const newToken = await refreshSpotifyToken();
+          currentToken = newToken;
+          // No need to call cb here; the SDK will call getOAuthToken again as needed
+        } catch (err) {
+          // Optionally, handle logout or error UI
+          console.error('Failed to refresh Spotify token', err);
+        }
       });
 
       player.connect();

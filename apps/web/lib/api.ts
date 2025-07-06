@@ -327,3 +327,15 @@ export const bookmarkApi = {
     return response.data;
   },
 };
+
+export async function refreshSpotifyToken() {
+  const token = typeof window !== 'undefined' ? localStorage.getItem('sonder_token') : null;
+  if (!token) throw new Error('No JWT found');
+  const res = await axios.post(
+    `${process.env.NEXT_PUBLIC_API_URL}/auth/refresh-spotify`,
+    {},
+    { headers: { Authorization: `Bearer ${token}` } }
+  );
+  if (!res.data?.accessToken) throw new Error('No access token returned');
+  return res.data.accessToken;
+}

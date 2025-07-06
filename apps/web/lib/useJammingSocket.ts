@@ -58,7 +58,10 @@ export function useJammingSocket(roomId: string, setRoom: (room: any) => void) {
     socket.on('room_state', handleRoomState);
     socket.on('room_ended', handleRoomEnded);
 
-    if (!socket || !player || !deviceId) return;
+    if (!socket || !player || !deviceId) {
+      toast.error('You don\'t have a spotify account connected or don\'t have a premium account');
+      return;
+    }
 
     const handlePlay = ({ trackId, positionMs }: { trackId: string; positionMs: number }) => {
       if (!player || !deviceId) return;

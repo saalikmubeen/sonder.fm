@@ -5,6 +5,8 @@ import { User } from '../models/User';
 import { SpotifyAPI, CryptoUtils } from '@sonder/utils';
 import type { APIResponse } from '@sonder/types';
 import { RefreshToken } from '../models/RefreshToken';
+import { auth } from '../middleware/auth';
+import type { AuthRequest } from '../middleware/auth';
 
 import {
   buildSpotifyProfile,
@@ -203,7 +205,7 @@ router.get('/callback', async (req, res) => {
       { userId: user._id, spotifyId: user.spotifyId },
       process.env.JWT_SECRET!,
       // { expiresIn: '7d' }
-      { expiresIn: '15m' }
+      { expiresIn: '1m' }
     );
 
     // 🔁 Rotate refresh token
@@ -326,7 +328,7 @@ router.post('/refresh', async (req, res) => {
   const newAccess = jwt.sign(
     { userId: stored.userId._id, spotifyId: user.spotifyId },
     process.env.JWT_SECRET!,
-    { expiresIn: '15m' }
+    { expiresIn: '1m' }
     //  { expiresIn: '7d' }
   );
 
@@ -349,6 +351,27 @@ router.post('/refresh', async (req, res) => {
     accessToken: newAccess,
     refreshToken: newRaw,
   });
+});
+
+// Refresh Spotify access token using user's refresh token
+router.post('/refresh-spotify', auth, async (req: AuthRequest, res) => {
+  try {
+    const user = req.user;
+    if (!user) return res.status(404).json({ success: false, error: 'User not found' });
+
+    // Decrypt the Spotify refresh token
+    const refreshToken = CryptoUtils.decrypt(user.refreshTokenEncrypted);
+    const { accessToken, expiresIn } = await spotifyAPI.refreshAccessToken(refreshToken);
+
+    user.accessToken = accessToken;
+    user.accessTokenExpiresAt = new Date(Date.now() + expiresIn * 1000);
+    await user.save();
+
+    res.json({ success: true, accessToken, expiresIn });
+  } catch (error) {
+    console.error('Error refreshing Spotify token:', error);
+    res.status(500).json({ success: false, error: 'Failed to refresh Spotify token' });
+  }
 });
 
 // Logout
