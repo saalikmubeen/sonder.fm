@@ -1,3 +1,4 @@
+import { Toaster } from 'react-hot-toast';
 import '../styles/tailwind.css';
 import Providers from './providers';
 
@@ -15,6 +16,7 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className="bg-white dark:bg-gray-900 text-gray-900 dark:text-white min-h-screen">
         <Providers>{children}</Providers>
+        <Toaster position="top-right" />
       </body>
     </html>
   );
