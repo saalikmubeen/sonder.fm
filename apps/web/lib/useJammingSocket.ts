@@ -21,10 +21,9 @@ export function useJammingSocket(roomId: string, setRoom: (room: any) => void) {
 
   // Handle playback events
   useEffect(() => {
-
     if (!socket) return;
 
-     // User joined event
+    // User joined event
     const handleUserJoined = (user: any) => {
       setRoom((prev: any) => ({
         ...prev,
@@ -33,14 +32,31 @@ export function useJammingSocket(roomId: string, setRoom: (room: any) => void) {
       toast.success(`${user.displayName} joined the room`);
     };
 
+    // User left event
+    const handleUserLeft = (user: any) => {
+      setRoom((prev: any) => ({
+        ...prev,
+        members: (prev?.members || []).filter((m: any) => m.userId !== user.userId),
+      }));
+      toast(`${user.displayName} left the room`, { icon: '👋' });
+    };
+
     // Room state event
     const handleRoomState = (room: any) => {
       console.log('[Jamming] Received room state event', room);
       setRoom(room);
     };
 
+    // Room ended event
+    const handleRoomEnded = () => {
+      toast.error('Room has ended');
+      // Redirect will be handled by the component
+    };
+
     socket.on('user_joined', handleUserJoined);
+    socket.on('user_left', handleUserLeft);
     socket.on('room_state', handleRoomState);
+    socket.on('room_ended', handleRoomEnded);
 
     if (!socket || !player || !deviceId) return;
 
@@ -72,7 +88,7 @@ export function useJammingSocket(roomId: string, setRoom: (room: any) => void) {
 
     const handlePause = () => {
       console.log('[Jamming] Received playback_pause event');
-      toast('⏸️ Playback paused (socket event)', { icon: '⏸️' });
+      toast('⏸️ Playback paused', { icon: '⏸️' });
       player._options.getOAuthToken((token: string) => {
         fetch(`https://api.spotify.com/v1/me/player/pause?device_id=${deviceId}`, {
           method: 'PUT',
@@ -105,7 +121,9 @@ export function useJammingSocket(roomId: string, setRoom: (room: any) => void) {
       socket.off('playback_pause', handlePause);
       socket.off('playback_seek', handleSeek);
       socket.off('user_joined', handleUserJoined);
+      socket.off('user_left', handleUserLeft);
       socket.off('room_state', handleRoomState);
+      socket.off('room_ended', handleRoomEnded);
     };
   }, [socket, player, deviceId, setRoom]);
 }

@@ -9,9 +9,19 @@ interface JammingSocketData {
   currentRoom?: string;
 }
 
+interface ChatMessage {
+  id: string;
+  userId: string;
+  displayName: string;
+  avatarUrl: string;
+  message: string;
+  timestamp: Date;
+}
+
 export const setupJammingSocket = (io: Server) => {
   const jammingNamespace = io.of('/jamming');
   const activeConnections = new Map<string, Set<string>>(); // roomId -> Set of userIds
+  const roomChats = new Map<string, ChatMessage[]>(); // roomId -> ChatMessage[]
 
   jammingNamespace.use(async (socket, next) => {
     try {
@@ -56,6 +66,8 @@ export const setupJammingSocket = (io: Server) => {
           activeConnections.get(prevRoomId)!.delete(userId);
           if (activeConnections.get(prevRoomId)!.size === 0) {
             activeConnections.delete(prevRoomId);
+            // Clean up chat history when room is empty
+            roomChats.delete(prevRoomId);
           }
         }
 
@@ -76,6 +88,15 @@ export const setupJammingSocket = (io: Server) => {
         activeConnections.set(roomId, new Set());
       }
       activeConnections.get(roomId)!.add(userId);
+
+      // Initialize chat history for room if it doesn't exist
+      if (!roomChats.has(roomId)) {
+        roomChats.set(roomId, []);
+      }
+
+      // Send existing chat history to the user
+      const chatHistory = roomChats.get(roomId) || [];
+      socket.emit('chat_history', chatHistory);
 
       // Notify others in the room
       socket.to(roomId).emit('user_joined', {
@@ -101,31 +122,115 @@ export const setupJammingSocket = (io: Server) => {
       }
     });
 
+    // Handle chat messages
+    socket.on('send_chat_message', (data: { roomId: string; message: string }) => {
+      const { roomId, message } = data;
+      
+      // Validate message
+      if (!message || typeof message !== 'string' || message.trim().length === 0) {
+        socket.emit('chat_error', { error: 'Message cannot be empty' });
+        return;
+      }
+
+      if (message.length > 500) {
+        socket.emit('chat_error', { error: 'Message too long (max 500 characters)' });
+        return;
+      }
+
+      // Check if user is in the room
+      if ((socket as any).currentRoom !== roomId) {
+        socket.emit('chat_error', { error: 'You are not in this room' });
+        return;
+      }
+
+      // Create chat message
+      const chatMessage: ChatMessage = {
+        id: `${Date.now()}-${userId}`,
+        userId,
+        displayName: user.displayName,
+        avatarUrl: user.avatarUrl,
+        message: message.trim(),
+        timestamp: new Date(),
+      };
+
+      // Add to room chat history
+      if (!roomChats.has(roomId)) {
+        roomChats.set(roomId, []);
+      }
+      const chatHistory = roomChats.get(roomId)!;
+      chatHistory.push(chatMessage);
+
+      // Keep only last 100 messages to prevent memory issues
+      if (chatHistory.length > 100) {
+        chatHistory.shift();
+      }
+
+      // Broadcast message to all users in the room
+      jammingNamespace.to(roomId).emit('chat_message', chatMessage);
+
+      console.log(`Chat message from ${user.displayName} in room ${roomId}: ${message}`);
+    });
+
+    // Handle typing indicators
+    socket.on('typing_start', (roomId: string) => {
+      if ((socket as any).currentRoom === roomId) {
+        socket.to(roomId).emit('user_typing', {
+          userId,
+          displayName: user.displayName,
+          isTyping: true,
+        });
+      }
+    });
+
+    socket.on('typing_stop', (roomId: string) => {
+      if ((socket as any).currentRoom === roomId) {
+        socket.to(roomId).emit('user_typing', {
+          userId,
+          displayName: user.displayName,
+          isTyping: false,
+        });
+      }
+    });
+
     // Leave room
     socket.on('leave_room', (roomId: string) => {
-      // console.log(`User ${user.displayName} leaving room ${roomId}`);
+      console.log(`User ${user.displayName} leaving room ${roomId}`);
 
-      // socket.leave(roomId);
-      // (socket as any).currentRoom = undefined;
+      socket.leave(roomId);
+      (socket as any).currentRoom = undefined;
 
-      // // Update room state
-      // const { room, roomEnded } = RoomManager.leaveRoom(roomId, userId);
+      // Remove from active connections
+      if (activeConnections.has(roomId)) {
+        activeConnections.get(roomId)!.delete(userId);
+        if (activeConnections.get(roomId)!.size === 0) {
+          activeConnections.delete(roomId);
+          // Clean up chat history when room is empty
+          roomChats.delete(roomId);
+          console.log(`Cleaned up chat history for empty room ${roomId}`);
+        }
+      }
 
-      // if (roomEnded) {
-      //   // Notify all users that room ended
-      //   jammingNamespace.to(roomId).emit('room_ended');
-      // } else {
-      //   // Notify others that user left
-      //   jammingNamespace.to(roomId).emit('user_left', {
-      //     userId,
-      //     displayName: user.displayName,
-      //   });
+      // Update room state
+      const { room, roomEnded } = RoomManager.leaveRoom(roomId, userId);
 
-      //   // Send updated room state
-      //   if (room) {
-      //     jammingNamespace.to(roomId).emit('room_state', room);
-      //   }
-      // }
+      if (roomEnded) {
+        // Notify all users that room ended
+        jammingNamespace.to(roomId).emit('room_ended');
+        // Clean up chat history
+        roomChats.delete(roomId);
+        console.log(`Room ${roomId} ended, chat history cleaned up`);
+      } else {
+        // Notify others that user left
+        jammingNamespace.to(roomId).emit('user_left', {
+          userId,
+          displayName: user.displayName,
+        });
+
+        // Send updated room state
+        if (room) {
+          jammingNamespace.to(roomId).emit('room_state', room);
+        }
+      }
     });
 
     // Host playback controls
@@ -253,11 +358,45 @@ export const setupJammingSocket = (io: Server) => {
       console.log(`Host ${user.displayName} changed track in room ${roomId}`);
     });
 
-            // Handle disconnect - don't automatically remove users from rooms
+    // Handle disconnect - clean up user from room
     socket.on('disconnect', () => {
       console.log(`User ${user.displayName} disconnected from jamming socket`);
-      // Note: We don't remove users from rooms on socket disconnect
-      // Users should explicitly leave rooms via the leave_room event
+      
+      const currentRoom = (socket as any).currentRoom;
+      if (currentRoom) {
+        // Remove from active connections
+        if (activeConnections.has(currentRoom)) {
+          activeConnections.get(currentRoom)!.delete(userId);
+          if (activeConnections.get(currentRoom)!.size === 0) {
+            activeConnections.delete(currentRoom);
+            // Clean up chat history when room is empty
+            roomChats.delete(currentRoom);
+            console.log(`Cleaned up chat history for empty room ${currentRoom} after disconnect`);
+          }
+        }
+
+        // Update room state
+        const { room, roomEnded } = RoomManager.leaveRoom(currentRoom, userId);
+
+        if (roomEnded) {
+          // Notify all users that room ended
+          jammingNamespace.to(currentRoom).emit('room_ended');
+          // Clean up chat history
+          roomChats.delete(currentRoom);
+          console.log(`Room ${currentRoom} ended after host disconnect, chat history cleaned up`);
+        } else {
+          // Notify others that user left
+          jammingNamespace.to(currentRoom).emit('user_left', {
+            userId,
+            displayName: user.displayName,
+          });
+
+          // Send updated room state
+          if (room) {
+            jammingNamespace.to(currentRoom).emit('room_state', room);
+          }
+        }
+      }
     });
   });
 };
