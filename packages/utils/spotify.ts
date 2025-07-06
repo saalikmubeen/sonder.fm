@@ -64,8 +64,10 @@ export class SpotifyAPI {
       'playlist-read-private',
       'playlist-read-collaborative',
       'playlist-modify-public',
-      'user-read-currently-playing',
-      'user-read-playback-state'
+      'user-read-playback-state',     // To know if a track is playing
+      'user-modify-playback-state',   // To change tracks, play/pause, seek
+      'user-read-currently-playing',   // To get current playing track
+      'streaming', // <-- THIS IS REQUIRED
     ].join(' ');
 
     const params = new URLSearchParams({
@@ -73,6 +75,7 @@ export class SpotifyAPI {
       client_id: this.clientId,
       scope: scopes,
       redirect_uri: this.redirectUri,
+      show_dialog: 'true',
       ...(state && { state }),
     });
 

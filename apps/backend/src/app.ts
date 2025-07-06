@@ -24,11 +24,14 @@ import noteRoutes from './routes/note';
 import messageRoutes from './routes/message';
 import bookmarkRoutes from './routes/bookmark';
 import followRoutes from './routes/follow';
+import jammingRoutes from './routes/jamming';
 
 // Import services
 import { setupSocket } from './services/socket';
+import { setupJammingSocket } from './services/jammingSocket';
 import { updateAllUsersNowPlaying } from './services/nowPlayingUpdater';
 import { CryptoUtils } from '@sonder/utils';
+import { RoomManager } from './models/JammingRoom';
 
 const app = express();
 const server = createServer(app);
@@ -59,6 +62,7 @@ app.use(cors({
 }));
 app.use(cookieParser());
 
+
 // Rate limiting
 const limiter = rateLimit({
   windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS!) || 15 * 60 * 1000,
@@ -80,6 +84,7 @@ app.use('/note', noteRoutes);
 app.use('/message', messageRoutes);
 app.use('/bookmark', bookmarkRoutes);
 app.use('/follow', followRoutes);
+app.use('/jamming', jammingRoutes);
 
 // Health check
 app.get('/health', (req, res) => {
@@ -91,7 +96,8 @@ app.get('/health', (req, res) => {
 });
 
 // Setup Socket.IO
-setupSocket(io);
+// setupSocket(io);
+setupJammingSocket(io);
 
 // Background job: Update now playing every 2 minutes
 // cron.schedule('*/2 * * * *', async () => {

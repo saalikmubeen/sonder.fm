@@ -1,0 +1,263 @@
+import { Server, Socket } from 'socket.io';
+import jwt from 'jsonwebtoken';
+import { User } from '../models/User';
+import { RoomManager } from '../models/JammingRoom';
+
+interface JammingSocketData {
+  userId: string;
+  user: any;
+  currentRoom?: string;
+}
+
+export const setupJammingSocket = (io: Server) => {
+  const jammingNamespace = io.of('/jamming');
+  const activeConnections = new Map<string, Set<string>>(); // roomId -> Set of userIds
+
+  jammingNamespace.use(async (socket, next) => {
+    try {
+      console.log("Jamming socket use", socket.handshake.auth)
+      const token = socket.handshake.auth.token;
+      const decoded = jwt.verify(token, process.env.JWT_SECRET!) as any;
+      const user = await User.findById(decoded.userId);
+      console.log("User found", user)
+
+      if (!user) {
+        console.log("User not found", decoded)
+        return next(new Error('Authentication error'));
+      }
+
+      (socket as any).userId = decoded.userId;
+      (socket as any).user = user;
+      next();
+    } catch (error) {
+      console.error("Error in jamming socket use", error)
+      next(new Error('Authentication error'));
+    }
+  });
+
+  jammingNamespace.on('connection', (socket: Socket) => {
+    const userId = (socket as any).userId;
+    const user = (socket as any).user;
+
+    console.log(`User ${user.displayName} connected to jamming`);
+
+    // Join a room
+    socket.on('join_room', (roomId: string) => {
+      console.log(`User ${user.displayName} joining room ${roomId}`);
+
+      // Leave previous room if any (but not if it's the same room)
+      if ((socket as any).currentRoom && (socket as any).currentRoom !== roomId) {
+        console.log(`User ${user.displayName} leaving previous room ${(socket as any).currentRoom} to join ${roomId}`);
+        socket.leave((socket as any).currentRoom);
+        const prevRoomId = (socket as any).currentRoom;
+
+        // Remove from active connections
+        if (activeConnections.has(prevRoomId)) {
+          activeConnections.get(prevRoomId)!.delete(userId);
+          if (activeConnections.get(prevRoomId)!.size === 0) {
+            activeConnections.delete(prevRoomId);
+          }
+        }
+
+        jammingNamespace.to(prevRoomId).emit('user_left', {
+          userId,
+          displayName: user.displayName,
+        });
+      } else if ((socket as any).currentRoom === roomId) {
+        console.log(`User ${user.displayName} already in room ${roomId}, not leaving`);
+      }
+
+      // Join new room
+      socket.join(roomId);
+      (socket as any).currentRoom = roomId;
+
+      // Add to active connections
+      if (!activeConnections.has(roomId)) {
+        activeConnections.set(roomId, new Set());
+      }
+      activeConnections.get(roomId)!.add(userId);
+
+      // Notify others in the room
+      socket.to(roomId).emit('user_joined', {
+        userId,
+        spotifyId: user.spotifyId,
+        displayName: user.displayName,
+        avatarUrl: user.avatarUrl,
+        publicSlug: user.publicSlug,
+      });
+
+      // Join the room in RoomManager (ensures member has publicSlug)
+      const room = RoomManager.joinRoom(roomId, {
+        userId: user._id.toString(),
+        spotifyId: user.spotifyId,
+        displayName: user.displayName,
+        avatarUrl: user.avatarUrl,
+        publicSlug: user.publicSlug,
+      });
+      if (room) {
+        socket.emit('room_state', room);
+        // Broadcast full updated room state to all members
+        jammingNamespace.to(roomId).emit('room_state', room);
+      }
+    });
+
+    // Leave room
+    socket.on('leave_room', (roomId: string) => {
+      // console.log(`User ${user.displayName} leaving room ${roomId}`);
+
+      // socket.leave(roomId);
+      // (socket as any).currentRoom = undefined;
+
+      // // Update room state
+      // const { room, roomEnded } = RoomManager.leaveRoom(roomId, userId);
+
+      // if (roomEnded) {
+      //   // Notify all users that room ended
+      //   jammingNamespace.to(roomId).emit('room_ended');
+      // } else {
+      //   // Notify others that user left
+      //   jammingNamespace.to(roomId).emit('user_left', {
+      //     userId,
+      //     displayName: user.displayName,
+      //   });
+
+      //   // Send updated room state
+      //   if (room) {
+      //     jammingNamespace.to(roomId).emit('room_state', room);
+      //   }
+      // }
+    });
+
+    // Host playback controls
+    socket.on('host_play', async (data: { roomId: string; trackId?: string; positionMs: number }) => {
+      console.log("Host requested playback", data)
+      const { roomId, trackId } = data;
+      const room = RoomManager.getRoom(roomId);
+
+      if (!room || room.hostId !== userId) {
+        socket.emit('error', { message: 'Not authorized to control playback' });
+        return;
+      }
+
+      // Fetch track info from Spotify and update currentTrack
+      let track = null;
+      if (trackId) {
+        try {
+          const userAccessToken = user.accessToken;
+          const res = await fetch(`https://api.spotify.com/v1/tracks/${trackId}`,
+            { headers: { Authorization: `Bearer ${userAccessToken}` } });
+          if (res.ok) {
+            const trackData = await res.json() as any;
+            track = {
+              id: trackData.id,
+              name: trackData.name,
+              artist: trackData.artists.map((a: any) => a.name).join(', '),
+              album: trackData.album.name,
+              albumArt: trackData.album.images[0]?.url || '',
+              spotifyUrl: trackData.external_urls.spotify,
+              durationMs: trackData.duration_ms,
+            };
+            RoomManager.setCurrentTrack(roomId, track);
+          }
+        } catch (err) {
+          console.error('Failed to fetch track info from Spotify:', err);
+        }
+      }
+
+      // Update room state
+      RoomManager.updatePlaybackState(roomId, {
+        isPlaying: true,
+        positionMs: data.positionMs,
+      });
+
+      // Broadcast to all room members
+      jammingNamespace.to(roomId).emit('playback_play', {
+        trackId,
+        positionMs: data.positionMs,
+        timestamp: Date.now(),
+      });
+
+      // Broadcast updated room state (with currentTrack) to all clients
+      const updatedRoom = RoomManager.getRoom(roomId);
+      if (updatedRoom) {
+        jammingNamespace.to(roomId).emit('room_state', updatedRoom);
+      }
+
+      console.log(`Host ${user.displayName} started playback in room ${roomId}`);
+    });
+
+    // Host pause controls
+    socket.on('host_pause', (data: { roomId: string; positionMs: number }) => {
+      const { roomId, positionMs } = data;
+      console.log("Socket pause backend", data)
+      const room = RoomManager.getRoom(roomId);
+      if (!room || room.hostId !== userId) {
+        socket.emit('error', { message: 'Not authorized to control playback' });
+        return;
+      }
+      // Update playback state
+      RoomManager.updatePlaybackState(roomId, {
+        isPlaying: false,
+        positionMs,
+      });
+      // Broadcast pause event to all clients
+      jammingNamespace.to(roomId).emit('playback_pause', { positionMs });
+      // Broadcast updated room state to all clients
+      const updatedRoom = RoomManager.getRoom(roomId);
+      if (updatedRoom) {
+        jammingNamespace.to(roomId).emit('room_state', updatedRoom);
+      }
+    });
+
+    socket.on('host_seek', (data: { roomId: string; positionMs: number }) => {
+      const { roomId, positionMs } = data;
+      const room = RoomManager.getRoom(roomId);
+
+      if (!room || room.hostId !== userId) {
+        socket.emit('error', { message: 'Not authorized to control playback' });
+        return;
+      }
+
+      // Update room state
+      RoomManager.updatePlaybackState(roomId, {
+        positionMs,
+      });
+
+      // Broadcast to all room members
+      jammingNamespace.to(roomId).emit('playback_seek', {
+        positionMs,
+        timestamp: Date.now(),
+      });
+
+      console.log(`Host ${user.displayName} seeked playback in room ${roomId}`);
+    });
+
+    socket.on('host_track_change', (data: { roomId: string; track: any }) => {
+      const { roomId, track } = data;
+      const room = RoomManager.getRoom(roomId);
+
+      if (!room || room.hostId !== userId) {
+        socket.emit('error', { message: 'Not authorized to control playback' });
+        return;
+      }
+
+      // Update room state
+      RoomManager.setCurrentTrack(roomId, track);
+
+      // Broadcast to all room members
+      jammingNamespace.to(roomId).emit('track_changed', {
+        track,
+        timestamp: Date.now(),
+      });
+
+      console.log(`Host ${user.displayName} changed track in room ${roomId}`);
+    });
+
+            // Handle disconnect - don't automatically remove users from rooms
+    socket.on('disconnect', () => {
+      console.log(`User ${user.displayName} disconnected from jamming socket`);
+      // Note: We don't remove users from rooms on socket disconnect
+      // Users should explicitly leave rooms via the leave_room event
+    });
+  });
+};
