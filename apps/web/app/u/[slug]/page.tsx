@@ -41,6 +41,7 @@ import { Card } from '@sonder/ui/components/Card';
 import { Button } from '@sonder/ui/components/Button';
 import { LoadingSpinner } from '@sonder/ui/components/LoadingSpinner';
 import { motion as motionDiv } from 'framer-motion';
+import Link from 'next/link';
 
 // Minimal Tooltip component
 function Tooltip({ content, children }: { content: string; children: React.ReactNode }) {
@@ -357,10 +358,9 @@ export default function UserProfilePage() {
         <div className="w-28 bg-white dark:bg-black fixed left-0 top-0 h-full flex flex-col">
           {/* Sonder.fm logo at the top */}
           <div className="flex items-center gap-2 h-16 px-4 select-none">
-            <div className="w-3 h-3 bg-green-500 rounded-full" />
-            <span className="text-lg font-bold text-black dark:text-white tracking-tight">
+            <Link href="/" className="font-bold text-lg text-black dark:text-white hover:text-green-500 transition-colors">
               Sonder.fm
-            </span>
+            </Link>
           </div>
 
           {/* Centered Navigation */}
@@ -741,15 +741,14 @@ function ProfileSection({
                 </motion.button>
               )}
               {/* Message Button for own profile */}
-              {isOwnProfile && (
-                <motion.button
-                  whileHover={{ scale: 1.01 }}
-                  whileTap={{ scale: 0.98 }}
-                  className="px-3 py-1.5 rounded-full font-medium text-xs bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-all flex items-center gap-1.5"
+              {isOwnProfile && user && (
+                <Link
+                  href="/jam"
+                  className="px-3 py-1.5 rounded-full font-medium text-xs bg-green-600 text-white hover:bg-green-700 shadow-lg hover:shadow-xl transition-all flex items-center gap-1.5"
                 >
-                  <MessageSquare className="w-3 h-3" />
-                  Messages
-                </motion.button>
+                  <Music className="w-3 h-3" />
+                  Create a Jam
+                </Link>
               )}
             </div>
             {/* Follow Counts */}
@@ -1455,7 +1454,7 @@ function PlaylistsSection({ playlists, openSpotifyUrl }: any) {
               transition={{ delay: index * 0.05 }}
               whileHover={{ scale: 1.05 }}
               onClick={() => openSpotifyUrl(playlist.url)}
-              className="bg-gray-50 dark:bg-gray-800/50 rounded-2xl p-4 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors cursor-pointer group"
+              className="bg-gray-50 dark:bg-gray-900/60 rounded-2xl p-4 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors cursor-pointer group"
             >
               <div className="aspect-square bg-gray-200 dark:bg-gray-700 rounded-lg mb-3 flex items-center justify-center overflow-hidden">
                 {playlist.imageUrl ? (
@@ -1503,181 +1502,179 @@ function BookmarksSection({
   openSpotifyAtTimestamp,
 }: any) {
   return (
-    <>
-      <motion.div
-        key="bookmarks"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: -20 }}
-        className="bg-white dark:bg-gray-900 rounded-2xl shadow-lg p-6 md:p-8"
-      >
-        {/* Subtle Instructional Banner */}
-        <div className="mb-5">
-          <div className="flex items-center gap-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 text-gray-600 dark:text-gray-300 text-sm">
-            <Info className="w-4 h-4 text-green-400" />
-            <span>
-              Play a song on <span className="font-medium text-green-600">Spotify</span>, then open your <span className="font-medium text-green-600">Sonder.fm</span> profile to bookmark that exact moment in the song.
-            </span>
-          </div>
+    <motion.div
+      key="bookmarks"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -20 }}
+      className=""
+    >
+      {/* Subtle Instructional Banner */}
+      <div className="mb-5">
+        <div className="flex items-center gap-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 text-gray-600 dark:text-gray-300 text-sm">
+          <Info className="w-4 h-4 text-green-400" />
+          <span>
+            Play a song on <span className="font-medium text-green-600">Spotify</span>, then open your <span className="font-medium text-green-600">Sonder.fm</span> profile to bookmark that exact moment in the song.
+          </span>
         </div>
+      </div>
 
-        {loading ? (
-          <div className="flex items-center justify-center py-12">
-            <LoadingSpinner size="md" />
-          </div>
-        ) : !bookmarks.length ? (
-          <div className="text-center py-12">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="bg-gradient-to-br from-green-100 to-emerald-100 dark:from-green-800/40 dark:to-emerald-800/40 rounded-2xl p-8 max-w-md mx-auto"
-            >
-              <div className="w-16 h-16 bg-gradient-to-br from-green-600 to-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Bookmark className="w-8 h-8 text-white" />
+      {loading ? (
+        <div className="flex items-center justify-center py-12">
+          <LoadingSpinner size="md" />
+        </div>
+      ) : !bookmarks.length ? (
+        <div className="text-center py-12">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-gradient-to-br from-green-100 to-emerald-100 dark:from-green-800/40 dark:to-emerald-800/40 rounded-2xl p-8 max-w-md mx-auto"
+          >
+            <div className="w-16 h-16 bg-gradient-to-br from-green-600 to-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Bookmark className="w-8 h-8 text-white" />
+            </div>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+              No bookmarks yet
+            </h3>
+            <p className="text-gray-600 dark:text-gray-400 text-sm mb-4">
+              {isOwnProfile
+                ? 'Start playing a song on Spotify, then visit your profile to bookmark special moments!'
+                : `${profile.displayName} hasn't bookmarked any musical moments yet.`}
+            </p>
+            {isOwnProfile && (
+              <div className="flex items-center justify-center gap-2 text-xs text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-900/30 rounded-lg px-3 py-2">
+                <Info className="w-4 h-4" />
+                <span>Play music → Visit profile → Click bookmark icon</span>
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                No bookmarks yet
-              </h3>
-              <p className="text-gray-600 dark:text-gray-400 text-sm mb-4">
-                {isOwnProfile
-                  ? 'Start playing a song on Spotify, then visit your profile to bookmark special moments!'
-                  : `${profile.displayName} hasn't bookmarked any musical moments yet.`}
-              </p>
-              {isOwnProfile && (
-                <div className="flex items-center justify-center gap-2 text-xs text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-900/30 rounded-lg px-3 py-2">
-                  <Info className="w-4 h-4" />
-                  <span>Play music → Visit profile → Click bookmark icon</span>
+            )}
+          </motion.div>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {bookmarks.map((bookmark: any, index: number) => (
+            <motion.div
+              key={bookmark._id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.1 }}
+              className="group p-3 sm:p-4 flex flex-col h-full bg-gray-50 dark:bg-gray-900/60 border border-gray-200 dark:border-gray-800 rounded-xl shadow-sm hover:bg-gray-100 dark:hover:bg-gray-800 hover:shadow transition-all"
+            >
+              <div className="flex items-center gap-4">
+                {/* Album Art */}
+                <div className="relative flex-shrink-0">
+                  <img
+                    src={bookmark.metadata.album.imageUrl}
+                    alt={bookmark.metadata.album.name}
+                    onClick={() => {
+                      console.log('Album clicked:', bookmark.metadata.spotifyUrl, bookmark.timestampMs);
+                      openSpotifyAtTimestamp(bookmark.metadata.spotifyUrl, bookmark.timestampMs);
+                    }}
+                    className="w-14 h-14 md:w-16 md:h-16 rounded-lg object-cover shadow-md border-2 border-white dark:border-gray-900 cursor-pointer hover:scale-105 transition-transform relative z-10"
+                  />
+                  <div className="absolute inset-0 bg-black/20 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                    <Play className="w-6 h-6 text-white" />
+                  </div>
                 </div>
-              )}
-            </motion.div>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {bookmarks.map((bookmark: any, index: number) => (
-              <motion.div
-                key={bookmark._id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 }}
-                className="group bg-gray-50 dark:bg-gray-800 rounded-xl p-4 hover:bg-gray-100/80 dark:hover:bg-gray-700/80 transition-all flex flex-col h-full"
-              >
-                                  <div className="flex items-center gap-4">
-                    {/* Album Art */}
-                    <div className="relative flex-shrink-0">
-                      <img
-                        src={bookmark.metadata.album.imageUrl}
-                        alt={bookmark.metadata.album.name}
-                        onClick={() => {
-                          console.log('Album clicked:', bookmark.metadata.spotifyUrl, bookmark.timestampMs);
-                          openSpotifyAtTimestamp(bookmark.metadata.spotifyUrl, bookmark.timestampMs);
-                        }}
-                        className="w-14 h-14 md:w-16 md:h-16 rounded-lg object-cover shadow-md border-2 border-white dark:border-gray-900 cursor-pointer hover:scale-105 transition-transform relative z-10"
-                      />
-                      <div className="absolute inset-0 bg-black/20 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-                        <Play className="w-6 h-6 text-white" />
-                      </div>
-                    </div>
 
-                  {/* Track Info */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <h3 className="font-semibold text-base text-gray-900 dark:text-white truncate">
-                        {bookmark.metadata.name}
-                      </h3>
-                      <Tooltip content={`The moment saved in the song.`}>
-                        <div className="flex items-center gap-1 text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-900/30 rounded-full px-2 py-0.5 cursor-pointer">
-                          <Clock className="w-3 h-3" />
-                          <span className="text-xs font-medium">
-                            {formatTime(bookmark.timestampMs)}
-                          </span>
-                        </div>
-                      </Tooltip>
-                      {/* Tiny progress bar with marker (fixed for visibility) */}
-                      <div className="mt-1 w-24 h-6 flex items-center relative">
-                        <div className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-full border border-gray-300 dark:border-gray-800 z-10" />
-                        {/* Marker: if duration is available, use it; else, use 50% */}
-                        {bookmark.durationMs ? (
-                          <div
-                            className="absolute top-1/2 w-4 h-4 rounded-full bg-green-500 border-2 border-white dark:border-gray-900 shadow -translate-x-1/2 -translate-y-1/2 z-20"
-                            style={{ left: `${Math.min(100, Math.max(0, (bookmark.timestampMs / bookmark.durationMs) * 100))}%` }}
-                          />
-                        ) : (
-                          <div
-                            className="absolute top-1/2 left-1/2 w-4 h-4 rounded-full bg-green-500 border-2 border-white dark:border-gray-900 shadow -translate-x-1/2 -translate-y-1/2 z-20"
-                          />
-                        )}
+                {/* Track Info */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <h3 className="font-semibold text-base text-gray-900 dark:text-white truncate">
+                      {bookmark.metadata.name}
+                    </h3>
+                    <Tooltip content={`The moment saved in the song.`}>
+                      <div className="flex items-center gap-1 text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-900/30 rounded-full px-2 py-0.5 cursor-pointer">
+                        <Clock className="w-3 h-3" />
+                        <span className="text-xs font-medium">
+                          {formatTime(bookmark.timestampMs)}
+                        </span>
                       </div>
-                    </div>
-                    <p className="text-gray-600 dark:text-gray-400 text-xs truncate mb-1">
-                      {bookmark.metadata.artists.map((a: any) => a.name).join(', ')}
-                    </p>
-
-                    {/* Caption */}
-                    {editingBookmarkId === bookmark._id ? (
-                      <div className="flex items-center gap-2 mt-2">
-                        <input
-                          type="text"
-                          value={editCaption}
-                          onChange={(e) => setEditCaption(e.target.value)}
-                          placeholder="Add a caption..."
-                          className="flex-1 text-xs bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-600 rounded-lg px-2 py-1 focus:outline-none focus:ring-2 focus:ring-purple-500"
-                          maxLength={500}
-                          autoFocus
+                    </Tooltip>
+                    {/* Tiny progress bar with marker (fixed for visibility) */}
+                    <div className="mt-1 w-24 h-6 flex items-center relative">
+                      <div className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-full border border-gray-300 dark:border-gray-800 z-10" />
+                      {/* Marker: if duration is available, use it; else, use 50% */}
+                      {bookmark.durationMs ? (
+                        <div
+                          className="absolute top-1/2 w-4 h-4 rounded-full bg-green-500 border-2 border-white dark:border-gray-900 shadow -translate-x-1/2 -translate-y-1/2 z-20"
+                          style={{ left: `${Math.min(100, Math.max(0, (bookmark.timestampMs / bookmark.durationMs) * 100))}%` }}
                         />
-                        <button
-                          onClick={() => onEditSave(bookmark._id)}
-                          className="p-1 text-green-600 hover:bg-green-100 dark:hover:bg-green-900/30 rounded"
-                        >
-                          <Check className="w-3 h-3" />
-                        </button>
-                        <button
-                          onClick={onEditCancel}
-                          className="p-1 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 rounded"
-                        >
-                          <X className="w-3 h-3" />
-                        </button>
-                      </div>
-                    ) : bookmark.caption ? (
-                      <p className="text-gray-700 dark:text-gray-300 text-xs italic mt-1 line-clamp-2">
-                        "{bookmark.caption}"
-                      </p>
-                    ) : null}
-
-                    <p className="text-gray-500 text-xs mt-1">
-                      {timeAgo(new Date(bookmark.createdAt))}
-                    </p>
-
-                    {/* Actions Row - right-aligned, own line */}
-                    <div className="flex gap-2 mt-3 justify-end">
-                      {isOwnProfile && (
-                        <>
-                          <button
-                            onClick={() => {
-                              setEditingBookmarkId(bookmark._id);
-                              setEditCaption(bookmark.caption || '');
-                            }}
-                            className="flex items-center justify-center w-8 h-8 rounded-full border border-transparent hover:border-blue-300 dark:hover:border-blue-700 bg-transparent hover:bg-blue-100/60 dark:hover:bg-blue-900/40 text-blue-500 dark:text-blue-300 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-400"
-                            title="Edit caption"
-                          >
-                            <Edit3 className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => onDeleteBookmark(bookmark._id)}
-                            className="flex items-center justify-center w-8 h-8 rounded-full border border-transparent hover:border-red-300 dark:hover:border-red-700 bg-transparent hover:bg-red-100/60 dark:hover:bg-red-900/40 text-red-500 dark:text-red-300 transition-colors focus:outline-none focus:ring-2 focus:ring-red-400"
-                            title="Delete bookmark"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </>
+                      ) : (
+                        <div
+                          className="absolute top-1/2 left-1/2 w-4 h-4 rounded-full bg-green-500 border-2 border-white dark:border-gray-900 shadow -translate-x-1/2 -translate-y-1/2 z-20"
+                        />
                       )}
                     </div>
                   </div>
+                  <p className="text-gray-600 dark:text-gray-400 text-xs truncate mb-1">
+                    {bookmark.metadata.artists.map((a: any) => a.name).join(', ')}
+                  </p>
+
+                  {/* Caption */}
+                  {editingBookmarkId === bookmark._id ? (
+                    <div className="flex items-center gap-2 mt-2">
+                      <input
+                        type="text"
+                        value={editCaption}
+                        onChange={(e) => setEditCaption(e.target.value)}
+                        placeholder="Add a caption..."
+                        className="flex-1 text-xs bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-600 rounded-lg px-2 py-1 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                        maxLength={500}
+                        autoFocus
+                      />
+                      <button
+                        onClick={() => onEditSave(bookmark._id)}
+                        className="p-1 text-green-600 hover:bg-green-100 dark:hover:bg-green-900/30 rounded"
+                      >
+                        <Check className="w-3 h-3" />
+                      </button>
+                      <button
+                        onClick={onEditCancel}
+                        className="p-1 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 rounded"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ) : bookmark.caption ? (
+                    <p className="text-gray-700 dark:text-gray-300 text-xs italic mt-1 line-clamp-2">
+                      "{bookmark.caption}"
+                    </p>
+                  ) : null}
+
+                  <p className="text-gray-500 text-xs mt-1">
+                    {timeAgo(new Date(bookmark.createdAt))}
+                  </p>
+
+                  {/* Actions Row - right-aligned, own line */}
+                  <div className="flex gap-2 mt-3 justify-end">
+                    {isOwnProfile && (
+                      <>
+                        <button
+                          onClick={() => {
+                            setEditingBookmarkId(bookmark._id);
+                            setEditCaption(bookmark.caption || '');
+                          }}
+                          className="flex items-center justify-center w-8 h-8 rounded-full border border-transparent hover:border-blue-300 dark:hover:border-blue-700 bg-transparent hover:bg-blue-100/60 dark:hover:bg-blue-900/40 text-blue-500 dark:text-blue-300 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-400"
+                          title="Edit caption"
+                        >
+                          <Edit3 className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => onDeleteBookmark(bookmark._id)}
+                          className="flex items-center justify-center w-8 h-8 rounded-full border border-transparent hover:border-red-300 dark:hover:border-red-700 bg-transparent hover:bg-red-100/60 dark:hover:bg-red-900/40 text-red-500 dark:text-red-300 transition-colors focus:outline-none focus:ring-2 focus:ring-red-400"
+                          title="Delete bookmark"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </>
+                    )}
+                  </div>
                 </div>
-              </motion.div>
-            ))}
-          </div>
-        )}
-      </motion.div>
-    </>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      )}
+    </motion.div>
   );
 }

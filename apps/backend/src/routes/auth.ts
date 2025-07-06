@@ -205,7 +205,7 @@ router.get('/callback', async (req, res) => {
       { userId: user._id, spotifyId: user.spotifyId },
       process.env.JWT_SECRET!,
       // { expiresIn: '7d' }
-      { expiresIn: '1m' }
+      { expiresIn: '60m' }
     );
 
     // 🔁 Rotate refresh token
@@ -328,7 +328,7 @@ router.post('/refresh', async (req, res) => {
   const newAccess = jwt.sign(
     { userId: stored.userId._id, spotifyId: user.spotifyId },
     process.env.JWT_SECRET!,
-    { expiresIn: '1m' }
+    { expiresIn: '60m' }
     //  { expiresIn: '7d' }
   );
 

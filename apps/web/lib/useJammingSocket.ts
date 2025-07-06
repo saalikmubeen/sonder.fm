@@ -58,14 +58,17 @@ export function useJammingSocket(roomId: string, setRoom: (room: any) => void) {
     socket.on('room_state', handleRoomState);
     socket.on('room_ended', handleRoomEnded);
 
-    if (!socket || !player || !deviceId) {
-      toast.error('You don\'t have a spotify account connected or don\'t have a premium account');
-      return;
+    console.log("Socket", socket)
+    console.log("Player", player)
+    console.log("Device ID", deviceId)
+
+    if (!deviceId) {
+      toast.error('You need a premium spotify account to play music');
     }
 
     const handlePlay = ({ trackId, positionMs }: { trackId: string; positionMs: number }) => {
-      if (!player || !deviceId) return;
       console.log("Playing track", trackId, positionMs)
+      if (!player || !deviceId) return;
       player._options.getOAuthToken((token: string) => {
         fetch(`https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`, {
           method: 'PUT',
@@ -91,7 +94,8 @@ export function useJammingSocket(roomId: string, setRoom: (room: any) => void) {
 
     const handlePause = () => {
       console.log('[Jamming] Received playback_pause event');
-      toast('⏸️ Playback paused', { icon: '⏸️' });
+      toast('⏸️ Playback paused', { icon: '' });
+      if (!player || !deviceId) return;
       player._options.getOAuthToken((token: string) => {
         fetch(`https://api.spotify.com/v1/me/player/pause?device_id=${deviceId}`, {
           method: 'PUT',
@@ -104,6 +108,7 @@ export function useJammingSocket(roomId: string, setRoom: (room: any) => void) {
     };
 
     const handleSeek = ({ positionMs }: { positionMs: number }) => {
+      if (!player || !deviceId) return;
       player._options.getOAuthToken((token: string) => {
         fetch(`https://api.spotify.com/v1/me/player/seek?device_id=${deviceId}&position_ms=${positionMs}`, {
           method: 'PUT',

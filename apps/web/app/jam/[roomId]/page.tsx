@@ -16,7 +16,8 @@ import {
   Loader2,
   Send,
   MessageCircle,
-  X
+  X,
+  Bookmark
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 import { jammingApi } from '@/lib/jamming-api';
@@ -25,6 +26,9 @@ import toast from 'react-hot-toast';
 import { useJammingSocket } from '@/lib/useJammingSocket';
 import { useJammingStore } from '@/lib/jamming-store';
 import Link from 'next/link';
+import BookmarkModal from '@/components/BookmarkModal';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { bookmarkApi } from '@/lib/api';
 
 interface Track {
   id: string;
@@ -380,6 +384,53 @@ export default function JammingRoomPage() {
     }
   };
 
+  // Bookmark state
+  const [showBookmarkModal, setShowBookmarkModal] = useState(false);
+  const [bookmarkLoading, setBookmarkLoading] = useState(false);
+
+  const queryClient = useQueryClient();
+
+  const createBookmarkMutation = useMutation({
+    mutationFn: (data: {
+      trackId: string;
+      timestampMs: number;
+      durationMs: number;
+      caption?: string;
+      metadata: any;
+    }) => bookmarkApi.createBookmark(data),
+    onSuccess: () => {
+      // Optionally invalidate bookmarks query if you have one in jam room
+      toast.success('Bookmark saved! 🎵');
+      setShowBookmarkModal(false);
+      setBookmarkLoading(false);
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.error || 'Failed to save bookmark');
+      setBookmarkLoading(false);
+    },
+  });
+
+  const handleBookmarkMoment = (caption: string) => {
+    if (!room || !room.currentTrack) return;
+    setBookmarkLoading(true);
+    const bookmarkData = {
+      trackId: room.currentTrack.spotifyUrl?.split('/track/')[1]?.split('?')[0] || '',
+      timestampMs: currentPosition,
+      durationMs: room.currentTrack.durationMs,
+      caption: caption.trim() || undefined,
+      metadata: {
+        name: room.currentTrack.name,
+        artists: [{ name: room.currentTrack.artist }],
+        album: {
+          name: room.currentTrack.album,
+          imageUrl: room.currentTrack.albumArt,
+        },
+        spotifyUrl: room.currentTrack.spotifyUrl,
+      },
+    };
+    createBookmarkMutation.mutate(bookmarkData);
+  };
+
   if (loading || isJoining) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex items-center justify-center">
@@ -524,143 +575,136 @@ export default function JammingRoomPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="bg-white dark:bg-gray-900 rounded-3xl shadow-lg p-8 mb-8"
+            className="bg-white dark:bg-[#181c24] rounded-2xl shadow-md p-3 sm:p-4 mb-4 sm:mb-6 border border-gray-200 dark:border-gray-800 w-full max-w-xl mx-auto"
           >
             {room.currentTrack ? (
-              <div className="flex items-center gap-6">
-                <motion.img
-                  animate={isPlaying ? { rotate: [0, 5, -5, 0] } : {}}
-                  transition={{ duration: 2, repeat: Infinity }}
-                  src={room.currentTrack.albumArt}
-                  alt={room.currentTrack.album}
-                  className="w-24 h-24 rounded-2xl object-cover shadow-lg"
-                />
-
-                <div className="flex-1 min-w-0">
-                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white truncate mb-2">
+              <div className="flex flex-col items-center text-center sm:grid sm:grid-cols-[auto,1fr] sm:items-stretch sm:text-left gap-3 sm:gap-6">
+                {/* Album Art - full height on desktop, centered on mobile */}
+                <div className="flex justify-center sm:block sm:h-full">
+                  <motion.img
+                    animate={isPlaying
+                      ? { rotate: [0, 12, -12, 0], scale: [1, 1.08, 0.96, 1] }
+                      : { rotate: 0, scale: 1 }
+                    }
+                    transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+                    src={room.currentTrack.albumArt}
+                    alt={room.currentTrack.album}
+                    className="w-24 h-24 sm:w-40 sm:h-full sm:max-h-56 rounded-xl object-cover shadow-lg border border-gray-700 transition-all duration-300 mb-2 sm:mb-0"
+                    style={{ boxShadow: '0 4px 16px 0 rgba(0,0,0,0.25)' }}
+                  />
+                </div>
+                {/* Info/Controls - stacked and centered on mobile, left-aligned on desktop */}
+                <div className="flex-1 min-w-0 w-full flex flex-col justify-center items-center sm:items-start text-center sm:text-left h-full">
+                  <h2 className="text-base sm:text-lg font-bold text-white truncate mb-0.5 sm:mb-1 w-full">
                     {room.currentTrack.name}
                   </h2>
-                  <p className="text-lg text-gray-600 dark:text-gray-400 truncate mb-1">
+                  <p className="text-xs sm:text-sm text-gray-400 truncate mb-0.5 font-medium w-full">
                     {room.currentTrack.artist}
                   </p>
-                  <p className="text-sm text-gray-500 truncate">
+                  <p className="text-[11px] sm:text-xs text-gray-500 truncate mb-1 font-normal w-full">
                     {room.currentTrack.album}
                   </p>
-
-                  {/* Progress Bar */}
-                  <div className="mt-4 space-y-2">
+                  <div className="mt-0.5 sm:mt-1 space-y-0.5 sm:space-y-1 w-full">
                     {isHost ? (
-                      // Host: show only the seek slider
-                      <input
-                        type="range"
-                        min={0}
-                        max={room.currentTrack.durationMs}
-                        value={pendingSeek !== null ? pendingSeek : currentPosition}
-                        onChange={e => {
-                          const newPosition = Number(e.target.value);
-                          setPendingSeek(newPosition); // update UI immediately while dragging
-                        }}
-                        onMouseUp={e => {
-                          if (pendingSeek !== null && socket && room) {
-                            socket.emit('host_seek', { roomId: room.roomId, positionMs: pendingSeek });
-                            setCurrentPosition(pendingSeek);
-                            setPendingSeek(null);
-                            // If at end and not playing, also emit play
-                            if (
-                              room.currentTrack &&
-                              room.playbackState.positionMs === room.currentTrack.durationMs &&
-                              !room.playbackState.isPlaying
-                            ) {
-                              socket.emit('host_play', {
-                                roomId: room.roomId,
-                                trackId: room.currentTrack.id,
-                                positionMs: pendingSeek,
-                              });
-                            }
-                          }
-                        }}
-                        onTouchEnd={e => {
-                          if (pendingSeek !== null && socket && room) {
-                            socket.emit('host_seek', { roomId: room.roomId, positionMs: pendingSeek });
-                            setCurrentPosition(pendingSeek);
-                            setPendingSeek(null);
-                            // If at end and not playing, also emit play
-                            if (
-                              room.currentTrack &&
-                              room.playbackState.positionMs === room.currentTrack.durationMs &&
-                              !room.playbackState.isPlaying
-                            ) {
-                              socket.emit('host_play', {
-                                roomId: room.roomId,
-                                trackId: room.currentTrack.id,
-                                positionMs: pendingSeek,
-                              });
-                            }
-                          }
-                        }}
-                        className="w-full mt-2 accent-green-500"
-                      />
-                    ) : (
-                      // Non-host: show only the progress bar
                       <>
-                        <div className="h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                        <input
+                          type="range"
+                          min={0}
+                          max={room.currentTrack.durationMs}
+                          value={pendingSeek !== null ? pendingSeek : currentPosition}
+                          onChange={e => {
+                            const newPosition = Number(e.target.value);
+                            setPendingSeek(newPosition);
+                          }}
+                          onMouseUp={e => {
+                            if (pendingSeek !== null && socket && room) {
+                              socket.emit('host_seek', { roomId: room.roomId, positionMs: pendingSeek });
+                              setCurrentPosition(pendingSeek);
+                              setPendingSeek(null);
+                              if (
+                                room.currentTrack &&
+                                pendingSeek >= room.currentTrack.durationMs &&
+                                !room.playbackState.isPlaying
+                              ) {
+                                handlePlay();
+                              }
+                            }
+                          }}
+                          className="w-full accent-green-500 h-1 rounded-full bg-gray-700 transition-all duration-200"
+                          style={{ minHeight: 0, maxHeight: 6 }}
+                        />
+                        <div className="flex justify-between text-[10px] sm:text-[11px] text-gray-400 mt-0.5 w-full">
+                          <span>{formatDuration(pendingSeek !== null ? pendingSeek : currentPosition)}</span>
+                          <span>{formatDuration(room.currentTrack.durationMs)}</span>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div className="h-1 bg-gray-700 rounded-full overflow-hidden w-full">
                           <motion.div
                             initial={{ width: 0 }}
                             animate={{ width: `${progressPercent}%` }}
                             className="h-full bg-gradient-to-r from-green-500 to-emerald-500 rounded-full"
                           />
                         </div>
-                        <div className="flex justify-between text-xs text-gray-500">
+                        <div className="flex justify-between text-[10px] sm:text-[11px] text-gray-400 mt-0.5 w-full">
                           <span>{formatDuration(currentPosition)}</span>
                           <span>{formatDuration(room.currentTrack.durationMs)}</span>
                         </div>
                       </>
                     )}
                   </div>
-                </div>
-
-                <div className="flex flex-col items-center gap-4">
-                  {/* Playback Controls (Host Only) */}
-                  {isHost && room?.currentTrack && (
-                    <button
-                      onClick={
-                        (room.playbackState.isPlaying && currentPosition < room.currentTrack.durationMs)
-                          ? handlePause
-                          : handlePlay
-                      }
-                      className="w-16 h-16 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full flex items-center justify-center text-white shadow-lg hover:shadow-xl transition-all"
-                      aria-label={
-                        (room.playbackState.isPlaying && currentPosition < room.currentTrack.durationMs)
-                          ? 'Pause'
-                          : 'Play'
-                      }
+                  {/* Controls - centered and stacked on mobile, row on desktop */}
+                  <div className="flex flex-row justify-center sm:justify-start items-center gap-3 mt-4 w-full">
+                    {isHost && room?.currentTrack && (
+                      <button
+                        onClick={
+                          (room.playbackState.isPlaying && currentPosition < room.currentTrack.durationMs)
+                            ? handlePause
+                            : handlePlay
+                        }
+                        className="w-12 h-12 sm:w-10 sm:h-10 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full flex items-center justify-center text-white shadow-lg hover:shadow-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-green-400"
+                        aria-label={
+                          (room.playbackState.isPlaying && currentPosition < room.currentTrack.durationMs)
+                            ? 'Pause'
+                            : 'Play'
+                        }
+                        style={{ boxShadow: '0 2px 8px 0 rgba(16,185,129,0.25)' }}
+                      >
+                        {(room.playbackState.isPlaying && currentPosition < room.currentTrack.durationMs)
+                          ? <Pause className="w-5 h-5" />
+                          : <Play className="w-5 h-5 ml-0.5" />}
+                      </button>
+                    )}
+                    <motion.a
+                      whileHover={{ scale: 1.05 }}
+                      href={room.currentTrack.spotifyUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1 px-3 py-2 sm:px-2 sm:py-1 bg-gray-100 dark:bg-gray-800 text-xs text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors rounded-full"
                     >
-                      {(room.playbackState.isPlaying && currentPosition < room.currentTrack.durationMs)
-                        ? <Pause className="w-6 h-6" />
-                        : <Play className="w-6 h-6 ml-1" />}
-                    </button>
-                  )}
-
-                  {/* Spotify Link */}
-                  <motion.a
-                    whileHover={{ scale: 1.05 }}
-                    href={room.currentTrack.spotifyUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-800 rounded-full text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-                  >
-                    <ExternalLink className="w-4 h-4" />
-                    Open in Spotify
-                  </motion.a>
+                      <ExternalLink className="w-4 h-4 sm:w-3.5 sm:h-3.5" />
+                      Open in Spotify
+                    </motion.a>
+                    {room.currentTrack && (
+                      <button
+                        onClick={() => setShowBookmarkModal(true)}
+                        className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors ml-2"
+                        title="Bookmark this moment"
+                      >
+                        <Bookmark className="w-5 h-5 text-green-500" />
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
             ) : (
-              <div className="text-center py-12">
-                <Music className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+              <div className="text-center py-6 sm:py-8">
+                <Music className="w-8 h-8 sm:w-10 sm:h-10 text-gray-400 mx-auto mb-2" />
+                <h2 className="text-sm sm:text-base font-semibold text-white mb-1">
                   No track selected
                 </h2>
-                <p className="text-gray-600 dark:text-gray-400">
+                <p className="text-gray-400 text-[11px] sm:text-xs">
                   {isHost ? 'Search and select a track to start jamming' : 'Waiting for the host to select a track'}
                 </p>
               </div>
@@ -673,18 +717,17 @@ export default function JammingRoomPage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
-              className="bg-white dark:bg-gray-900 rounded-3xl shadow-lg p-6 mb-8"
+              className="bg-[#181c24] dark:bg-[#181c24] rounded-2xl shadow-md p-3 sm:p-4 mb-4 sm:mb-6 border border-gray-800 w-full max-w-xl mx-auto"
             >
-              <div className="flex items-center gap-3 mb-4">
-                <Crown className="w-5 h-5 text-yellow-500" />
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+              <div className="flex items-center gap-2 mb-3">
+                <Crown className="w-4 h-4 text-yellow-500" />
+                <h3 className="text-base sm:text-lg font-semibold text-white">
                   Host Controls
                 </h3>
               </div>
-
               {/* Search */}
-              <div className="space-y-4">
-                <div className="flex gap-2">
+              <div className="space-y-2 sm:space-y-4">
+                <div className="flex gap-2 flex-col sm:flex-row">
                   <div className="flex-1 relative">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
                     <input
@@ -693,7 +736,7 @@ export default function JammingRoomPage() {
                       onChange={(e) => setSearchQuery(e.target.value)}
                       onKeyPress={(e) => e.key === 'Enter' && searchTracks()}
                       placeholder="Search for tracks..."
-                      className="w-full pl-10 pr-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all placeholder-gray-400 dark:placeholder-gray-500 text-gray-900 dark:text-white"
+                      className="w-full pl-10 pr-3 py-2 sm:py-3 bg-gray-800 border border-gray-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all placeholder-gray-400 dark:placeholder-gray-500 text-white text-sm"
                     />
                   </div>
                   <motion.button
@@ -701,7 +744,7 @@ export default function JammingRoomPage() {
                     whileTap={{ scale: 0.98 }}
                     onClick={searchTracks}
                     disabled={isSearching || !searchQuery.trim()}
-                    className="px-6 py-3 bg-green-600 text-white rounded-2xl font-medium hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                    className="px-4 py-2 sm:px-6 sm:py-3 bg-green-600 text-white rounded-xl font-medium hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 text-sm"
                   >
                     {isSearching ? (
                       <Loader2 className="w-4 h-4 animate-spin" />
@@ -711,7 +754,6 @@ export default function JammingRoomPage() {
                     Search
                   </motion.button>
                 </div>
-
                 {/* Search Results */}
                 <AnimatePresence>
                   {searchResults.length > 0 && (
@@ -719,25 +761,25 @@ export default function JammingRoomPage() {
                       initial={{ opacity: 0, height: 0 }}
                       animate={{ opacity: 1, height: 'auto' }}
                       exit={{ opacity: 0, height: 0 }}
-                      className="space-y-2 max-h-64 overflow-y-auto"
+                      className="space-y-2 max-h-48 sm:max-h-64 overflow-y-auto"
                     >
                       {searchResults.map((track) => (
                         <motion.button
                           key={track.id}
                           whileHover={{ scale: 1.01 }}
                           onClick={() => selectTrack(track)}
-                          className="w-full flex items-center gap-4 p-3 bg-gray-50 dark:bg-gray-800 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-left"
+                          className="w-full flex items-center gap-2 sm:gap-4 p-2 sm:p-3 bg-gray-800 rounded-xl hover:bg-gray-700 transition-colors text-left"
                         >
                           <img
                             src={track.albumArt}
                             alt={track.album}
-                            className="w-12 h-12 rounded-lg object-cover"
+                            className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg object-cover"
                           />
                           <div className="flex-1 min-w-0">
-                            <h4 className="font-medium text-gray-900 dark:text-white truncate">
+                            <h4 className="font-medium text-white truncate text-sm">
                               {track.name}
                             </h4>
-                            <p className="text-sm text-gray-600 dark:text-gray-400 truncate">
+                            <p className="text-xs text-gray-400 truncate">
                               {track.artist}
                             </p>
                           </div>
@@ -758,44 +800,41 @@ export default function JammingRoomPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
-            className="bg-white dark:bg-gray-900 rounded-3xl shadow-lg p-6"
+            className="bg-white dark:bg-[#181c24] rounded-2xl shadow-md p-3 sm:p-4 border border-gray-200 dark:border-gray-800 w-full max-w-xl mx-auto"
           >
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+            <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-3 sm:mb-4">
               Room Members ({room.members.length})
             </h3>
-
-            <div className="space-y-3">
+            <div className="space-y-2 sm:space-y-3">
               {room.members.map((member) => (
                 <motion.div
                   key={member.userId}
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
-                  className="flex items-center gap-3"
+                  className="flex items-center gap-2 sm:gap-3"
                 >
                   <img
                     src={member.avatarUrl}
                     alt={member.displayName}
-                    className="w-10 h-10 rounded-full object-cover"
+                    className="w-8 h-8 sm:w-10 sm:h-10 rounded-full object-cover"
                   />
                   <div className="flex-1">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1 sm:gap-2">
                       <Link
                         href={`/u/${member.publicSlug}`}
-                        className="font-medium text-gray-900 dark:text-white hover:underline"
+                        className="font-medium text-gray-900 dark:text-white hover:underline text-sm"
                       >
-                        {member.displayName}
+                        {member.userId === user?._id ? 'you' : member.displayName}
                       </Link>
                       {member.userId === room.hostId && (
-                        <Crown className="w-4 h-4 text-yellow-500" />
+                        <Crown className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-yellow-500" />
                       )}
                     </div>
-                    <span className="text-sm text-gray-500">
-                      @{member.spotifyId}
-                    </span>
+
                   </div>
                   <div className="flex items-center gap-1">
-                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                    <span className="text-xs text-gray-500">Online</span>
+                    <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-green-500 rounded-full"></div>
+                    <span className="text-xs text-gray-500 dark:text-gray-400">Online</span>
                   </div>
                 </motion.div>
               ))}
@@ -812,7 +851,7 @@ export default function JammingRoomPage() {
             animate={{ x: 0 }}
             exit={{ x: 320 }}
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            className="fixed right-0 top-0 h-full w-80 bg-white dark:bg-gray-900 border-l border-gray-200 dark:border-gray-800 shadow-xl z-50"
+            className="fixed right-0 top-0 h-full w-full sm:w-96 md:w-[420px] bg-white dark:bg-gray-900 border-l border-gray-200 dark:border-gray-800 shadow-xl z-50"
           >
             {/* Chat Header */}
             <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-800">
@@ -837,42 +876,40 @@ export default function JammingRoomPage() {
                   <p className="text-xs">Start the conversation!</p>
                 </div>
               ) : (
-                chatMessages.map((message) => (
-                  <motion.div
-                    key={message.id}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className={`flex gap-3 ${message.userId === user?._id ? '' : ''}`}
-                  >
-                    <img
-                      src={message.avatarUrl}
-                      alt={message.displayName}
-                      className="w-8 h-8 rounded-full object-cover flex-shrink-0"
-                    />
-                    <div className={`flex-1 ${message.userId === user?._id ? '' : ''}`}>
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="text-xs font-medium text-gray-900 dark:text-white">
-                          {message.displayName}
-                        </span>
-                        <span className="text-xs text-gray-500">
-                          {new Date(message.timestamp).toLocaleTimeString([], {
-                            hour: '2-digit',
-                            minute: '2-digit'
-                          })}
-                        </span>
-                      </div>
-                      <div
-                        className={`inline-block px-3 py-2 rounded-2xl text-sm max-w-[200px] break-words ${
-                          message.userId === user?._id
-                            ? 'bg-green-500 text-white'
-                            : 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white'
-                        }`}
-                      >
-                        {message.message}
+                chatMessages.map((message) => {
+                  const isOwn = message.userId === user?._id;
+                  return (
+                    <div key={message.id} className="flex gap-3">
+                      <img
+                        src={message.avatarUrl}
+                        alt={message.displayName}
+                        className="w-8 h-8 rounded-full object-cover flex-shrink-0"
+                      />
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-xs font-medium text-gray-900 dark:text-white">
+                            {isOwn ? 'you' : message.displayName}
+                          </span>
+                          <span className="text-xs text-gray-500 dark:text-gray-400">
+                            {new Date(message.timestamp).toLocaleTimeString([], {
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            })}
+                          </span>
+                        </div>
+                        <div
+                          className={`inline-block px-3 py-2 rounded-2xl text-sm max-w-[200px] break-words ${
+                            isOwn
+                              ? 'bg-green-500 text-white dark:bg-green-600 dark:text-white'
+                              : 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white'
+                          }`}
+                        >
+                          {message.message}
+                        </div>
                       </div>
                     </div>
-                  </motion.div>
-                ))
+                  );
+                })
               )}
 
               {/* Typing Indicator */}
@@ -934,6 +971,23 @@ export default function JammingRoomPage() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Bookmark Modal */}
+      {room.currentTrack && (
+        <BookmarkModal
+          isOpen={showBookmarkModal}
+          onClose={() => setShowBookmarkModal(false)}
+          onSave={handleBookmarkMoment}
+          loading={bookmarkLoading}
+          trackInfo={{
+            name: room.currentTrack.name,
+            artist: room.currentTrack.artist,
+            album: room.currentTrack.album,
+            albumArt: room.currentTrack.albumArt,
+            timestampMs: currentPosition,
+          }}
+        />
+      )}
     </div>
   );
 }
