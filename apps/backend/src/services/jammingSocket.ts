@@ -2,6 +2,7 @@ import { Server, Socket } from 'socket.io';
 import jwt from 'jsonwebtoken';
 import { User } from '../models/User';
 import { RoomManager } from '../models/JammingRoom';
+import { RoomSyncService } from './roomSync';
 
 interface JammingSocketData {
   userId: string;
@@ -114,6 +115,9 @@ export const setupJammingSocket = (io: Server) => {
         publicSlug: user.publicSlug,
       });
       if (room) {
+        // Sync to database
+        RoomSyncService.syncRoomToDatabase(roomId);
+
         socket.emit('room_state', room);
         // Broadcast full updated room state to all members
         jammingNamespace.to(roomId).emit('room_state', room);
@@ -211,6 +215,13 @@ export const setupJammingSocket = (io: Server) => {
       // Update room state
       const { room, roomEnded } = RoomManager.leaveRoom(roomId, userId);
 
+      // Sync to database or cleanup
+      if (roomEnded) {
+        RoomSyncService.cleanupRoom(roomId);
+      } else if (room) {
+        RoomSyncService.syncRoomToDatabase(roomId);
+      }
+
       if (roomEnded) {
         // Notify all users that room ended
         jammingNamespace.to(roomId).emit('room_ended');
@@ -272,6 +283,17 @@ export const setupJammingSocket = (io: Server) => {
         isPlaying: true,
         positionMs: data.positionMs,
       });
+
+      // Add to song history if this is a new track
+      if (trackId) {
+        const updatedRoom = RoomManager.getRoom(roomId);
+        if (updatedRoom?.currentTrack) {
+          RoomSyncService.addSongToHistory(roomId, updatedRoom.currentTrack, user.spotifyId);
+        }
+      }
+
+      // Sync room state to database
+      RoomSyncService.syncRoomToDatabase(roomId);
 
       // Broadcast to all room members
       jammingNamespace.to(roomId).emit('playback_play', {
@@ -373,6 +395,13 @@ export const setupJammingSocket = (io: Server) => {
 
         // Update room state
         const { room, roomEnded } = RoomManager.leaveRoom(currentRoom, userId);
+
+        // Sync to database or cleanup
+        if (roomEnded) {
+          RoomSyncService.cleanupRoom(currentRoom);
+        } else if (room) {
+          RoomSyncService.syncRoomToDatabase(currentRoom);
+        }
 
         if (roomEnded) {
           // Notify all users that room ended

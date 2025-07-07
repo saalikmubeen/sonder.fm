@@ -25,6 +25,7 @@ import messageRoutes from './routes/message';
 import bookmarkRoutes from './routes/bookmark';
 import followRoutes from './routes/follow';
 import jammingRoutes from './routes/jamming';
+import roomRoutes from './routes/room';
 
 // Import services
 import { setupSocket } from './services/socket';
@@ -85,6 +86,7 @@ app.use('/message', messageRoutes);
 app.use('/bookmark', bookmarkRoutes);
 app.use('/follow', followRoutes);
 app.use('/jamming', jammingRoutes);
+app.use('/rooms', roomRoutes);
 
 // Health check
 app.get('/health', (req, res) => {

@@ -3,6 +3,7 @@ import { auth, AuthRequest } from '../middleware/auth';
 import { RoomManager } from '../models/JammingRoom';
 import type { APIResponse } from '@sonder/types';
 import { SpotifyAPI } from '@sonder/utils';
+import { RoomSyncService } from '../services/roomSync';
 
 const router = express.Router();
 
@@ -61,6 +62,9 @@ router.post('/rooms/:roomId/create', auth, async (req: AuthRequest, res) => {
       hostName: room.members.find(m => m.userId === room.hostId)?.displayName,
       memberCount: room.members.length
     });
+
+    // Sync to database
+    await RoomSyncService.syncRoomToDatabase(roomId);
 
     const response: APIResponse<{ room: any; isHost: boolean }> = {
       success: true,
@@ -136,6 +140,9 @@ router.post('/rooms/:roomId/join', auth, async (req: AuthRequest, res) => {
       memberCount: room.members.length
     });
 
+    // Sync to database
+    await RoomSyncService.syncRoomToDatabase(roomId);
+
     const response: APIResponse<{ room: any; isHost: boolean }> = {
       success: true,
       data: {
@@ -161,6 +168,13 @@ router.post('/rooms/:roomId/leave', auth, async (req: AuthRequest, res) => {
     const userId = req.userId!;
 
     const { room, roomEnded } = RoomManager.leaveRoom(roomId, userId);
+
+    // Sync to database or cleanup
+    if (roomEnded) {
+      await RoomSyncService.cleanupRoom(roomId);
+    } else {
+      await RoomSyncService.syncRoomToDatabase(roomId);
+    }
 
     res.json({
       success: true,
@@ -274,6 +288,17 @@ router.post('/rooms/:roomId/play', auth, async (req: AuthRequest, res) => {
       isPlaying: true,
       positionMs,
     });
+
+    // Add to song history if this is a new track
+    if (trackId && room) {
+      const updatedRoom = RoomManager.getRoom(roomId);
+      if (updatedRoom?.currentTrack) {
+        await RoomSyncService.addSongToHistory(roomId, updatedRoom.currentTrack, user.spotifyId);
+      }
+    }
+
+    // Sync room state to database
+    await RoomSyncService.syncRoomToDatabase(roomId);
 
     // Control Spotify playback from backend
     console.log(user.accessToken, positionMs, trackId)

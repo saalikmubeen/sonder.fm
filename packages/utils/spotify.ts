@@ -64,6 +64,7 @@ export class SpotifyAPI {
       'playlist-read-private',
       'playlist-read-collaborative',
       'playlist-modify-public',
+      'playlist-modify-private',
       'user-read-playback-state',     // To know if a track is playing
       'user-modify-playback-state',   // To change tracks, play/pause, seek
       'user-read-currently-playing',   // To get current playing track

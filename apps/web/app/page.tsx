@@ -12,6 +12,7 @@ import {
   ArrowRight,
   Moon,
   LogIn,
+  Radio,
 } from 'lucide-react';
 import { Button } from '@sonder/ui';
 import { useAuth } from '@/lib/auth-context';
@@ -276,6 +277,13 @@ export default function HomePage() {
                 Connect Spotify
               </Button>
             </div>
+            <Link
+              href="/jam/discover"
+              className="inline-flex items-center gap-2 px-6 py-3 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-2 border-gray-200 dark:border-gray-700 rounded-full font-medium hover:border-gray-300 dark:hover:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all"
+            >
+              <Radio className="w-4 h-4" />
+              Discover Rooms
+            </Link>
           </div>
         </motion.div>
       </section>

@@ -19,7 +19,8 @@ import {
   X,
   Bookmark,
   Sun,
-  Moon
+  Moon,
+  Clock
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 import { jammingApi } from '@/lib/jamming-api';
@@ -31,7 +32,9 @@ import Link from 'next/link';
 import BookmarkModal from '@/components/BookmarkModal';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { bookmarkApi } from '@/lib/api';
+import { roomsApi } from '@/lib/rooms-api';
 import { useTheme } from 'next-themes';
+import RoomHistoryModal from '@/components/RoomHistoryModal';
 
 interface Track {
   id: string;
@@ -172,6 +175,9 @@ export default function JammingRoomPage() {
 
   // Add this state at the top of your component:
   const [pendingSeek, setPendingSeek] = useState<number | null>(null);
+
+  // Room history state
+  const [showHistoryModal, setShowHistoryModal] = useState(false);
 
   // Auto-scroll chat to bottom
   useEffect(() => {
@@ -647,6 +653,17 @@ export default function JammingRoomPage() {
                   )}
                 </motion.button>
               )}
+
+              {/* Room History */}
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setShowHistoryModal(true)}
+                className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                title="Room History"
+              >
+                <Clock className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+              </motion.button>
             </div>
           </motion.div>
 
@@ -1077,6 +1094,13 @@ export default function JammingRoomPage() {
           }}
         />
       )}
+
+      {/* Room History Modal */}
+      <RoomHistoryModal
+        isOpen={showHistoryModal}
+        onClose={() => setShowHistoryModal(false)}
+        roomId={roomId}
+      />
     </div>
   );
 }
