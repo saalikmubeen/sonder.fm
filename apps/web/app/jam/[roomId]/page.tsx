@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useLayoutEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useParams, useRouter } from 'next/navigation';
 import {
@@ -69,6 +69,64 @@ interface ChatMessage {
   avatarUrl: string;
   message: string;
   timestamp: Date;
+}
+
+// MarqueeText: Robust marquee effect for overflowing text (copied from /u/[slug])
+function MarqueeText({ text, className = "", speed = 25 }: { text: string; className?: string; speed?: number }) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const textRef = useRef<HTMLDivElement>(null);
+  const [scrollDistance, setScrollDistance] = useState(0);
+  const [isOverflowing, setIsOverflowing] = useState(false);
+
+  useLayoutEffect(() => {
+    function measure() {
+      if (containerRef.current && textRef.current) {
+        const distance = textRef.current.scrollWidth - containerRef.current.clientWidth;
+        setScrollDistance(distance > 0 ? distance : 0);
+        setIsOverflowing(distance > 0);
+      }
+    }
+    measure();
+    window.addEventListener('resize', measure);
+    return () => window.removeEventListener('resize', measure);
+  }, [text]);
+
+  // Animation: left to right, then jump back, with pause at end
+  const duration = (scrollDistance / speed) || 6;
+  const pause = 1.2; // seconds to pause at the end
+
+  return (
+    <div
+      ref={containerRef}
+      className={`relative w-[70vw] max-w-full sm:w-auto overflow-hidden whitespace-nowrap ${className}`}
+      style={{ maxWidth: '100%' }}
+    >
+      {isOverflowing && scrollDistance > 0 ? (
+        <>
+          <motion.div
+            ref={textRef}
+            initial={{ x: 0 }}
+            animate={{ x: [-0, -scrollDistance, -scrollDistance] }}
+            transition={{
+              times: [0, 0.95, 1],
+              duration: duration + pause,
+              ease: 'easeInOut',
+              repeat: Infinity,
+              repeatType: 'loop',
+              repeatDelay: 0,
+            }}
+            className="inline-block"
+          >
+            {text}
+          </motion.div>
+          {/* Right fade gradient */}
+          <div className="pointer-events-none absolute right-0 top-0 h-full w-8 bg-gradient-to-l from-black/80 dark:from-black/80 to-transparent" />
+        </>
+      ) : (
+        <span ref={textRef} className="inline-block">{text}</span>
+      )}
+    </div>
+  );
 }
 
 export default function JammingRoomPage() {
@@ -431,6 +489,9 @@ export default function JammingRoomPage() {
     createBookmarkMutation.mutate(bookmarkData);
   };
 
+  // Add state for input focus
+  const [chatInputFocused, setChatInputFocused] = useState(false);
+
   if (loading || isJoining) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex items-center justify-center">
@@ -595,8 +656,8 @@ export default function JammingRoomPage() {
                 </div>
                 {/* Info/Controls - stacked and centered on mobile, left-aligned on desktop */}
                 <div className="flex-1 min-w-0 w-full flex flex-col justify-center items-center sm:items-start text-center sm:text-left h-full">
-                  <h2 className="text-base sm:text-lg font-bold text-white truncate mb-0.5 sm:mb-1 w-full">
-                    {room.currentTrack.name}
+                  <h2 className="text-xs sm:text-base font-bold text-white mb-0.5 sm:mb-1 w-full max-w-full overflow-hidden">
+                    <MarqueeText text={room.currentTrack.name} />
                   </h2>
                   <p className="text-xs sm:text-sm text-gray-400 truncate mb-0.5 font-medium w-full">
                     {room.currentTrack.artist}
@@ -776,8 +837,8 @@ export default function JammingRoomPage() {
                             className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg object-cover"
                           />
                           <div className="flex-1 min-w-0">
-                            <h4 className="font-medium text-white truncate text-sm">
-                              {track.name}
+                            <h4 className="font-medium text-white text-xs sm:text-sm w-full max-w-full overflow-hidden">
+                              <MarqueeText text={track.name} />
                             </h4>
                             <p className="text-xs text-gray-400 truncate">
                               {track.artist}
@@ -932,11 +993,21 @@ export default function JammingRoomPage() {
             </div>
 
             {/* Chat Input */}
-            <div className="p-4 border-t border-gray-200 dark:border-gray-800">
+            <div className={`p-4 border-t border-gray-200 dark:border-gray-800 ${chatInputFocused ? 'pb-24 sm:pb-4' : ''} transition-all duration-300`}>
               <div className="flex gap-2">
                 <input
                   type="text"
                   value={newMessage}
+                  onFocus={() => {
+                    setChatInputFocused(true);
+                    // Scroll chat into view on mobile
+                    if (window.innerWidth < 640 && chatMessagesRef.current) {
+                      setTimeout(() => {
+                        chatMessagesRef.current!.scrollTop = chatMessagesRef.current!.scrollHeight;
+                      }, 200);
+                    }
+                  }}
+                  onBlur={() => setChatInputFocused(false)}
                   onChange={(e) => {
                     setNewMessage(e.target.value);
                     if (e.target.value.trim() && !isTyping) {

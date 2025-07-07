@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef, useLayoutEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useParams, useRouter } from 'next/navigation';
 import { motion, AnimatePresence, animate } from 'framer-motion';
@@ -108,6 +108,64 @@ type Section =
   | 'recent'
   | 'playlists'
   | 'bookmarks';
+
+// MarqueeText: Robust marquee effect for overflowing text
+function MarqueeText({ text, className = "", speed = 50 }: { text: string; className?: string; speed?: number }) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const textRef = useRef<HTMLDivElement>(null);
+  const [scrollDistance, setScrollDistance] = useState(0);
+  const [isOverflowing, setIsOverflowing] = useState(false);
+
+  useLayoutEffect(() => {
+    function measure() {
+      if (containerRef.current && textRef.current) {
+        const distance = textRef.current.scrollWidth - containerRef.current.clientWidth;
+        setScrollDistance(distance > 0 ? distance : 0);
+        setIsOverflowing(distance > 0);
+      }
+    }
+    measure();
+    window.addEventListener('resize', measure);
+    return () => window.removeEventListener('resize', measure);
+  }, [text]);
+
+  // Animation: left to right, then jump back, with pause at end
+  const duration = (scrollDistance / speed) || 6;
+  const pause = 1.2; // seconds to pause at the end
+
+  return (
+    <div
+      ref={containerRef}
+      className={`relative w-[70vw] max-w-full sm:w-auto overflow-hidden whitespace-nowrap ${className}`}
+      style={{ maxWidth: '100%' }}
+    >
+      {isOverflowing && scrollDistance > 0 ? (
+        <>
+          <motion.div
+            ref={textRef}
+            initial={{ x: 0 }}
+            animate={{ x: [-0, -scrollDistance, -scrollDistance] }}
+            transition={{
+              times: [0, 0.95, 1],
+              duration: duration + pause,
+              ease: 'easeInOut',
+              repeat: Infinity,
+              repeatType: 'loop',
+              repeatDelay: 0,
+            }}
+            className="inline-block"
+          >
+            {text}
+          </motion.div>
+          {/* Right fade gradient */}
+          <div className="pointer-events-none absolute right-0 top-0 h-full w-8 bg-gradient-to-l from-black/80 dark:from-black/80 to-transparent" />
+        </>
+      ) : (
+        <span ref={textRef} className="inline-block">{text}</span>
+      )}
+    </div>
+  );
+}
 
 export default function UserProfilePage() {
   const { slug } = useParams<{ slug: string }>();
@@ -785,88 +843,88 @@ function ProfileSection({
         {/* Now Playing */}
         <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
           {profile.nowPlaying ? (
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <motion.div
-                  className="relative"
-                  animate={{
-                    rotate: [0, 5, -5, 0],
-                    scale: [1, 1.02, 1]
-                  }}
-                  transition={{
-                    duration: 4,
-                    repeat: Infinity,
-                    ease: "easeInOut"
-                  }}
-                >
-                  <img
-                    src={profile.nowPlaying.albumArt}
-                    alt={profile.nowPlaying.album}
-                    className="w-12 h-12 rounded-md shadow-lg"
-                  />
-                  <div className="absolute inset-0 bg-black/60 rounded-md flex items-center justify-center">
-                    {profile.nowPlaying.isPlaying ? (
-                      <Pause className="w-4 h-4 text-white" />
-                    ) : (
-                      <Play className="w-4 h-4 text-white" />
-                    )}
-                  </div>
-                </motion.div>
+            <div className="flex flex-row items-center justify-between gap-3 w-full">
+              {/* Album art */}
+              <motion.div
+                className="relative flex-shrink-0"
+                animate={{
+                  rotate: [0, 5, -5, 0],
+                  scale: [1, 1.02, 1]
+                }}
+                transition={{
+                  duration: 4,
+                  repeat: Infinity,
+                  ease: "easeInOut"
+                }}
+              >
+                <img
+                  src={profile.nowPlaying.albumArt}
+                  alt={profile.nowPlaying.album}
+                  className="w-12 h-12 rounded-md shadow-lg"
+                />
+                <div className="absolute inset-0 bg-black/60 rounded-md flex items-center justify-center">
+                  {profile.nowPlaying.isPlaying ? (
+                    <Pause className="w-4 h-4 text-white" />
+                  ) : (
+                    <Play className="w-4 h-4 text-white" />
+                  )}
+                </div>
+              </motion.div>
 
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center space-x-2">
-                    <motion.span
-                      animate={
-                  profile.nowPlaying.isPlaying
-                    ? { scale: [1, 1.06, 1], backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'] }
-                    : { scale: 1 }
-                }
-                  transition={{
-                    duration: 2,
-                    repeat: Infinity,
-                    ease: 'easeInOut',
-                  }}
-                className="inline-block bg-gradient-to-r from-purple-500 via-pink-500 to-indigo-500 bg-[length:200%_200%] bg-clip-text text-transparent font-semibold text-xs"
+              {/* Now Playing text and progress */}
+              <div className="flex-1 min-w-0 w-full max-w-full px-2">
+                <div className="flex items-center space-x-2">
+                  <motion.span
+                    animate={
+                      profile.nowPlaying.isPlaying
+                        ? { scale: [1, 1.06, 1], backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'] }
+                        : { scale: 1 }
+                    }
+                    transition={{
+                      duration: 2,
+                      repeat: Infinity,
+                      ease: 'easeInOut',
+                    }}
+                    className="inline-block bg-gradient-to-r from-purple-500 via-pink-500 to-indigo-500 bg-[length:200%_200%] bg-clip-text text-transparent font-semibold text-xs"
                   >
                     Now Playing
                   </motion.span>
-                  </div>
-                  <h3 className="text-sm font-semibold truncate mt-1">
-                    {profile.nowPlaying.song}
-                  </h3>
-                  <p className="text-xs text-gray-600 dark:text-gray-400 truncate">
-                    {profile.nowPlaying.artist} •{' '}
-                    {profile.nowPlaying.album}
-                  </p>
+                </div>
+                <h3 className="text-xs sm:text-sm md:text-base font-semibold mt-1 w-full max-w-full overflow-hidden">
+                  <MarqueeText text={profile.nowPlaying.song} />
+                </h3>
+                <p className="text-xs text-gray-600 dark:text-gray-400 truncate w-full max-w-full overflow-hidden">
+                  {profile.nowPlaying.artist} • {profile.nowPlaying.album}
+                </p>
 
-                  {/* Progress Bar */}
-                  <div className="mt-1 space-y-1">
-                    <div className="h-1 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                      <motion.div
-                        className="h-full bg-green-500 rounded-full"
-                        initial={{ width: 0 }}
-                        animate={{
-                          width: `${(profile.nowPlaying.progressMs / profile.nowPlaying.durationMs) * 100}%`
-                        }}
-                        transition={{
-                          duration: 1,
-                          ease: "easeOut"
-                        }}
-                      />
-                    </div>
-                    <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400">
-                      <span>
-                        {formatTime(profile.nowPlaying.progressMs)}
-                      </span>
-                      <span>
-                        {formatTime(profile.nowPlaying.durationMs)}
-                      </span>
-                    </div>
+                {/* Progress Bar */}
+                <div className="mt-1 space-y-1 w-full max-w-full">
+                  <div className="h-1 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden w-full max-w-full">
+                    <motion.div
+                      className="h-full bg-green-500 rounded-full"
+                      initial={{ width: 0 }}
+                      animate={{
+                        width: `${(profile.nowPlaying.progressMs / profile.nowPlaying.durationMs) * 100}%`
+                      }}
+                      transition={{
+                        duration: 1,
+                        ease: "easeOut"
+                      }}
+                    />
+                  </div>
+                  <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 w-full max-w-full">
+                    <span className="truncate">
+                      {formatTime(profile.nowPlaying.progressMs)}
+                    </span>
+                    <span className="truncate">
+                      {formatTime(profile.nowPlaying.durationMs)}
+                    </span>
                   </div>
                 </div>
               </div>
 
-              <div className="flex flex-col gap-1">
+              {/* Buttons at the far right */}
+              <div className="flex flex-col gap-1 items-end justify-end flex-shrink-0 ml-2">
                 {profile.nowPlaying.previewUrl && (
                   <motion.button
                     whileHover={{ scale: 1.1 }}
@@ -880,8 +938,6 @@ function ProfileSection({
                     <PlayCircle className="w-5 h-5 text-green-500" />
                   </motion.button>
                 )}
-
-                {/* Bookmark Button */}
                 {isOwnProfile && (
                   <motion.button
                     whileHover={{ scale: 1.05 }}
@@ -1088,7 +1144,7 @@ function ProfileSection({
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 1.0 }}
+        exit={{ opacity: 0, y: -20 }}
         className="space-y-4"
       >
         <div className="flex items-center justify-between">
