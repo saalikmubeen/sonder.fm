@@ -17,7 +17,9 @@ import {
   Send,
   MessageCircle,
   X,
-  Bookmark
+  Bookmark,
+  Sun,
+  Moon
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 import { jammingApi } from '@/lib/jamming-api';
@@ -29,6 +31,7 @@ import Link from 'next/link';
 import BookmarkModal from '@/components/BookmarkModal';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { bookmarkApi } from '@/lib/api';
+import { useTheme } from 'next-themes';
 
 interface Track {
   id: string;
@@ -133,6 +136,9 @@ export default function JammingRoomPage() {
   const params = useParams();
   const router = useRouter();
   const { user, loading } = useAuth();
+  const { theme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
 
   const roomId = params.roomId as string;
 
@@ -578,7 +584,7 @@ export default function JammingRoomPage() {
       {/* Main Content */}
       <div className={`flex-1 transition-all duration-300 ${isChatOpen ? 'mr-80' : ''}`}>
         <div className="max-w-4xl mx-auto px-4 py-8">
-          {/* Header */}
+          {/* Header (with Theme Toggle at end) */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -628,6 +634,22 @@ export default function JammingRoomPage() {
                   {room.members.length}
                 </span>
               </div>
+
+              {/* Theme Toggle */}
+              {mounted && (
+                <motion.button
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                  className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                  aria-label="Toggle theme"
+                >
+                  {theme === 'dark' ? (
+                    <Sun className="w-5 h-5" />
+                  ) : (
+                    <Moon className="w-5 h-5" />
+                  )}
+                </motion.button>
+              )}
             </div>
           </motion.div>
 
@@ -656,7 +678,7 @@ export default function JammingRoomPage() {
                 </div>
                 {/* Info/Controls - stacked and centered on mobile, left-aligned on desktop */}
                 <div className="flex-1 min-w-0 w-full flex flex-col justify-center items-center sm:items-start text-center sm:text-left h-full">
-                  <h2 className="text-xs sm:text-base font-bold text-white mb-0.5 sm:mb-1 w-full max-w-full overflow-hidden">
+                  <h2 className="text-xs sm:text-base font-bold text-gray-900 dark:text-white mb-0.5 sm:mb-1 w-full max-w-full overflow-hidden text-center flex justify-center">
                     <MarqueeText text={room.currentTrack.name} />
                   </h2>
                   <p className="text-xs sm:text-sm text-gray-400 truncate mb-0.5 font-medium w-full">
@@ -778,11 +800,11 @@ export default function JammingRoomPage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
-              className="bg-[#181c24] dark:bg-[#181c24] rounded-2xl shadow-md p-3 sm:p-4 mb-4 sm:mb-6 border border-gray-800 w-full max-w-xl mx-auto"
+              className="bg-white dark:bg-[#181c24] rounded-2xl shadow p-3 sm:p-4 mb-4 sm:mb-6 border border-gray-200 dark:border-gray-800 w-full max-w-xl mx-auto"
             >
               <div className="flex items-center gap-2 mb-3">
                 <Crown className="w-4 h-4 text-yellow-500" />
-                <h3 className="text-base sm:text-lg font-semibold text-white">
+                <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">
                   Host Controls
                 </h3>
               </div>
@@ -797,7 +819,7 @@ export default function JammingRoomPage() {
                       onChange={(e) => setSearchQuery(e.target.value)}
                       onKeyPress={(e) => e.key === 'Enter' && searchTracks()}
                       placeholder="Search for tracks..."
-                      className="w-full pl-10 pr-3 py-2 sm:py-3 bg-gray-800 border border-gray-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all placeholder-gray-400 dark:placeholder-gray-500 text-white text-sm"
+                      className="w-full pl-10 pr-3 py-2 sm:py-3 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all placeholder-gray-400 dark:placeholder-gray-500 text-gray-900 dark:text-white text-sm"
                     />
                   </div>
                   <motion.button
@@ -829,7 +851,7 @@ export default function JammingRoomPage() {
                           key={track.id}
                           whileHover={{ scale: 1.01 }}
                           onClick={() => selectTrack(track)}
-                          className="w-full flex items-center gap-2 sm:gap-4 p-2 sm:p-3 bg-gray-800 rounded-xl hover:bg-gray-700 transition-colors text-left"
+                          className="w-full flex items-center gap-2 sm:gap-4 p-2 sm:p-3 bg-gray-100 dark:bg-gray-800 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors text-left"
                         >
                           <img
                             src={track.albumArt}
@@ -837,14 +859,14 @@ export default function JammingRoomPage() {
                             className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg object-cover"
                           />
                           <div className="flex-1 min-w-0">
-                            <h4 className="font-medium text-white text-xs sm:text-sm w-full max-w-full overflow-hidden">
+                            <h4 className="font-medium text-gray-900 dark:text-white text-xs sm:text-sm w-full max-w-full overflow-hidden">
                               <MarqueeText text={track.name} />
                             </h4>
-                            <p className="text-xs text-gray-400 truncate">
+                            <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
                               {track.artist}
                             </p>
                           </div>
-                          <span className="text-xs text-gray-500">
+                          <span className="text-xs text-gray-500 dark:text-gray-400">
                             {formatDuration(track.durationMs)}
                           </span>
                         </motion.button>

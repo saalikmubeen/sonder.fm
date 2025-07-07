@@ -67,6 +67,42 @@ export default function JamPage() {
     }
   };
 
+  const handleJoinRoom = async () => {
+    if (!user) {
+      toast.error('Please log in to join a jamming room');
+      return;
+    }
+
+    if (!roomName.trim()) {
+      toast.error('Please enter a room name');
+      return;
+    }
+
+    setIsJoining(true);
+
+    try {
+      const cleanName = cleanRoomName(roomName);
+      console.log(`Joining room: ${cleanName}`);
+
+      const joinResponse = await jammingApi.joinRoom(cleanName);
+      console.log('Join room response:', joinResponse);
+
+      if (!joinResponse.success) {
+        toast.error(joinResponse.error || 'Failed to join room. Please check the name and try again.');
+        setIsJoining(false);
+        return;
+      }
+
+      toast.success('Joined room successfully!');
+      router.push(`/jam/${cleanName}`);
+    } catch (error: any) {
+      console.error('Error joining room:', error);
+      toast.error('Failed to join room. Please try again.');
+    } finally {
+      setIsJoining(false);
+    }
+  };
+
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
       // Default to create on Enter key
@@ -190,7 +226,7 @@ export default function JamPage() {
                 <motion.button
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
-                  onClick={handleCreateAndJoinRoom}
+                  onClick={handleJoinRoom}
                   disabled={isCreating || isJoining || !roomName.trim()}
                   className="px-4 py-3 bg-gradient-to-r from-blue-500 to-indigo-500 text-white rounded-2xl font-medium hover:from-blue-600 hover:to-indigo-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
