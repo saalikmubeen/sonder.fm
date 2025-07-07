@@ -34,6 +34,7 @@ export default function JamPage() {
     setIsCreating(true);
 
     try {
+
       const cleanName = cleanRoomName(roomName);
       console.log(`Creating room: ${cleanName}`);
 
@@ -42,8 +43,6 @@ export default function JamPage() {
       console.log('Create room response:', createResponse);
 
       if (!createResponse.success) {
-        toast.error(createResponse.error || 'Failed to create room. Please try again.');
-        setIsCreating(false);
         return;
       }
 
@@ -60,8 +59,8 @@ export default function JamPage() {
       toast.success('Room created and joined successfully!');
       router.push(`/jam/${cleanName}`);
     } catch (error: any) {
-      console.error('Error creating/joining room:', error);
-      toast.error('Failed to create and join room. Please try again.');
+      console.error('Error creating/joining room:', error.response.data.error);
+      toast.error(error.response.data.error || 'Failed to create and join room. Please try again.');
     } finally {
       setIsCreating(false);
     }

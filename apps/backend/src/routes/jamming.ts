@@ -23,6 +23,17 @@ router.post('/rooms/:roomId/create', auth, async (req: AuthRequest, res) => {
     console.log(`Creating room: ${roomId} for user: ${user.displayName}`);
     console.log(`Current total rooms: ${RoomManager.getRoomCount()}`);
 
+    // Check if user is already hosting a room
+    const userId = user._id.toString();
+    const alreadyHosting = RoomManager.getAllRooms().some(room => room.hostId === userId);
+    if (alreadyHosting) {
+      console.log(`User ${user.displayName} is already hosting a room. Preventing multiple host rooms.`);
+      return res.status(400).json({
+        success: false,
+        error: 'You are already hosting a jam. End your current jam before hosting a new one.',
+      });
+    }
+
     // Check if room already exists
     const existingRoom = RoomManager.getRoom(roomId);
     if (existingRoom) {

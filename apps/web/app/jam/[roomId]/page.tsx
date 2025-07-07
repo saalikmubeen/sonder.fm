@@ -495,9 +495,6 @@ export default function JammingRoomPage() {
     createBookmarkMutation.mutate(bookmarkData);
   };
 
-  // Add state for input focus
-  const [chatInputFocused, setChatInputFocused] = useState(false);
-
   if (loading || isJoining) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex items-center justify-center">
@@ -934,7 +931,8 @@ export default function JammingRoomPage() {
             animate={{ x: 0 }}
             exit={{ x: 320 }}
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            className="fixed right-0 top-0 h-full w-full sm:w-96 md:w-[420px] bg-white dark:bg-gray-900 border-l border-gray-200 dark:border-gray-800 shadow-xl z-50"
+            className="fixed right-0 top-0 w-full sm:w-96 md:w-[420px] bg-white dark:bg-gray-900 border-l border-gray-200 dark:border-gray-800 shadow-xl z-50 flex flex-col h-[100dvh]"
+            style={{ height: '100dvh', maxHeight: '100dvh' }}
           >
             {/* Chat Header */}
             <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-800">
@@ -950,7 +948,7 @@ export default function JammingRoomPage() {
             {/* Chat Messages */}
             <div
               ref={chatMessagesRef}
-              className="flex-1 overflow-y-auto p-4 space-y-3 h-[calc(100vh-140px)]"
+              className="flex-1 overflow-y-auto p-4 space-y-3"
             >
               {chatMessages.length === 0 ? (
                 <div className="text-center text-gray-500 dark:text-gray-400 mt-8">
@@ -1015,13 +1013,12 @@ export default function JammingRoomPage() {
             </div>
 
             {/* Chat Input */}
-            <div className={`p-4 border-t border-gray-200 dark:border-gray-800 ${chatInputFocused ? 'pb-24 sm:pb-4' : ''} transition-all duration-300`}>
+            <div className="p-4 border-t border-gray-200 dark:border-gray-800">
               <div className="flex gap-2">
                 <input
                   type="text"
                   value={newMessage}
                   onFocus={() => {
-                    setChatInputFocused(true);
                     // Scroll chat into view on mobile
                     if (window.innerWidth < 640 && chatMessagesRef.current) {
                       setTimeout(() => {
@@ -1029,7 +1026,6 @@ export default function JammingRoomPage() {
                       }, 200);
                     }
                   }}
-                  onBlur={() => setChatInputFocused(false)}
                   onChange={(e) => {
                     setNewMessage(e.target.value);
                     if (e.target.value.trim() && !isTyping) {
