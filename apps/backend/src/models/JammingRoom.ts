@@ -2,6 +2,7 @@
 export interface JammingRoom {
   roomId: string;
   hostId: string;
+  name: string;
   hostSpotifyId: string;
   members: Array<{
     userId: string;
@@ -31,10 +32,11 @@ export interface JammingRoom {
 export class RoomManager {
   private static rooms = new Map<string, JammingRoom>();
 
-  static createRoom(roomId: string, host: { userId: string; spotifyId: string; displayName: string; avatarUrl: string; publicSlug: string }): JammingRoom {
+  static createRoom(roomId: string, host: { userId: string; spotifyId: string; displayName: string; avatarUrl: string; publicSlug: string; name: string }): JammingRoom {
     console.log(`RoomManager: Creating room ${roomId} with host ${host.displayName}`);
     const room: JammingRoom = {
       roomId,
+      name: host.name,
       hostId: host.userId,
       hostSpotifyId: host.spotifyId,
       members: [host],
@@ -122,6 +124,10 @@ export class RoomManager {
 
   static getAllRooms(): JammingRoom[] {
     return Array.from(this.rooms.values());
+  }
+
+  static getRoomsMap():  Map<string, JammingRoom> {
+    return this.rooms
   }
 
   static getRoomCount(): number {

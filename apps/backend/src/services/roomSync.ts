@@ -4,7 +4,7 @@ import { User } from '../models/User';
 
 export class RoomSyncService {
   // Sync in-memory room to database
-  static async syncRoomToDatabase(roomId: string) {
+  static async syncRoomToDatabase(roomId: string, name?: string) {
     try {
       const memoryRoom = RoomManager.getRoom(roomId);
       if (!memoryRoom) return;
@@ -19,7 +19,7 @@ export class RoomSyncService {
 
         dbRoom = new Room({
           roomId: memoryRoom.roomId,
-          name: roomId, // Use roomId as name for now
+          name: name || roomId, // Use provided name or roomId as fallback
           hostId: host._id,
           hostSpotifyId: memoryRoom.hostSpotifyId,
           isPublic: true,

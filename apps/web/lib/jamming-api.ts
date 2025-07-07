@@ -10,10 +10,9 @@ const getToken = () => {
 
 export const jammingApi = {
   // Create a new room
-  createRoom: async (roomId: string) => {
-    console.log(`🔵 Frontend: Creating room ${roomId}`);
-    console.log(`🔵 Frontend: Making POST request to /jamming/rooms/${roomId}/create`);
-    const response = await apiClient.post(`/jamming/rooms/${roomId}/create`);
+  createRoom: async (name: string) => {
+    console.log(`🔵 Frontend: Creating room with name ${name}`);
+    const response = await apiClient.post(`/jamming/rooms/create`, { name });
     console.log(`🔵 Frontend: Create room response:`, response.data);
     return response.data;
   },
@@ -21,7 +20,6 @@ export const jammingApi = {
   // Join an existing room
   joinRoom: async (roomId: string) => {
     console.log(`🟡 Frontend: Joining room ${roomId}`);
-    console.log(`🟡 Frontend: Making POST request to /jamming/rooms/${roomId}/join`);
     const response = await apiClient.post(`/jamming/rooms/${roomId}/join`);
     console.log(`🟡 Frontend: Join room response:`, response.data);
     return response.data;
@@ -66,6 +64,12 @@ export const jammingApi = {
   // Get devices
   getDevices: async (roomId: string) => {
     const response = await apiClient.get(`/jamming/rooms/${roomId}/devices`);
+    return response.data;
+  },
+
+  // Search for rooms by name
+  searchRoomsByName: async (name: string) => {
+    const response = await apiClient.get(`/jamming/rooms/search?name=${encodeURIComponent(name)}`);
     return response.data;
   },
 };

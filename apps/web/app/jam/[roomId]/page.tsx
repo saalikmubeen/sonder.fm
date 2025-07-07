@@ -56,6 +56,7 @@ interface RoomMember {
 
 interface Room {
   roomId: string;
+  name: string;
   hostId: string;
   hostSpotifyId: string;
   members: RoomMember[];
@@ -604,7 +605,7 @@ export default function JammingRoomPage() {
               </motion.button>
               <div>
                 <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-                  {roomId}
+                  {room.name}
                 </h1>
                 <p className="text-sm text-gray-500 dark:text-gray-400">
                   {isHost ? 'You are the host' : `Hosted by ${room.members.find(m => m.userId === room.hostId)?.displayName}`}

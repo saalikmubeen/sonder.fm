@@ -4,6 +4,8 @@ import { RoomManager } from '../models/JammingRoom';
 import type { APIResponse } from '@sonder/types';
 import { SpotifyAPI } from '@sonder/utils';
 import { RoomSyncService } from '../services/roomSync';
+import { v4 as uuidv4 } from 'uuid';
+import { Room } from '../models/Room';
 
 const router = express.Router();
 
@@ -14,37 +16,21 @@ const spotifyAPI = new SpotifyAPI(
 );
 
 // Create a new room (only through /jam page)
-router.post('/rooms/:roomId/create', auth, async (req: AuthRequest, res) => {
-  console.log(`🔵 CREATE ENDPOINT HIT: ${req.params.roomId}`);
+router.post('/rooms/create', auth, async (req: AuthRequest, res) => {
   try {
-    const { roomId } = req.params;
     const user = req.user!;
-
-    console.log(`=== CREATE ROOM REQUEST ===`);
-    console.log(`Creating room: ${roomId} for user: ${user.displayName}`);
-    console.log(`Current total rooms: ${RoomManager.getRoomCount()}`);
-
+    const roomId = uuidv4();
+    // Optionally accept a name from the request body
+    const { name } = req.body;
     // Check if user is already hosting a room
     const userId = user._id.toString();
     const alreadyHosting = RoomManager.getAllRooms().some(room => room.hostId === userId);
     if (alreadyHosting) {
-      console.log(`User ${user.displayName} is already hosting a room. Preventing multiple host rooms.`);
       return res.status(400).json({
         success: false,
         error: 'You are already hosting a jam. End your current jam before hosting a new one.',
       });
     }
-
-    // Check if room already exists
-    const existingRoom = RoomManager.getRoom(roomId);
-    if (existingRoom) {
-      console.log(`Room ${roomId} already exists`);
-      return res.status(400).json({
-        success: false,
-        error: 'Room already exists. Use join endpoint instead.',
-      });
-    }
-
     // Create new room with current user as host
     const room = RoomManager.createRoom(roomId, {
       userId: user._id.toString(),
@@ -52,31 +38,20 @@ router.post('/rooms/:roomId/create', auth, async (req: AuthRequest, res) => {
       displayName: user.displayName,
       avatarUrl: user.avatarUrl,
       publicSlug: user.publicSlug,
+      name: name
     });
-
-    console.log(`Room ${roomId} created successfully with ${room.members.length} members`);
-    console.log(`Total rooms after creation: ${RoomManager.getRoomCount()}`);
-    console.log(`Room details:`, {
-      roomId: room.roomId,
-      hostId: room.hostId,
-      hostName: room.members.find(m => m.userId === room.hostId)?.displayName,
-      memberCount: room.members.length
-    });
-
-    // Sync to database
-    await RoomSyncService.syncRoomToDatabase(roomId);
-
-    const response: APIResponse<{ room: any; isHost: boolean }> = {
+    // Optionally set the name in the DB (RoomSyncService)
+    await RoomSyncService.syncRoomToDatabase(roomId, name);
+    const response: APIResponse<{ room: any; isHost: boolean; roomId: string }> = {
       success: true,
       data: {
         room,
         isHost: true,
+        roomId,
       },
     };
-
     res.json(response);
   } catch (error) {
-    console.error('Error creating room:', error);
     res.status(500).json({
       success: false,
       error: 'Failed to create room',
@@ -188,6 +163,53 @@ router.post('/rooms/:roomId/leave', auth, async (req: AuthRequest, res) => {
     });
   }
 });
+
+
+
+// Search for rooms by name
+router.get('/rooms/search', auth, async (req: AuthRequest, res) => {
+  console.log("helooooooooooo")
+  try {
+    const { name } = req.query;
+    if (!name || typeof name !== 'string') {
+      return res.status(400).json({ success: false, error: 'Room name is required' });
+    }
+    // Find active rooms with this name (lastActive within 15 minutes, at least 1 participant)
+    const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000);
+    let rooms = await Room.find({
+      name,
+      lastActive: { $gte: fifteenMinutesAgo },
+      participants: { $ne: [] }
+    })
+      .populate('hostId', 'displayName avatarUrl publicSlug')
+      .populate('participants', 'displayName avatarUrl publicSlug')
+      .sort({ lastActive: -1 });
+
+
+    const currentRooms = RoomManager.getRoomsMap();
+
+    // only those rooms which are currently active and not deleted.
+    rooms = rooms.filter((room) => {
+      return currentRooms.has(room.roomId);
+    })
+
+    // Return metadata for each room
+    const result = rooms.map((room: any) => ({
+      roomId: room.roomId,
+      name: room.name,
+      host: room.hostId,
+      participantCount: room.participants.length,
+      createdAt: room.createdAt,
+      lastActive: room.lastActive,
+    }));
+
+    res.json({ success: true, data: { rooms: result } });
+  } catch (error) {
+    res.status(500).json({ success: false, error: 'Failed to search rooms' });
+  }
+});
+
+
 
 // Get room info
 router.get('/rooms/:roomId', auth, async (req: AuthRequest, res) => {
@@ -596,5 +618,7 @@ router.get('/rooms/:roomId/devices', auth, async (req: AuthRequest, res) => {
     res.status(500).json({ error: 'Failed to fetch devices' });
   }
 });
+
+
 
 export default router;

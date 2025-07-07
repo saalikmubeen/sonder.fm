@@ -13,99 +13,89 @@ export default function JamPage() {
   const [roomName, setRoomName] = useState('');
   const [isCreating, setIsCreating] = useState(false);
   const [isJoining, setIsJoining] = useState(false);
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [showRoomList, setShowRoomList] = useState(false);
   const router = useRouter();
   const { user, loading } = useAuth();
 
-  const cleanRoomName = (name: string) => {
-    return name.trim().toLowerCase().replace(/[^a-z0-9-]/g, '-');
-  };
-
-  const handleCreateAndJoinRoom = async () => {
+  const handleCreateRoom = async () => {
     if (!user) {
       toast.error('Please log in to create a jamming room');
       return;
     }
-
     if (!roomName.trim()) {
       toast.error('Please enter a room name');
       return;
     }
-
     setIsCreating(true);
-
     try {
-
-      const cleanName = cleanRoomName(roomName);
-      console.log(`Creating room: ${cleanName}`);
-
-      // Step 1: Create the room
-      const createResponse = await jammingApi.createRoom(cleanName);
-      console.log('Create room response:', createResponse);
-
+      const createResponse = await jammingApi.createRoom(roomName.trim());
       if (!createResponse.success) {
-        return;
-      }
-
-      // Step 2: Join the room
-      const joinResponse = await jammingApi.joinRoom(cleanName);
-      console.log('Join room response:', joinResponse);
-
-      if (!joinResponse.success) {
-        toast.error(joinResponse.error || 'Failed to join room after creation. Please try again.');
+        toast.error(createResponse.error || 'Failed to create room.');
         setIsCreating(false);
         return;
       }
-
+      const newRoomId = createResponse.data.roomId;
+      // Join the new room
+      const joinResponse = await jammingApi.joinRoom(newRoomId);
+      if (!joinResponse.success) {
+        toast.error(joinResponse.error || 'Failed to join room after creation.');
+        setIsCreating(false);
+        return;
+      }
       toast.success('Room created and joined successfully!');
-      router.push(`/jam/${cleanName}`);
+      router.push(`/jam/${newRoomId}`);
     } catch (error: any) {
-      console.error('Error creating/joining room:', error.response.data.error);
-      toast.error(error.response.data.error || 'Failed to create and join room. Please try again.');
+      toast.error('Failed to create and join room. Please try again.');
     } finally {
       setIsCreating(false);
     }
   };
 
-  const handleJoinRoom = async () => {
+  const handleJoinRoomSearch = async () => {
     if (!user) {
       toast.error('Please log in to join a jamming room');
       return;
     }
-
     if (!roomName.trim()) {
       toast.error('Please enter a room name');
       return;
     }
-
     setIsJoining(true);
-
     try {
-      const cleanName = cleanRoomName(roomName);
-      console.log(`Joining room: ${cleanName}`);
-
-      const joinResponse = await jammingApi.joinRoom(cleanName);
-      console.log('Join room response:', joinResponse);
-
-      if (!joinResponse.success) {
-        toast.error(joinResponse.error || 'Failed to join room. Please check the name and try again.');
-        setIsJoining(false);
-        return;
-      }
-
-      toast.success('Joined room successfully!');
-      router.push(`/jam/${cleanName}`);
+      const searchResponse = await jammingApi.searchRoomsByName(roomName.trim());
+      const rooms = searchResponse?.data?.rooms || [];
+      setSearchResults(rooms);
+      setShowRoomList(true);
     } catch (error: any) {
-      console.error('Error joining room:', error);
-      toast.error('Failed to join room. Please try again.');
+      toast.error('Failed to search for rooms. Please try again.');
     } finally {
       setIsJoining(false);
     }
   };
 
+  const handleJoinRoom = async (roomId: string) => {
+    setIsJoining(true);
+    try {
+      const joinResponse = await jammingApi.joinRoom(roomId);
+      if (!joinResponse.success) {
+        toast.error(joinResponse.error || 'Failed to join room.');
+        setIsJoining(false);
+        return;
+      }
+      toast.success('Joined room successfully!');
+      router.push(`/jam/${roomId}`);
+    } catch (error: any) {
+      toast.error('Failed to join room. Please try again.');
+    } finally {
+      setIsJoining(false);
+      setShowRoomList(false);
+    }
+  };
+
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
-      // Default to create on Enter key
-      handleCreateAndJoinRoom();
+      handleJoinRoomSearch();
     }
   };
 
@@ -203,7 +193,7 @@ export default function JamPage() {
                 <motion.button
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
-                  onClick={handleCreateAndJoinRoom}
+                  onClick={handleCreateRoom}
                   disabled={isCreating || isJoining || !roomName.trim()}
                   className="px-4 py-3 bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-2xl font-medium hover:from-green-600 hover:to-emerald-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
@@ -220,12 +210,11 @@ export default function JamPage() {
                     </>
                   )}
                 </motion.button>
-
                 {/* Join Room Button */}
                 <motion.button
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
-                  onClick={handleJoinRoom}
+                  onClick={handleJoinRoomSearch}
                   disabled={isCreating || isJoining || !roomName.trim()}
                   className="px-4 py-3 bg-gradient-to-r from-blue-500 to-indigo-500 text-white rounded-2xl font-medium hover:from-blue-600 hover:to-indigo-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
@@ -244,6 +233,44 @@ export default function JamPage() {
                 </motion.button>
               </div>
             </div>
+
+            {/* Room List Modal */}
+            {showRoomList && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+                <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-lg p-6 w-full max-w-md mx-auto">
+                  <h3 className="text-lg font-bold mb-4 text-gray-900 dark:text-white">Rooms named "{roomName.trim()}"</h3>
+                  {searchResults.length === 0 ? (
+                    <div className="text-center text-gray-500 dark:text-gray-400 mb-4">No active rooms found.</div>
+                  ) : (
+                    <ul className="mb-4 max-h-60 overflow-y-auto divide-y divide-gray-200 dark:divide-gray-800">
+                      {searchResults.map((room) => (
+                        <li key={room.roomId} className="py-2 flex items-center justify-between">
+                          <div>
+                            <div className="font-medium text-gray-900 dark:text-white">Host: {room.host?.displayName || 'Unknown'}</div>
+                            <div className="text-xs text-gray-500 dark:text-gray-400">Users: {room.participantCount} • Created: {new Date(room.createdAt).toLocaleString()}</div>
+                          </div>
+                          <Button
+                            onClick={() => handleJoinRoom(room.roomId)}
+                            className="ml-2 px-3 py-1 text-xs bg-blue-500 hover:bg-blue-600 text-white rounded-full"
+                            disabled={isJoining}
+                          >
+                            Join
+                          </Button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                  <div className="flex justify-between gap-2">
+                    <Button
+                      onClick={() => setShowRoomList(false)}
+                      className="flex-1 bg-gray-200 dark:bg-gray-800 text-gray-700 dark:text-gray-200"
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
 
             <div className="mt-6 text-center">
               <p className="text-sm text-gray-500 dark:text-gray-400">
