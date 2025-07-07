@@ -85,10 +85,10 @@ export class RoomManager {
     room.members = room.members.filter(m => m.userId !== userId);
 
     // If host leaves, end the room
-    // if (room.hostId === userId) {
-    //   this.rooms.delete(roomId);
-    //   return { room: null, roomEnded: true };
-    // }
+    if (room.hostId === userId) {
+      this.rooms.delete(roomId);
+      return { room: null, roomEnded: true };
+    }
 
     // If no members left, end the room
     if (room.members.length === 0) {

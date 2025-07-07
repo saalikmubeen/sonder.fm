@@ -14,6 +14,7 @@ export function useJammingSocket(roomId: string, setRoom: (room: any) => void) {
     }
     return () => {
       if (socket && roomId) {
+        console.log('Leaving room', roomId);
         socket.emit('leave_room', roomId);
       }
     };
@@ -62,9 +63,9 @@ export function useJammingSocket(roomId: string, setRoom: (room: any) => void) {
     console.log("Player", player)
     console.log("Device ID", deviceId)
 
-    if (!deviceId) {
-      toast.error('You need a premium spotify account to play music');
-    }
+    // if (!deviceId) {
+    //   toast.error('You need a premium spotify account to play music');
+    // }
 
     const handlePlay = ({ trackId, positionMs }: { trackId: string; positionMs: number }) => {
       console.log("Playing track", trackId, positionMs)

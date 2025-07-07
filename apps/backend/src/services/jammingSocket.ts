@@ -191,45 +191,45 @@ export const setupJammingSocket = (io: Server) => {
     });
 
     // Leave room
-    // socket.on('leave_room', (roomId: string) => {
-    //   console.log(`User ${user.displayName} leaving room ${roomId}`);
+    socket.on('leave_room', (roomId: string) => {
+      console.log(`User ${user.displayName} leaving room ${roomId}`);
 
-    //   socket.leave(roomId);
-    //   (socket as any).currentRoom = undefined;
+      socket.leave(roomId);
+      (socket as any).currentRoom = undefined;
 
-    //   // Remove from active connections
-    //   if (activeConnections.has(roomId)) {
-    //     activeConnections.get(roomId)!.delete(userId);
-    //     if (activeConnections.get(roomId)!.size === 0) {
-    //       activeConnections.delete(roomId);
-    //       // Clean up chat history when room is empty
-    //       roomChats.delete(roomId);
-    //       console.log(`Cleaned up chat history for empty room ${roomId}`);
-    //     }
-    //   }
+      // Remove from active connections
+      if (activeConnections.has(roomId)) {
+        activeConnections.get(roomId)!.delete(userId);
+        if (activeConnections.get(roomId)!.size === 0) {
+          activeConnections.delete(roomId);
+          // Clean up chat history when room is empty
+          roomChats.delete(roomId);
+          console.log(`Cleaned up chat history for empty room ${roomId}`);
+        }
+      }
 
-    //   // Update room state
-    //   const { room, roomEnded } = RoomManager.leaveRoom(roomId, userId);
+      // Update room state
+      const { room, roomEnded } = RoomManager.leaveRoom(roomId, userId);
 
-    //   if (roomEnded) {
-    //     // Notify all users that room ended
-    //     jammingNamespace.to(roomId).emit('room_ended');
-    //     // Clean up chat history
-    //     roomChats.delete(roomId);
-    //     console.log(`Room ${roomId} ended, chat history cleaned up`);
-    //   } else {
-    //     // Notify others that user left
-    //     jammingNamespace.to(roomId).emit('user_left', {
-    //       userId,
-    //       displayName: user.displayName,
-    //     });
+      if (roomEnded) {
+        // Notify all users that room ended
+        jammingNamespace.to(roomId).emit('room_ended');
+        // Clean up chat history
+        roomChats.delete(roomId);
+        console.log(`Room ${roomId} ended, chat history cleaned up`);
+      } else {
+        // Notify others that user left
+        jammingNamespace.to(roomId).emit('user_left', {
+          userId,
+          displayName: user.displayName,
+        });
 
-    //     // Send updated room state
-    //     if (room) {
-    //       jammingNamespace.to(roomId).emit('room_state', room);
-    //     }
-    //   }
-    // });
+        // Send updated room state
+        if (room) {
+          jammingNamespace.to(roomId).emit('room_state', room);
+        }
+      }
+    });
 
     // Host playback controls
     socket.on('host_play', async (data: { roomId: string; trackId?: string; positionMs: number }) => {

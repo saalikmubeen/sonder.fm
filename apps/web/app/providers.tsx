@@ -18,9 +18,9 @@ export default function Providers({
     <QueryClientProvider client={queryClient}>
       <ThemeProviderClient>
         <AuthProvider>
-          <JammingProvider>
+          {/* <JammingProvider> */}
             {children}
-          </JammingProvider>
+          {/* </JammingProvider> */}
         </AuthProvider>
       </ThemeProviderClient>
       <ReactQueryDevtools initialIsOpen={false} />
