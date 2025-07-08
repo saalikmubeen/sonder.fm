@@ -24,9 +24,12 @@ import {
   Volume2,
   Sun,
   Moon,
+  Hash,
+  Tag as TagIcon,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 import { roomsApi } from '@/lib/rooms-api';
+import { jammingApi } from '@/lib/jamming-api';
 import { useQuery } from '@tanstack/react-query';
 import { formatTime, timeAgo } from '@sonder/utils';
 import toast from 'react-hot-toast';
@@ -65,6 +68,7 @@ interface Room {
       avatarUrl: string;
     };
   };
+  tags?: string[];
   songHistoryCount?: number;
   hasFriends: boolean;
   isActive: boolean;
@@ -82,6 +86,7 @@ export default function RoomDiscoveryPage() {
   const [filter, setFilter] = useState<'all' | 'friends'>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
 
   useEffect(() => {
     setMounted(true);
@@ -95,6 +100,47 @@ export default function RoomDiscoveryPage() {
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
+  const clearSearch = () => {
+    setSearchQuery('');
+    setDebouncedSearch('');
+  };
+
+  // Fetch available tags
+  const { data: tagsData } = useQuery({
+    queryKey: ['tags'],
+    queryFn: jammingApi.getTags,
+    enabled: !!user,
+  });
+
+  const availableTags = tagsData?.data?.tags || [];
+  const popularTags = availableTags.slice(0, 12); // Show top 12 most used tags
+
+  const toggleTag = (tagName: string) => {
+    setSelectedTags(prev => 
+      prev.includes(tagName) 
+        ? prev.filter(t => t !== tagName)
+        : [...prev, tagName]
+    );
+  };
+
+  const clearAllTags = () => {
+    setSelectedTags([]);
+  };
+
+  const getTagColor = (tag: string) => {
+    const colors = [
+      'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300',
+      'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300',
+      'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300',
+      'bg-pink-100 text-pink-800 dark:bg-pink-900/30 dark:text-pink-300',
+      'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300',
+      'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-300',
+      'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300',
+      'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300',
+    ];
+    return colors[tag.length % colors.length];
+  };
+
   // Fetch live rooms
   const {
     data: liveRoomsData,
@@ -102,8 +148,12 @@ export default function RoomDiscoveryPage() {
     error: liveError,
     refetch: refetchLive,
   } = useQuery({
-    queryKey: ['live-rooms', filter, debouncedSearch],
-    queryFn: () => roomsApi.getDiscoveryRooms(filter, debouncedSearch || undefined),
+    queryKey: ['live-rooms', filter, debouncedSearch, selectedTags],
+    queryFn: () => roomsApi.getDiscoveryRooms(
+      filter, 
+      debouncedSearch || undefined, 
+      selectedTags.length > 0 ? selectedTags : undefined
+    ),
     enabled: !!user && activeTab === 'live',
     refetchInterval: 10000, // Refresh every 10 seconds for live rooms
   });
@@ -115,8 +165,11 @@ export default function RoomDiscoveryPage() {
     error: recentError,
     refetch: refetchRecent,
   } = useQuery({
-    queryKey: ['recent-rooms', debouncedSearch],
-    queryFn: () => roomsApi.getRecentRooms(debouncedSearch || undefined),
+    queryKey: ['recent-rooms', debouncedSearch, selectedTags],
+    queryFn: () => roomsApi.getRecentRooms(
+      debouncedSearch || undefined,
+      selectedTags.length > 0 ? selectedTags : undefined
+    ),
     enabled: !!user && activeTab === 'recent',
     refetchInterval: 30000, // Refresh every 30 seconds for recent rooms
   });
@@ -133,11 +186,6 @@ export default function RoomDiscoveryPage() {
 
   const handleViewHistory = (roomId: string) => {
     router.push(`/jam/${roomId}/history`);
-  };
-
-  const clearSearch = () => {
-    setSearchQuery('');
-    setDebouncedSearch('');
   };
 
   if (loading) {
@@ -317,6 +365,73 @@ export default function RoomDiscoveryPage() {
           )}
         </motion.div>
 
+        {/* Tag Filters */}
+        {popularTags.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.25 }}
+            className="bg-white dark:bg-gray-900 rounded-2xl shadow-lg p-6 mb-6"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                <TagIcon className="w-5 h-5" />
+                Filter by Tags
+              </h3>
+              {selectedTags.length > 0 && (
+                <button
+                  onClick={clearAllTags}
+                  className="text-sm text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+                >
+                  Clear All
+                </button>
+              )}
+            </div>
+
+            {/* Selected Tags */}
+            {selectedTags.length > 0 && (
+              <div className="flex flex-wrap gap-2 mb-4 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                {selectedTags.map((tag) => (
+                  <motion.span
+                    key={tag}
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium ${getTagColor(tag)} ring-2 ring-green-500`}
+                  >
+                    <Hash className="w-3 h-3" />
+                    {tag}
+                    <button
+                      onClick={() => toggleTag(tag)}
+                      className="ml-1 hover:bg-black/10 dark:hover:bg-white/10 rounded-full p-0.5 transition-colors"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </motion.span>
+                ))}
+              </div>
+            )}
+
+            {/* Available Tags */}
+            <div className="flex flex-wrap gap-2">
+              {popularTags.map((tag) => (
+                <button
+                  key={tag.name}
+                  onClick={() => toggleTag(tag.name)}
+                  className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium transition-all hover:scale-105 ${
+                    selectedTags.includes(tag.name)
+                      ? getTagColor(tag.name) + ' ring-2 ring-green-500'
+                      : getTagColor(tag.name) + ' hover:ring-2 hover:ring-gray-300 dark:hover:ring-gray-600'
+                  }`}
+                >
+                  <Hash className="w-3 h-3" />
+                  {tag.name}
+                  <span className="text-xs opacity-60">({tag.usageCount})</span>
+                </button>
+              ))}
+            </div>
+          </motion.div>
+        )}
+
         {/* Rooms Grid */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -375,6 +490,8 @@ export default function RoomDiscoveryPage() {
               <p className="text-gray-500 dark:text-gray-400 mb-6">
                 {searchQuery 
                   ? `No rooms match "${searchQuery}". Try a different search term.`
+                  : selectedTags.length > 0
+                    ? `No rooms found with the selected tags. Try different tags or clear filters.`
                   : activeTab === 'live'
                     ? filter === 'friends'
                       ? "None of your friends are in active rooms right now."
@@ -450,6 +567,18 @@ function RoomCard({
   const maxVisibleParticipants = 6;
   const visibleParticipants = room.participants.slice(0, maxVisibleParticipants);
   const remainingCount = Math.max(0, room.participantCount - maxVisibleParticipants);
+
+  const getTagColor = (tag: string) => {
+    const colors = [
+      'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300',
+      'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300',
+      'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300',
+      'bg-pink-100 text-pink-800 dark:bg-pink-900/30 dark:text-pink-300',
+      'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300',
+      'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-300',
+    ];
+    return colors[tag.length % colors.length];
+  };
 
   return (
     <motion.div
@@ -552,6 +681,28 @@ function RoomCard({
             )}
           </div>
         </div>
+
+        {/* Tags */}
+        {room.tags && room.tags.length > 0 && (
+          <div className="mb-4">
+            <div className="flex flex-wrap gap-1">
+              {room.tags.slice(0, 3).map((tag) => (
+                <span
+                  key={tag}
+                  className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${getTagColor(tag)}`}
+                >
+                  <Hash className="w-2.5 h-2.5" />
+                  {tag}
+                </span>
+              ))}
+              {room.tags.length > 3 && (
+                <span className="text-xs text-gray-500 dark:text-gray-400 px-2 py-1">
+                  +{room.tags.length - 3} more
+                </span>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Current/Last Track */}
         {trackToShow ? (
