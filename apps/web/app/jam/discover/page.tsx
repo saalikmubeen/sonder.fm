@@ -81,7 +81,7 @@ export default function RoomDiscoveryPage() {
   const router = useRouter();
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
-  
+
   const [activeTab, setActiveTab] = useState<'live' | 'recent'>('live');
   const [filter, setFilter] = useState<'all' | 'friends'>('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -116,8 +116,8 @@ export default function RoomDiscoveryPage() {
   const popularTags = availableTags.slice(0, 12); // Show top 12 most used tags
 
   const toggleTag = (tagName: string) => {
-    setSelectedTags(prev => 
-      prev.includes(tagName) 
+    setSelectedTags(prev =>
+      prev.includes(tagName)
         ? prev.filter(t => t !== tagName)
         : [...prev, tagName]
     );
@@ -150,8 +150,8 @@ export default function RoomDiscoveryPage() {
   } = useQuery({
     queryKey: ['live-rooms', filter, debouncedSearch, selectedTags],
     queryFn: () => roomsApi.getDiscoveryRooms(
-      filter, 
-      debouncedSearch || undefined, 
+      filter,
+      debouncedSearch || undefined,
       selectedTags.length > 0 ? selectedTags : undefined
     ),
     enabled: !!user && activeTab === 'live',
@@ -251,7 +251,7 @@ export default function RoomDiscoveryPage() {
                 </p>
               </div>
             </div>
-            
+
             {/* Theme Toggle */}
             {mounted && (
               <motion.button
@@ -413,7 +413,7 @@ export default function RoomDiscoveryPage() {
 
             {/* Available Tags */}
             <div className="flex flex-wrap gap-2">
-              {popularTags.map((tag) => (
+              {popularTags.map((tag: any) => (
                 <button
                   key={tag.name}
                   onClick={() => toggleTag(tag.name)}
@@ -488,7 +488,7 @@ export default function RoomDiscoveryPage() {
                 {searchQuery ? 'No rooms found' : `No ${activeTab} rooms found`}
               </h3>
               <p className="text-gray-500 dark:text-gray-400 mb-6">
-                {searchQuery 
+                {searchQuery
                   ? `No rooms match "${searchQuery}". Try a different search term.`
                   : selectedTags.length > 0
                     ? `No rooms found with the selected tags. Try different tags or clear filters.`
@@ -648,11 +648,11 @@ function RoomCard({
           <div className="flex items-center gap-2 mb-2">
             <Users className="w-4 h-4 text-gray-500" />
             <span className="text-sm text-gray-600 dark:text-gray-400">
-              {room.participantCount} {room.participantCount === 1 ? 'person' : 'people'} 
+              {room.participantCount} {room.participantCount === 1 ? 'person' : 'people'}
               {isLive ? ' listening' : ' listened'}
             </span>
           </div>
-          
+
           {/* Participant Avatars */}
           <div className="flex items-center gap-1">
             {visibleParticipants.map((participant, index) => (
