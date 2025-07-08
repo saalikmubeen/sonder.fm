@@ -287,7 +287,7 @@ export default function HomePage() {
               discover new sounds, and connect with friends—all in a
               beautiful, modern experience.
             </p>
-            <div className="flex flex-row gap-4 justify-center items-center mt-4">
+            <div className="flex flex-col md:flex-row gap-4 justify-center items-center mt-4">
               <Button
                 onClick={handleLogin}
                 size="lg"
