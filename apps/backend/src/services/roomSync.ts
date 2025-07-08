@@ -42,7 +42,7 @@ export class RoomSyncService {
       dbRoom.participants = participantIds.filter(Boolean);
       dbRoom.currentTrack = memoryRoom.currentTrack;
       dbRoom.lastActive = new Date();
-      
+
       // Update tags if provided
       if (tags) {
         dbRoom.tags = tags;
@@ -178,9 +178,9 @@ export class RoomSyncService {
       const rooms = await Room.find({
         isPublic: true,
         tags: { $in: tagFilters },
-        lastActive: { 
+        lastActive: {
           $gte: oneHourAgo,
-          $lte: fifteenMinutesAgo 
+          $lte: fifteenMinutesAgo
         },
         songHistory: { $ne: [] }
       })
@@ -300,15 +300,16 @@ export class RoomSyncService {
   // Get recently ended rooms (in database but not in memory)
   static async getRecentlyEndedRooms(userId?: string) {
     try {
+      // const oneDay = new Date(Date.now() - 24 * 60 * 60 * 1000)
       const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000); // Last hour
       const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000);
 
       // Get rooms from database that ended recently
       const dbRooms = await Room.find({
         isPublic: true,
-        lastActive: { 
-          $gte: oneHourAgo,
-          $lte: fifteenMinutesAgo 
+        lastActive: {
+          $gte: oneHourAgo, // only rooms that ended in the last hour
+          // $lte: fifteenMinutesAgo // but not in the last 15 minutes
         },
         songHistory: { $ne: [] } // Only rooms that had some activity
       })
@@ -399,7 +400,7 @@ export class RoomSyncService {
 
       // Filter by memory state if activeOnly
       const memoryRooms = RoomManager.getRoomsMap();
-      const filteredRooms = activeOnly 
+      const filteredRooms = activeOnly
         ? rooms.filter(room => memoryRooms.has(room.roomId))
         : rooms;
 
