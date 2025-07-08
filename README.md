@@ -1,9 +1,24 @@
 # Sonder.fm
 
-
 > **Connect. Share. Vibe.**
 
 [Sonder.fm](https://sonder-fm.vercel.app/) is a soulful, open-source music identity platform where users log in with Spotify and get a unique, public page (like `/u/xa93b21c`) showing their currently playing song, poetic GPT-generated "vibe summary," profile info, and more. It's like **Letterboxd for Spotify** or **Tumblr for musical energy** — built for people who feel music deeply and want to express their identity through it.
+
+**→ [View the source on GitHub](https://github.com/saalikmubeen/sonder.fm)**
+
+---
+
+## ✨ Features
+
+- **Modern, Social & Fun:** A beautiful, modern experience designed for music lovers and social discovery.
+- **Personalized Feed:** See what your friends are listening to and discover new music tailored to your taste.
+- **Social Profiles:** Showcase your top tracks, artists, and playlists in a beautiful profile.
+- **Live Now Playing:** Share your current vibe in real time with a live now playing status.
+- **Reactions & Vibe Notes:** React to friends' music and leave vibe notes to share your thoughts.
+- **Bookmarks:** Save your favorite moments in songs and revisit them anytime.
+- **Listening Rooms:** Join or create real-time listening rooms to vibe together with friends.
+- **Room History & Export:** View your listening history in rooms and export playlists to Spotify with one click.
+- **Open Source:** Explore and contribute on [GitHub](https://github.com/saalikmubeen/sonder.fm).
 
 ---
 
@@ -21,19 +36,18 @@
 ## ✨ Features Checklist
 
 - [x] **Spotify OAuth:** Secure login with Spotify, encrypted refresh tokens
-- [ ] **Personalized Feed:** See what your friends are listening to
+- [x] **Personalized Feed:** See what your friends are listening to
 - [x] **Social Profiles:** Unique public pages with display name, avatar, and now playing
 - [x] **Live Now Playing:** Real-time song status, always fresh from Spotify or cached
-- [ ] **Profile Themes:** Choose from pastel, grunge, sadcore, dark, and more
-- [ ] **Emoji Reactions & Vibe Notes:** React and leave anonymous messages
-- [ ] **Follow System:** Follow users, see their feed
-- [ ] **Reactions & Messaging:** Real-time chat and reactions via Socket.IO
+- [x] **Profile Themes:** Choose from pastel, grunge, sadcore, dark, and more
+- [x] **Emoji Reactions & Vibe Notes:** React and leave anonymous or attributed messages
+- [x] **Follow System:** Follow users, see their feed
 - [x] **Bookmarks:** Save and revisit your favorite song moments
+- [x] **Listening Rooms:** Real-time group listening and chat
+- [x] **Room History & Export:** Export room listening history as Spotify playlists
 - [x] **Mobile & Web:** Next.js frontend, React Native app placeholder
 - [x] **Dark Mode & Themes:** Beautiful, accessible design for all moods
-- [ ] **Production-ready Mobile App:** Full-featured React Native app
-
-
+- [ ] **Production-ready Mobile App:** Full-featured React Native app (coming soon)
 
 ---
 
@@ -164,7 +178,7 @@ yarn start
 
 ## 🖼️ Screenshots
 
-> _TODO._
+> _Coming soon!_
 
 ---
 
@@ -185,3 +199,7 @@ This project is [MIT licensed](LICENSE).
 ---
 
 > _Sonder.fm is built with love for music and open source. Join us and help shape the future of social music!_
+
+---
+
+**GitHub:** [https://github.com/saalikmubeen/sonder.fm](https://github.com/saalikmubeen/sonder.fm)
