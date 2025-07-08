@@ -10,9 +10,9 @@ const getToken = () => {
 
 export const jammingApi = {
   // Create a new room
-  createRoom: async (name: string) => {
+  createRoom: async (name: string, tags: string[] = []) => {
     console.log(`🔵 Frontend: Creating room with name ${name}`);
-    const response = await apiClient.post(`/jamming/rooms/create`, { name });
+    const response = await apiClient.post(`/jamming/rooms/create`, { name, tags });
     console.log(`🔵 Frontend: Create room response:`, response.data);
     return response.data;
   },
@@ -70,6 +70,12 @@ export const jammingApi = {
   // Search for rooms by name
   searchRoomsByName: async (name: string) => {
     const response = await apiClient.get(`/jamming/rooms/search?name=${encodeURIComponent(name)}`);
+    return response.data;
+  },
+
+  // Get all tags
+  getTags: async () => {
+    const response = await apiClient.get('/jamming/tags');
     return response.data;
   },
 };

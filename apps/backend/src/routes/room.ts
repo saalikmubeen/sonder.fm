@@ -12,13 +12,17 @@ const router = express.Router();
 router.get('/discover', auth, async (req: AuthRequest, res) => {
   try {
     const userId = req.userId;
-    const { filter, search } = req.query;
+    const { filter, search, tags } = req.query;
 
     let rooms;
+    const tagFilters = tags ? (tags as string).split(',').map(t => t.trim().toLowerCase()) : [];
 
     if (search && typeof search === 'string') {
       // Search functionality
-      rooms = await RoomSyncService.searchRooms(search, userId, true);
+      rooms = await RoomSyncService.searchRooms(search, userId, true, tagFilters);
+    } else if (tagFilters.length > 0) {
+      // Filter by tags
+      rooms = await RoomSyncService.getRoomsByTags(tagFilters, userId);
     } else {
       // Regular discovery
       rooms = await RoomSyncService.getActiveRooms(userId);
@@ -48,13 +52,17 @@ router.get('/discover', auth, async (req: AuthRequest, res) => {
 router.get('/recent', auth, async (req: AuthRequest, res) => {
   try {
     const userId = req.userId;
-    const { search } = req.query;
+    const { search, tags } = req.query;
 
     let rooms;
+    const tagFilters = tags ? (tags as string).split(',').map(t => t.trim().toLowerCase()) : [];
 
     if (search && typeof search === 'string') {
       // Search in recent rooms
-      rooms = await RoomSyncService.searchRooms(search, userId, false);
+      rooms = await RoomSyncService.searchRooms(search, userId, false, tagFilters);
+    } else if (tagFilters.length > 0) {
+      // Filter recent rooms by tags
+      rooms = await RoomSyncService.getRecentRoomsByTags(tagFilters, userId);
     } else {
       // Get recently ended rooms
       rooms = await RoomSyncService.getRecentlyEndedRooms(userId);

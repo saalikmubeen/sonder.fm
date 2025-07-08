@@ -6,6 +6,7 @@ import { SpotifyAPI } from '@sonder/utils';
 import { RoomSyncService } from '../services/roomSync';
 import { v4 as uuidv4 } from 'uuid';
 import { Room } from '../models/Room';
+import { Tag } from '../models/Tag';
 
 const router = express.Router();
 
@@ -20,8 +21,8 @@ router.post('/rooms/create', auth, async (req: AuthRequest, res) => {
   try {
     const user = req.user!;
     const roomId = uuidv4();
-    // Optionally accept a name from the request body
-    const { name } = req.body;
+    const { name, tags = [] } = req.body;
+
     // Check if user is already hosting a room
     const userId = user._id.toString();
     const alreadyHosting = RoomManager.getAllRooms().some(room => room.hostId === userId);
@@ -31,6 +32,10 @@ router.post('/rooms/create', auth, async (req: AuthRequest, res) => {
         error: 'You are already hosting a jam. End your current jam before hosting a new one.',
       });
     }
+
+    // Process and validate tags
+    const processedTags = await processRoomTags(tags);
+
     // Create new room with current user as host
     const room = RoomManager.createRoom(roomId, {
       userId: user._id.toString(),
@@ -40,8 +45,10 @@ router.post('/rooms/create', auth, async (req: AuthRequest, res) => {
       publicSlug: user.publicSlug,
       name: name
     });
-    // Optionally set the name in the DB (RoomSyncService)
-    await RoomSyncService.syncRoomToDatabase(roomId, name);
+
+    // Sync to database with tags
+    await RoomSyncService.syncRoomToDatabase(roomId, name, processedTags);
+
     const response: APIResponse<{ room: any; isHost: boolean; roomId: string }> = {
       success: true,
       data: {
@@ -55,6 +62,68 @@ router.post('/rooms/create', auth, async (req: AuthRequest, res) => {
     res.status(500).json({
       success: false,
       error: 'Failed to create room',
+    });
+  }
+});
+
+// Helper function to process and validate tags
+async function processRoomTags(tags: string[]): Promise<string[]> {
+  if (!Array.isArray(tags) || tags.length === 0) return [];
+
+  const processedTags: string[] = [];
+  const maxTags = 5;
+
+  for (const tag of tags.slice(0, maxTags)) {
+    if (typeof tag !== 'string') continue;
+
+    const cleanTag = tag.toLowerCase().trim();
+    
+    // Validate tag format
+    if (!cleanTag || cleanTag.length > 20 || !/^[a-zA-Z0-9\s\-]+$/.test(cleanTag)) {
+      continue;
+    }
+
+    processedTags.push(cleanTag);
+
+    // Upsert tag in database
+    try {
+      await Tag.findOneAndUpdate(
+        { name: cleanTag },
+        { 
+          $inc: { usageCount: 1 },
+          $setOnInsert: { 
+            name: cleanTag,
+            category: 'custom'
+          }
+        },
+        { upsert: true, new: true }
+      );
+    } catch (error) {
+      console.error('Error upserting tag:', error);
+    }
+  }
+
+  return [...new Set(processedTags)]; // Remove duplicates
+}
+
+// Get all tags for filtering
+router.get('/tags', async (req, res) => {
+  try {
+    const tags = await Tag.find({})
+      .sort({ usageCount: -1, name: 1 })
+      .limit(50);
+
+    const response: APIResponse<{ tags: any[] }> = {
+      success: true,
+      data: { tags }
+    };
+
+    res.json(response);
+  } catch (error) {
+    console.error('Error fetching tags:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch tags'
     });
   }
 });

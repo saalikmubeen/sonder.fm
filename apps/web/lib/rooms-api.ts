@@ -2,10 +2,11 @@ import { apiClient } from './api';
 
 export const roomsApi = {
   // Get active rooms for discovery
-  getDiscoveryRooms: async (filter?: 'all' | 'friends', search?: string) => {
+  getDiscoveryRooms: async (filter?: 'all' | 'friends', search?: string, tags?: string[]) => {
     const params = new URLSearchParams();
     if (filter && filter !== 'all') params.append('filter', filter);
     if (search) params.append('search', search);
+    if (tags && tags.length > 0) params.append('tags', tags.join(','));
     
     const queryString = params.toString();
     const response = await apiClient.get(`/rooms/discover${queryString ? `?${queryString}` : ''}`);
@@ -13,9 +14,13 @@ export const roomsApi = {
   },
 
   // Get recently ended rooms
-  getRecentRooms: async (search?: string) => {
-    const params = search ? `?search=${encodeURIComponent(search)}` : '';
-    const response = await apiClient.get(`/rooms/recent${params}`);
+  getRecentRooms: async (search?: string, tags?: string[]) => {
+    const params = new URLSearchParams();
+    if (search) params.append('search', search);
+    if (tags && tags.length > 0) params.append('tags', tags.join(','));
+    
+    const queryString = params.toString();
+    const response = await apiClient.get(`/rooms/recent${queryString ? `?${queryString}` : ''}`);
     return response.data;
   },
 

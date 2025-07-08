@@ -7,6 +7,7 @@ export interface RoomDocument extends Document {
   hostSpotifyId: string;
   isPublic: boolean;
   participants: Types.ObjectId[];
+  tags: string[];
   currentTrack?: {
     id: string;
     name: string;
@@ -61,6 +62,7 @@ const RoomSchema = new Schema<RoomDocument>({
   hostSpotifyId: { type: String, required: true },
   isPublic: { type: Boolean, default: true },
   participants: [{ type: Schema.Types.ObjectId, ref: 'User' }],
+  tags: [{ type: String, lowercase: true, trim: true }],
   currentTrack: CurrentTrackSchema,
   songHistory: [SongHistorySchema],
   lastActive: { type: Date, default: Date.now },
@@ -73,6 +75,8 @@ RoomSchema.index({ roomId: 1 });
 RoomSchema.index({ isPublic: 1, lastActive: -1 });
 RoomSchema.index({ participants: 1 });
 RoomSchema.index({ hostId: 1 });
+RoomSchema.index({ tags: 1 });
+RoomSchema.index({ isPublic: 1, tags: 1, lastActive: -1 });
 
 // Update lastActive and updatedAt on save
 RoomSchema.pre('save', function (next) {

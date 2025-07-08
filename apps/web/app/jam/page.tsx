@@ -3,20 +3,46 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
-import { Music, Users, Radio, ArrowRight, Sparkles, Plus, LogIn } from 'lucide-react';
+import { Music, Users, Radio, ArrowRight, Sparkles, Plus, LogIn, X, Hash } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 import { jammingApi } from '@/lib/jamming-api';
 import { Button } from '@sonder/ui';
 import toast from 'react-hot-toast';
+import { useQuery } from '@tanstack/react-query';
 
 export default function JamPage() {
   const [roomName, setRoomName] = useState('');
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [customTag, setCustomTag] = useState('');
   const [isCreating, setIsCreating] = useState(false);
   const [isJoining, setIsJoining] = useState(false);
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [showRoomList, setShowRoomList] = useState(false);
   const router = useRouter();
   const { user, loading } = useAuth();
+
+  // Predefined tags
+  const predefinedTags = [
+    { name: 'lofi', color: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300' },
+    { name: 'grunge', color: 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300' },
+    { name: 'sadcore', color: 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300' },
+    { name: 'party', color: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300' },
+    { name: 'chill', color: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' },
+    { name: 'rainy day', color: 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-300' },
+    { name: 'study', color: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300' },
+    { name: 'workout', color: 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300' },
+    { name: 'jazz', color: 'bg-pink-100 text-pink-800 dark:bg-pink-900/30 dark:text-pink-300' },
+    { name: 'electronic', color: 'bg-cyan-100 text-cyan-800 dark:bg-cyan-900/30 dark:text-cyan-300' },
+  ];
+
+  // Fetch existing tags for autocomplete
+  const { data: tagsData } = useQuery({
+    queryKey: ['tags'],
+    queryFn: jammingApi.getTags,
+    enabled: !!user,
+  });
+
+  const existingTags = tagsData?.data?.tags || [];
 
   const handleCreateRoom = async () => {
     if (!user) {
@@ -29,7 +55,7 @@ export default function JamPage() {
     }
     setIsCreating(true);
     try {
-      const createResponse = await jammingApi.createRoom(roomName.trim());
+      const createResponse = await jammingApi.createRoom(roomName.trim(), selectedTags);
       if (!createResponse.success) {
         toast.error(createResponse.error || 'Failed to create room.');
         setIsCreating(false);
@@ -50,6 +76,31 @@ export default function JamPage() {
     } finally {
       setIsCreating(false);
     }
+  };
+
+  const addTag = (tag: string) => {
+    const cleanTag = tag.toLowerCase().trim();
+    if (cleanTag && !selectedTags.includes(cleanTag) && selectedTags.length < 5) {
+      setSelectedTags([...selectedTags, cleanTag]);
+    }
+  };
+
+  const removeTag = (tag: string) => {
+    setSelectedTags(selectedTags.filter(t => t !== tag));
+  };
+
+  const addCustomTag = () => {
+    if (customTag.trim() && customTag.length <= 20 && /^[a-zA-Z0-9\s\-]+$/.test(customTag)) {
+      addTag(customTag);
+      setCustomTag('');
+    } else {
+      toast.error('Tag must be 1-20 characters and contain only letters, numbers, spaces, and hyphens');
+    }
+  };
+
+  const getTagColor = (tag: string) => {
+    const predefined = predefinedTags.find(t => t.name === tag);
+    return predefined?.color || 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300';
   };
 
   const handleJoinRoomSearch = async () => {
@@ -188,6 +239,84 @@ export default function JamPage() {
                 />
               </div>
 
+              {/* Tags Section */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                  Tags (optional) - Help others discover your vibe
+                </label>
+                
+                {/* Selected Tags */}
+                {selectedTags.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mb-3">
+                    {selectedTags.map((tag) => (
+                      <motion.span
+                        key={tag}
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium ${getTagColor(tag)}`}
+                      >
+                        <Hash className="w-3 h-3" />
+                        {tag}
+                        <button
+                          onClick={() => removeTag(tag)}
+                          className="ml-1 hover:bg-black/10 dark:hover:bg-white/10 rounded-full p-0.5 transition-colors"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </motion.span>
+                    ))}
+                  </div>
+                )}
+
+                {/* Predefined Tags */}
+                <div className="mb-3">
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">Popular tags:</p>
+                  <div className="flex flex-wrap gap-2">
+                    {predefinedTags.map((tag) => (
+                      <button
+                        key={tag.name}
+                        onClick={() => addTag(tag.name)}
+                        disabled={selectedTags.includes(tag.name) || selectedTags.length >= 5}
+                        className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed ${
+                          selectedTags.includes(tag.name) 
+                            ? tag.color + ' ring-2 ring-green-500' 
+                            : tag.color + ' hover:ring-2 hover:ring-gray-300 dark:hover:ring-gray-600'
+                        }`}
+                      >
+                        <Hash className="w-3 h-3" />
+                        {tag.name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Custom Tag Input */}
+                {selectedTags.length < 5 && (
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={customTag}
+                      onChange={(e) => setCustomTag(e.target.value)}
+                      onKeyPress={(e) => e.key === 'Enter' && addCustomTag()}
+                      placeholder="Add custom tag..."
+                      maxLength={20}
+                      className="flex-1 px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all placeholder-gray-400 dark:placeholder-gray-500 text-gray-900 dark:text-white text-sm"
+                      disabled={isCreating || isJoining}
+                    />
+                    <button
+                      onClick={addCustomTag}
+                      disabled={!customTag.trim() || isCreating || isJoining}
+                      className="px-3 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                    >
+                      Add
+                    </button>
+                  </div>
+                )}
+
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                  Max 5 tags • 20 characters each • Letters, numbers, spaces, and hyphens only
+                </p>
+              </div>
               <div className="grid grid-cols-2 gap-3">
                 {/* Create Room Button */}
                 <motion.button
