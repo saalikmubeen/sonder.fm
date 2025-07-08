@@ -1,6 +1,7 @@
 import { Room } from '../models/Room';
 import { RoomManager } from '../models/JammingRoom';
 import { User } from '../models/User';
+import { Follow } from '../models/Follow';
 
 export class RoomSyncService {
   // Sync in-memory room to database
@@ -105,55 +106,46 @@ export class RoomSyncService {
     }
   }
 
-  // Get rooms for discovery with friend information
-  static async getDiscoveryRooms(userId?: string) {
+  // Get active rooms (only those that exist in memory AND database)
+  static async getActiveRooms(userId?: string) {
     try {
       const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000);
 
-      // Get active rooms from database
+      // Get rooms from database that are recent
       const dbRooms = await Room.find({
-        $or: [
-          { isPublic: true },
-          { participants: userId }
-        ],
+        isPublic: true,
         lastActive: { $gte: fifteenMinutesAgo },
         participants: { $ne: [] } // Only rooms with participants
       })
       .populate('hostId', 'displayName avatarUrl publicSlug')
       .populate('participants', 'displayName avatarUrl publicSlug')
-      .populate('songHistory.playedBy', 'displayName avatarUrl publicSlug')
-      .sort({ lastActive: -1 })
-      .limit(20);
+      .sort({ lastActive: -1 });
+
+      // Get in-memory rooms
+      const memoryRooms = RoomManager.getRoomsMap();
+
+      // Only return rooms that exist in BOTH memory and database
+      const activeRooms = dbRooms.filter(room => memoryRooms.has(room.roomId));
 
       // Get user's following list if authenticated
       let userFollowing: string[] = [];
       if (userId) {
-        const user = await User.findById(userId);
-        if (user) {
-          // const followingUsers = await User.find({ _id: { $in: user.following || [] } });
-          // userFollowing = followingUsers.map(u => u._id.toString());
-
-           const followingIds: string[] = (user && (user as any).following) ? (user as any).following.map((id: any) => id.toString()) : [];
-           userFollowing = followingIds;
-        }
+        const follows = await Follow.find({ followerId: userId })
+          .populate('followingId', '_id');
+        userFollowing = follows.map(f => f.followingId._id.toString());
       }
 
       // Enhance with in-memory data and friend information
-      const enhancedRooms = dbRooms.map(room => {
-        const memoryRoom = RoomManager.getRoom(room.roomId);
+      const enhancedRooms = activeRooms.map(room => {
+        const memoryRoom = memoryRooms.get(room.roomId);
 
         // Check if any participants are friends
         const hasFriends = room.participants.some(participant =>
           userFollowing.includes(participant._id.toString())
         );
 
-        // Get current track from memory or database
+        // Get current track from memory (most up-to-date)
         const currentTrack = memoryRoom?.currentTrack || room.currentTrack;
-
-        // Get last played track if no current track
-        const lastPlayedTrack = room.songHistory.length > 0
-          ? room.songHistory[room.songHistory.length - 1]
-          : null;
 
         return {
           roomId: room.roomId,
@@ -162,18 +154,167 @@ export class RoomSyncService {
           participantCount: memoryRoom?.members.length || room.participants.length,
           participants: room.participants,
           currentTrack,
-          lastPlayedTrack,
           hasFriends,
-          isActive: !!memoryRoom,
+          isActive: true, // All rooms here are active
           lastActive: room.lastActive,
           createdAt: room.createdAt,
         };
       });
 
-      return enhancedRooms.filter(room => room.participantCount > 0);
+      return enhancedRooms;
     } catch (error) {
-      console.error('Error getting discovery rooms:', error);
+      console.error('Error getting active rooms:', error);
       return [];
     }
+  }
+
+  // Get recently ended rooms (in database but not in memory)
+  static async getRecentlyEndedRooms(userId?: string) {
+    try {
+      const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000); // Last hour
+      const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000);
+
+      // Get rooms from database that ended recently
+      const dbRooms = await Room.find({
+        isPublic: true,
+        lastActive: { 
+          $gte: oneHourAgo,
+          $lte: fifteenMinutesAgo 
+        },
+        songHistory: { $ne: [] } // Only rooms that had some activity
+      })
+      .populate('hostId', 'displayName avatarUrl publicSlug')
+      .populate('participants', 'displayName avatarUrl publicSlug')
+      .populate('songHistory.playedBy', 'displayName avatarUrl publicSlug')
+      .sort({ lastActive: -1 })
+      .limit(20);
+
+      // Get in-memory rooms to exclude active ones
+      const memoryRooms = RoomManager.getRoomsMap();
+
+      // Only return rooms that are NOT in memory (ended)
+      const endedRooms = dbRooms.filter(room => !memoryRooms.has(room.roomId));
+
+      // Get user's following list if authenticated
+      let userFollowing: string[] = [];
+      if (userId) {
+        const follows = await Follow.find({ followerId: userId })
+          .populate('followingId', '_id');
+        userFollowing = follows.map(f => f.followingId._id.toString());
+      }
+
+      // Enhance with friend information and last played track
+      const enhancedRooms = endedRooms.map(room => {
+        // Check if any participants were friends
+        const hasFriends = room.participants.some(participant =>
+          userFollowing.includes(participant._id.toString())
+        );
+
+        // Get last played track from history
+        const lastPlayedTrack = room.songHistory.length > 0
+          ? room.songHistory[room.songHistory.length - 1]
+          : null;
+
+        return {
+          roomId: room.roomId,
+          name: room.name,
+          host: room.hostId,
+          participantCount: room.participants.length,
+          participants: room.participants,
+          lastPlayedTrack,
+          songHistoryCount: room.songHistory.length,
+          hasFriends,
+          isActive: false,
+          lastActive: room.lastActive,
+          createdAt: room.createdAt,
+        };
+      });
+
+      return enhancedRooms;
+    } catch (error) {
+      console.error('Error getting recently ended rooms:', error);
+      return [];
+    }
+  }
+
+  // Search rooms by name
+  static async searchRooms(query: string, userId?: string, activeOnly: boolean = true) {
+    try {
+      const searchRegex = new RegExp(query, 'i');
+      const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000);
+
+      let searchCriteria: any = {
+        isPublic: true,
+        $or: [
+          { name: searchRegex },
+          { 'hostId.displayName': searchRegex }
+        ]
+      };
+
+      if (activeOnly) {
+        searchCriteria.lastActive = { $gte: fifteenMinutesAgo };
+        searchCriteria.participants = { $ne: [] };
+      }
+
+      const rooms = await Room.find(searchCriteria)
+        .populate('hostId', 'displayName avatarUrl publicSlug')
+        .populate('participants', 'displayName avatarUrl publicSlug')
+        .sort({ lastActive: -1 })
+        .limit(20);
+
+      // Filter by memory state if activeOnly
+      const memoryRooms = RoomManager.getRoomsMap();
+      const filteredRooms = activeOnly 
+        ? rooms.filter(room => memoryRooms.has(room.roomId))
+        : rooms;
+
+      // Get user's following list if authenticated
+      let userFollowing: string[] = [];
+      if (userId) {
+        const follows = await Follow.find({ followerId: userId })
+          .populate('followingId', '_id');
+        userFollowing = follows.map(f => f.followingId._id.toString());
+      }
+
+      // Enhance rooms
+      const enhancedRooms = filteredRooms.map(room => {
+        const memoryRoom = memoryRooms.get(room.roomId);
+        const isActive = !!memoryRoom;
+
+        const hasFriends = room.participants.some(participant =>
+          userFollowing.includes(participant._id.toString())
+        );
+
+        const currentTrack = memoryRoom?.currentTrack || room.currentTrack;
+        const lastPlayedTrack = !isActive && room.songHistory.length > 0
+          ? room.songHistory[room.songHistory.length - 1]
+          : null;
+
+        return {
+          roomId: room.roomId,
+          name: room.name,
+          host: room.hostId,
+          participantCount: isActive ? memoryRoom.members.length : room.participants.length,
+          participants: room.participants,
+          currentTrack: isActive ? currentTrack : undefined,
+          lastPlayedTrack: !isActive ? lastPlayedTrack : undefined,
+          songHistoryCount: room.songHistory.length,
+          hasFriends,
+          isActive,
+          lastActive: room.lastActive,
+          createdAt: room.createdAt,
+        };
+      });
+
+      return enhancedRooms;
+    } catch (error) {
+      console.error('Error searching rooms:', error);
+      return [];
+    }
+  }
+
+  // Legacy method for backward compatibility
+  static async getDiscoveryRooms(userId?: string) {
+    return this.getActiveRooms(userId);
   }
 }

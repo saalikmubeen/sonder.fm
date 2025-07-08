@@ -1,10 +1,21 @@
 import { apiClient } from './api';
 
 export const roomsApi = {
-  // Get rooms for discovery
-  getDiscoveryRooms: async (filter?: 'all' | 'friends') => {
-    const params = filter ? `?filter=${filter}` : '';
-    const response = await apiClient.get(`/rooms/discover${params}`);
+  // Get active rooms for discovery
+  getDiscoveryRooms: async (filter?: 'all' | 'friends', search?: string) => {
+    const params = new URLSearchParams();
+    if (filter && filter !== 'all') params.append('filter', filter);
+    if (search) params.append('search', search);
+    
+    const queryString = params.toString();
+    const response = await apiClient.get(`/rooms/discover${queryString ? `?${queryString}` : ''}`);
+    return response.data;
+  },
+
+  // Get recently ended rooms
+  getRecentRooms: async (search?: string) => {
+    const params = search ? `?search=${encodeURIComponent(search)}` : '';
+    const response = await apiClient.get(`/rooms/recent${params}`);
     return response.data;
   },
 

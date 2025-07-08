@@ -8,22 +8,30 @@ import type { APIResponse } from '@sonder/types';
 
 const router = express.Router();
 
-// Get rooms for discovery
+// Get active rooms for discovery
 router.get('/discover', auth, async (req: AuthRequest, res) => {
   try {
     const userId = req.userId;
-    const { filter } = req.query; // 'all' or 'friends'
+    const { filter, search } = req.query;
 
-    const rooms = await RoomSyncService.getDiscoveryRooms(userId);
+    let rooms;
+
+    if (search && typeof search === 'string') {
+      // Search functionality
+      rooms = await RoomSyncService.searchRooms(search, userId, true);
+    } else {
+      // Regular discovery
+      rooms = await RoomSyncService.getActiveRooms(userId);
+    }
 
     // Filter by friends if requested
-    const filteredRooms = filter === 'friends'
-      ? rooms.filter(room => room.hasFriends)
-      : rooms;
+    if (filter === 'friends') {
+      rooms = rooms.filter(room => room.hasFriends);
+    }
 
     const response: APIResponse<{ rooms: any[] }> = {
       success: true,
-      data: { rooms: filteredRooms }
+      data: { rooms }
     };
 
     res.json(response);
@@ -32,6 +40,37 @@ router.get('/discover', auth, async (req: AuthRequest, res) => {
     res.status(500).json({
       success: false,
       error: 'Failed to fetch rooms'
+    });
+  }
+});
+
+// Get recently ended rooms
+router.get('/recent', auth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.userId;
+    const { search } = req.query;
+
+    let rooms;
+
+    if (search && typeof search === 'string') {
+      // Search in recent rooms
+      rooms = await RoomSyncService.searchRooms(search, userId, false);
+    } else {
+      // Get recently ended rooms
+      rooms = await RoomSyncService.getRecentlyEndedRooms(userId);
+    }
+
+    const response: APIResponse<{ rooms: any[] }> = {
+      success: true,
+      data: { rooms }
+    };
+
+    res.json(response);
+  } catch (error) {
+    console.error('Error fetching recent rooms:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch recent rooms'
     });
   }
 });
@@ -111,9 +150,9 @@ router.post('/:roomId/export-playlist', auth, async (req: AuthRequest, res) => {
       }),
     });
 
-    // if (!createPlaylistResponse.ok) {
-    //   throw new Error('Failed to create Spotify playlist');
-    // }
+    if (!createPlaylistResponse.ok) {
+      throw new Error('Failed to create Spotify playlist');
+    }
 
     const playlist: any = await createPlaylistResponse.json();
 

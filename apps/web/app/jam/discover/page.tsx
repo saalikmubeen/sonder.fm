@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import {
@@ -16,6 +16,14 @@ import {
   Radio,
   Crown,
   ExternalLink,
+  Search,
+  X,
+  History,
+  Download,
+  Loader2,
+  Volume2,
+  Sun,
+  Moon,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 import { roomsApi } from '@/lib/rooms-api';
@@ -23,6 +31,7 @@ import { useQuery } from '@tanstack/react-query';
 import { formatTime, timeAgo } from '@sonder/utils';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
+import { useTheme } from 'next-themes';
 
 interface Room {
   roomId: string;
@@ -56,6 +65,7 @@ interface Room {
       avatarUrl: string;
     };
   };
+  songHistoryCount?: number;
   hasFriends: boolean;
   isActive: boolean;
   lastActive: string;
@@ -65,24 +75,69 @@ interface Room {
 export default function RoomDiscoveryPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
+  const { theme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+  
+  const [activeTab, setActiveTab] = useState<'live' | 'recent'>('live');
   const [filter, setFilter] = useState<'all' | 'friends'>('all');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
 
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Debounce search
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  // Fetch live rooms
   const {
-    data: roomsData,
-    isLoading,
-    error,
-    refetch,
+    data: liveRoomsData,
+    isLoading: liveLoading,
+    error: liveError,
+    refetch: refetchLive,
   } = useQuery({
-    queryKey: ['discovery-rooms', filter],
-    queryFn: () => roomsApi.getDiscoveryRooms(filter),
-    enabled: !!user,
-    refetchInterval: 30000, // Refresh every 30 seconds
+    queryKey: ['live-rooms', filter, debouncedSearch],
+    queryFn: () => roomsApi.getDiscoveryRooms(filter, debouncedSearch || undefined),
+    enabled: !!user && activeTab === 'live',
+    refetchInterval: 10000, // Refresh every 10 seconds for live rooms
   });
 
-  const rooms: Room[] = roomsData?.data?.rooms || [];
+  // Fetch recent rooms
+  const {
+    data: recentRoomsData,
+    isLoading: recentLoading,
+    error: recentError,
+    refetch: refetchRecent,
+  } = useQuery({
+    queryKey: ['recent-rooms', debouncedSearch],
+    queryFn: () => roomsApi.getRecentRooms(debouncedSearch || undefined),
+    enabled: !!user && activeTab === 'recent',
+    refetchInterval: 30000, // Refresh every 30 seconds for recent rooms
+  });
+
+  const liveRooms: Room[] = liveRoomsData?.data?.rooms || [];
+  const recentRooms: Room[] = recentRoomsData?.data?.rooms || [];
+  const currentRooms = activeTab === 'live' ? liveRooms : recentRooms;
+  const isLoading = activeTab === 'live' ? liveLoading : recentLoading;
+  const error = activeTab === 'live' ? liveError : recentError;
 
   const handleJoinRoom = (roomId: string) => {
     router.push(`/jam/${roomId}`);
+  };
+
+  const handleViewHistory = (roomId: string) => {
+    router.push(`/jam/${roomId}/history`);
+  };
+
+  const clearSearch = () => {
+    setSearchQuery('');
+    setDebouncedSearch('');
   };
 
   if (loading) {
@@ -127,75 +182,150 @@ export default function RoomDiscoveryPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
-      <div className="max-w-4xl mx-auto px-4 py-8">
+      <div className="max-w-6xl mx-auto px-4 py-8">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           className="text-center mb-8"
         >
-          <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-emerald-500 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Radio className="w-8 h-8 text-white" />
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-4">
+              <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-emerald-500 rounded-full flex items-center justify-center">
+                <Radio className="w-8 h-8 text-white" />
+              </div>
+              <div className="text-left">
+                <h1 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white">
+                  Discover Rooms
+                </h1>
+                <p className="text-gray-600 dark:text-gray-400">
+                  Join live music rooms or explore recent sessions
+                </p>
+              </div>
+            </div>
+            
+            {/* Theme Toggle */}
+            {mounted && (
+              <motion.button
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                className="p-3 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                aria-label="Toggle theme"
+              >
+                {theme === 'dark' ? (
+                  <Sun className="w-6 h-6 text-gray-600 dark:text-gray-400" />
+                ) : (
+                  <Moon className="w-6 h-6 text-gray-600 dark:text-gray-400" />
+                )}
+              </motion.button>
+            )}
           </div>
-          <h1 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-2">
-            Discover Rooms
-          </h1>
-          <p className="text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
-            Join live music rooms where people are listening together in perfect sync.
-            Find friends or discover new vibes.
-          </p>
         </motion.div>
 
-        {/* Filter Tabs */}
+        {/* Search Bar */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
           className="bg-white dark:bg-gray-900 rounded-2xl shadow-lg p-6 mb-6"
         >
+          <div className="relative">
+            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search rooms by name or host..."
+              className="w-full pl-12 pr-12 py-4 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all placeholder-gray-400 dark:placeholder-gray-500 text-gray-900 dark:text-white text-lg"
+            />
+            {searchQuery && (
+              <button
+                onClick={clearSearch}
+                className="absolute right-4 top-1/2 transform -translate-y-1/2 p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+              >
+                <X className="w-4 h-4 text-gray-400" />
+              </button>
+            )}
+          </div>
+        </motion.div>
+
+        {/* Tab Navigation */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="bg-white dark:bg-gray-900 rounded-2xl shadow-lg p-6 mb-6"
+        >
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
               <Filter className="w-5 h-5" />
-              Filter Rooms
+              Browse Rooms
             </h2>
             <button
-              onClick={() => refetch()}
+              onClick={() => activeTab === 'live' ? refetchLive() : refetchRecent()}
               className="text-sm text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
             >
               Refresh
             </button>
           </div>
 
-          <div className="flex bg-gray-100 dark:bg-gray-800 rounded-xl p-1">
+          {/* Main Tabs */}
+          <div className="flex bg-gray-100 dark:bg-gray-800 rounded-xl p-1 mb-4">
             {[
-              { id: 'all', label: 'All Rooms', icon: Music },
-              { id: 'friends', label: 'Friends Only', icon: Heart },
+              { id: 'live', label: 'Live Rooms', icon: Radio, count: liveRooms.length },
+              { id: 'recent', label: 'Recent Sessions', icon: History, count: recentRooms.length },
             ].map((tab) => (
               <button
                 key={tab.id}
-                onClick={() => setFilter(tab.id as 'all' | 'friends')}
-                className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-medium transition-all ${
-                  filter === tab.id
+                onClick={() => setActiveTab(tab.id as 'live' | 'recent')}
+                className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-medium transition-all ${
+                  activeTab === tab.id
                     ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
                     : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
                 }`}
               >
                 <tab.icon className="w-4 h-4" />
                 {tab.label}
+                <span className="text-xs bg-gray-200 dark:bg-gray-600 px-2 py-1 rounded-full">
+                  {tab.count}
+                </span>
               </button>
             ))}
           </div>
+
+          {/* Filter Tabs (only for live rooms) */}
+          {activeTab === 'live' && (
+            <div className="flex bg-gray-50 dark:bg-gray-800 rounded-lg p-1">
+              {[
+                { id: 'all', label: 'All Rooms', icon: Music },
+                { id: 'friends', label: 'Friends Only', icon: Heart },
+              ].map((filterTab) => (
+                <button
+                  key={filterTab.id}
+                  onClick={() => setFilter(filterTab.id as 'all' | 'friends')}
+                  className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-md font-medium transition-all text-sm ${
+                    filter === filterTab.id
+                      ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
+                      : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                  }`}
+                >
+                  <filterTab.icon className="w-4 h-4" />
+                  {filterTab.label}
+                </button>
+              ))}
+            </div>
+          )}
         </motion.div>
 
         {/* Rooms Grid */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
+          transition={{ delay: 0.3 }}
         >
           {isLoading ? (
-            <div className="grid gap-6 md:grid-cols-2">
-              {[...Array(4)].map((_, i) => (
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {[...Array(6)].map((_, i) => (
                 <div
                   key={i}
                   className="bg-white dark:bg-gray-900 rounded-2xl shadow-lg p-6 animate-pulse"
@@ -224,42 +354,55 @@ export default function RoomDiscoveryPage() {
                 Something went wrong while fetching rooms.
               </p>
               <button
-                onClick={() => refetch()}
+                onClick={() => activeTab === 'live' ? refetchLive() : refetchRecent()}
                 className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
               >
                 Try Again
               </button>
             </div>
-          ) : rooms.length === 0 ? (
+          ) : currentRooms.length === 0 ? (
             <div className="text-center py-12">
               <div className="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Radio className="w-8 h-8 text-gray-400" />
+                {activeTab === 'live' ? (
+                  <Radio className="w-8 h-8 text-gray-400" />
+                ) : (
+                  <History className="w-8 h-8 text-gray-400" />
+                )}
               </div>
               <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-                No active rooms found
+                {searchQuery ? 'No rooms found' : `No ${activeTab} rooms found`}
               </h3>
               <p className="text-gray-500 dark:text-gray-400 mb-6">
-                {filter === 'friends'
-                  ? "None of your friends are in active rooms right now."
-                  : "No one is jamming right now. Be the first to start a room!"}
+                {searchQuery 
+                  ? `No rooms match "${searchQuery}". Try a different search term.`
+                  : activeTab === 'live'
+                    ? filter === 'friends'
+                      ? "None of your friends are in active rooms right now."
+                      : "No one is jamming right now. Be the first to start a room!"
+                    : "No recent sessions found. Rooms will appear here after they end."
+                }
               </p>
-              <Link
-                href="/jam"
-                className="inline-flex items-center gap-2 px-6 py-3 bg-green-600 text-white rounded-2xl font-medium hover:bg-green-700 transition-colors"
-              >
-                <Play className="w-4 h-4" />
-                Start a Room
-              </Link>
+              {activeTab === 'live' && !searchQuery && (
+                <Link
+                  href="/jam"
+                  className="inline-flex items-center gap-2 px-6 py-3 bg-green-600 text-white rounded-2xl font-medium hover:bg-green-700 transition-colors"
+                >
+                  <Play className="w-4 h-4" />
+                  Start a Room
+                </Link>
+              )}
             </div>
           ) : (
-            <div className="grid gap-6 md:grid-cols-2">
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               <AnimatePresence>
-                {rooms.map((room, index) => (
+                {currentRooms.map((room, index) => (
                   <RoomCard
                     key={room.roomId}
                     room={room}
                     onJoin={handleJoinRoom}
+                    onViewHistory={handleViewHistory}
                     delay={index * 0.1}
+                    isLive={activeTab === 'live'}
                   />
                 ))}
               </AnimatePresence>
@@ -268,7 +411,7 @@ export default function RoomDiscoveryPage() {
         </motion.div>
 
         {/* Create Room CTA */}
-        {rooms.length > 0 && (
+        {currentRooms.length > 0 && activeTab === 'live' && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -293,13 +436,20 @@ export default function RoomDiscoveryPage() {
 function RoomCard({
   room,
   onJoin,
+  onViewHistory,
   delay = 0,
+  isLive = true,
 }: {
   room: Room;
   onJoin: (roomId: string) => void;
+  onViewHistory: (roomId: string) => void;
   delay?: number;
+  isLive?: boolean;
 }) {
   const trackToShow = room.currentTrack || room.lastPlayedTrack;
+  const maxVisibleParticipants = 6;
+  const visibleParticipants = room.participants.slice(0, maxVisibleParticipants);
+  const remainingCount = Math.max(0, room.participantCount - maxVisibleParticipants);
 
   return (
     <motion.div
@@ -307,51 +457,99 @@ function RoomCard({
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay }}
       whileHover={{ y: -4, scale: 1.02 }}
-      className="bg-white dark:bg-gray-900 rounded-2xl shadow-lg overflow-hidden border border-gray-200 dark:border-gray-800 group"
+      className="bg-white dark:bg-gray-900 rounded-2xl shadow-lg overflow-hidden border border-gray-200 dark:border-gray-800 group relative"
     >
-      {/* Header */}
-      <div className="p-6 pb-4">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-3">
-            <Link href={`/u/${room.host.publicSlug}`}>
-              <motion.img
-                whileHover={{ scale: 1.1 }}
-                src={room.host.avatarUrl}
-                alt={room.host.displayName}
-                className="w-12 h-12 rounded-full object-cover shadow-lg"
-              />
-            </Link>
-            <div>
-              <div className="flex items-center gap-2">
-                <Link
-                  href={`/u/${room.host.publicSlug}`}
-                  className="font-semibold text-gray-900 dark:text-white hover:underline"
-                >
-                  {room.host.displayName}
-                </Link>
-                <Crown className="w-4 h-4 text-yellow-500" />
-              </div>
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                Room: {room.name}
-              </p>
-            </div>
-          </div>
+      {/* Live Indicator */}
+      {isLive && (
+        <div className="absolute top-4 left-4 z-10">
+          <motion.div
+            animate={{ scale: [1, 1.1, 1] }}
+            transition={{ duration: 2, repeat: Infinity }}
+            className="flex items-center gap-2 bg-red-500 text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg"
+          >
+            <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
+            LIVE
+          </motion.div>
+        </div>
+      )}
 
-          <div className="flex items-center gap-2">
-            {room.hasFriends && (
+      {/* Friends Indicator */}
+      {room.hasFriends && (
+        <div className="absolute top-4 right-4 z-10">
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            className="w-8 h-8 bg-yellow-100 dark:bg-yellow-900/30 rounded-full flex items-center justify-center shadow-lg"
+            title="Friends in room"
+          >
+            <Heart className="w-4 h-4 text-yellow-600 dark:text-yellow-400 fill-current" />
+          </motion.div>
+        </div>
+      )}
+
+      <div className="p-6">
+        {/* Host Info */}
+        <div className="flex items-center gap-3 mb-4">
+          <Link href={`/u/${room.host.publicSlug}`}>
+            <motion.img
+              whileHover={{ scale: 1.1 }}
+              src={room.host.avatarUrl}
+              alt={room.host.displayName}
+              className="w-12 h-12 rounded-full object-cover shadow-lg border-2 border-white dark:border-gray-700"
+            />
+          </Link>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2">
+              <Link
+                href={`/u/${room.host.publicSlug}`}
+                className="font-semibold text-gray-900 dark:text-white hover:underline truncate"
+              >
+                {room.host.displayName}
+              </Link>
+              <Crown className="w-4 h-4 text-yellow-500 flex-shrink-0" />
+            </div>
+            <p className="text-sm text-gray-500 dark:text-gray-400 truncate">
+              {room.name}
+            </p>
+          </div>
+        </div>
+
+        {/* Participants */}
+        <div className="mb-4">
+          <div className="flex items-center gap-2 mb-2">
+            <Users className="w-4 h-4 text-gray-500" />
+            <span className="text-sm text-gray-600 dark:text-gray-400">
+              {room.participantCount} {room.participantCount === 1 ? 'person' : 'people'} 
+              {isLive ? ' listening' : ' listened'}
+            </span>
+          </div>
+          
+          {/* Participant Avatars */}
+          <div className="flex items-center gap-1">
+            {visibleParticipants.map((participant, index) => (
+              <motion.img
+                key={participant._id}
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ delay: delay + index * 0.05 }}
+                src={participant.avatarUrl}
+                alt={participant.displayName}
+                className="w-8 h-8 rounded-full object-cover border-2 border-white dark:border-gray-800 shadow-sm"
+                title={participant.displayName}
+                style={{ marginLeft: index > 0 ? '-8px' : '0' }}
+              />
+            ))}
+            {remainingCount > 0 && (
               <motion.div
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
-                className="w-6 h-6 bg-yellow-100 dark:bg-yellow-900/30 rounded-full flex items-center justify-center"
-                title="Friends in room"
+                transition={{ delay: delay + visibleParticipants.length * 0.05 }}
+                className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 border-2 border-white dark:border-gray-800 flex items-center justify-center text-xs font-bold text-gray-600 dark:text-gray-400 shadow-sm"
+                style={{ marginLeft: '-8px' }}
               >
-                <Heart className="w-3 h-3 text-yellow-600 dark:text-yellow-400 fill-current" />
+                +{remainingCount}
               </motion.div>
             )}
-            <div className="flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400">
-              <Users className="w-4 h-4" />
-              <span>{room.participantCount}</span>
-            </div>
           </div>
         </div>
 
@@ -365,9 +563,9 @@ function RoomCard({
                   alt={trackToShow.album}
                   className="w-12 h-12 rounded-lg object-cover shadow-md"
                 />
-                {room.currentTrack ? (
+                {isLive && room.currentTrack ? (
                   <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full flex items-center justify-center">
-                    <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
+                    <Volume2 className="w-2 h-2 text-white" />
                   </div>
                 ) : (
                   <div className="absolute -top-1 -right-1 w-4 h-4 bg-gray-400 rounded-full flex items-center justify-center">
@@ -376,22 +574,22 @@ function RoomCard({
                 )}
               </div>
               <div className="flex-1 min-w-0">
-                <h4 className="font-medium text-gray-900 dark:text-white truncate">
+                <h4 className="font-medium text-gray-900 dark:text-white truncate text-sm">
                   {trackToShow.name}
                 </h4>
-                <p className="text-sm text-gray-600 dark:text-gray-400 truncate">
+                <p className="text-xs text-gray-600 dark:text-gray-400 truncate">
                   {trackToShow.artist}
                 </p>
-                {!room.currentTrack && room.lastPlayedTrack && (
+                {!isLive && room.lastPlayedTrack && (
                   <p className="text-xs text-gray-500 dark:text-gray-500 flex items-center gap-1 mt-1">
                     <Clock className="w-3 h-3" />
-                    Last played {timeAgo(new Date(room.lastPlayedTrack.playedAt))}
+                    {timeAgo(new Date(room.lastPlayedTrack.playedAt))}
                   </p>
                 )}
               </div>
-              {room.currentTrack && (
-                <div className="text-xs text-green-600 dark:text-green-400 font-medium">
-                  LIVE
+              {isLive && room.currentTrack && (
+                <div className="text-xs text-green-600 dark:text-green-400 font-bold">
+                  NOW
                 </div>
               )}
             </div>
@@ -400,20 +598,38 @@ function RoomCard({
           <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-4 mb-4 text-center">
             <Music className="w-8 h-8 text-gray-400 mx-auto mb-2" />
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              No music playing yet
+              {isLive ? 'No music playing yet' : 'No tracks recorded'}
             </p>
           </div>
         )}
 
-        {/* Join Button */}
+        {/* Action Button */}
         <motion.button
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
-          onClick={() => onJoin(room.roomId)}
-          className="w-full px-4 py-3 bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-xl font-medium hover:from-green-600 hover:to-emerald-600 transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2 group-hover:scale-105"
+          onClick={() => isLive ? onJoin(room.roomId) : onViewHistory(room.roomId)}
+          className={`w-full px-4 py-3 rounded-xl font-medium transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2 group-hover:scale-105 ${
+            isLive
+              ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white hover:from-green-600 hover:to-emerald-600'
+              : 'bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:from-purple-600 hover:to-pink-600'
+          }`}
         >
-          <Play className="w-4 h-4" />
-          Join Room
+          {isLive ? (
+            <>
+              <Play className="w-4 h-4" />
+              Join Room
+            </>
+          ) : (
+            <>
+              <History className="w-4 h-4" />
+              View History
+              {room.songHistoryCount && (
+                <span className="text-xs bg-white/20 px-2 py-1 rounded-full">
+                  {room.songHistoryCount} songs
+                </span>
+              )}
+            </>
+          )}
           <ArrowRight className="w-4 h-4" />
         </motion.button>
       </div>
@@ -421,10 +637,12 @@ function RoomCard({
       {/* Footer */}
       <div className="px-6 py-3 bg-gray-50 dark:bg-gray-800/50 border-t border-gray-100 dark:border-gray-700">
         <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
-          <span>Active {timeAgo(new Date(room.lastActive))}</span>
+          <span>
+            {isLive ? 'Active' : 'Ended'} {timeAgo(new Date(room.lastActive))}
+          </span>
           <div className="flex items-center gap-1">
-            <div className={`w-2 h-2 rounded-full ${room.isActive ? 'bg-green-500' : 'bg-gray-400'}`} />
-            <span>{room.isActive ? 'Live' : 'Inactive'}</span>
+            <div className={`w-2 h-2 rounded-full ${isLive ? 'bg-green-500' : 'bg-gray-400'}`} />
+            <span>{isLive ? 'Live' : 'Ended'}</span>
           </div>
         </div>
       </div>
