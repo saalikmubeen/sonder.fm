@@ -216,6 +216,7 @@ router.get('/:slug', validateSlug, handleValidationErrors, async (req: AuthReque
     }
 
     const publicProfile: PublicProfile = {
+      _id: user._id.toString(),
       displayName: user.displayName,
       avatarUrl: user.avatarUrl,
       publicSlug: user.publicSlug,

@@ -29,7 +29,7 @@ router.post('/:slug', optionalAuth, async (req: AuthRequest, res) => {
 
     // Find target user
     const targetUser = await User.findOne({ publicSlug: slug });
-    
+
     if (!targetUser) {
       return res.status(404).json({
         success: false,
@@ -53,7 +53,7 @@ router.post('/:slug', optionalAuth, async (req: AuthRequest, res) => {
     res.json({
       success: true,
       message: 'Vibe note added successfully',
-      data: { 
+      data: {
         note: {
           ...vibeNote.toObject(),
           authorId: vibeNote.isAnonymous ? undefined : vibeNote.authorId
@@ -77,7 +77,7 @@ router.get('/:slug', async (req, res) => {
 
     // Find target user
     const targetUser = await User.findOne({ publicSlug: slug });
-    
+
     if (!targetUser) {
       return res.status(404).json({
         success: false,
@@ -113,28 +113,36 @@ router.get('/:slug', async (req, res) => {
   }
 });
 
-// Delete vibe note (only by author)
+// Delete vibe note (by author or target user)
 router.delete('/:noteId', auth, async (req: AuthRequest, res) => {
   try {
     const { noteId } = req.params;
     const userId = req.userId!;
 
-    // Find and delete note if user is the author
-    const result = await VibeNote.findOneAndDelete({
-      _id: noteId,
-      authorId: userId
-    });
-
-    if (!result) {
+    // Find the note
+    const note = await VibeNote.findById(noteId);
+    if (!note) {
       return res.status(404).json({
         success: false,
-        error: 'Note not found or you are not authorized to delete it'
+        error: 'Note not found'
       });
     }
 
-    res.json({
-      success: true,
-      message: 'Vibe note deleted successfully'
+    // Allow delete if user is author or target user
+    if (
+      (note.authorId && note.authorId.toString() === userId) ||
+      (note.targetUserId && note.targetUserId.toString() === userId)
+    ) {
+      await note.deleteOne();
+      return res.json({
+        success: true,
+        message: 'Vibe note deleted successfully'
+      });
+    }
+
+    return res.status(403).json({
+      success: false,
+      error: 'You are not authorized to delete this note'
     });
   } catch (error) {
     console.error('Error deleting vibe note:', error);

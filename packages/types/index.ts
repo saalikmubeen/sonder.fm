@@ -53,10 +53,10 @@ export interface Reaction {
 
 export interface VibeNote {
   _id?: string;
-  targetUserId: string;
+  targetUserId: Types.ObjectId;
   note: string;
   isAnonymous: boolean;
-  authorId?: string;
+  authorId?: Types.ObjectId;
   createdAt: Date;
 }
 
@@ -240,6 +240,7 @@ export interface FeedItem {
 }
 
 export interface PublicProfile {
+  _id: string;
   displayName: string;
   avatarUrl: string;
   publicSlug: string;

@@ -818,21 +818,22 @@ export default function UserProfilePage() {
                   )}
                   {!user && !isOwnProfile && (
                     <motion.div
-                      initial={{ opacity: 0, y: 20 }}
+                      initial={{ opacity: 0, y: 12 }}
                       animate={{ opacity: 1, y: 0 }}
-                      className="bg-gradient-to-br from-blue-50/50 to-indigo-50/50 dark:from-blue-900/20 dark:to-indigo-900/20 backdrop-blur-sm rounded-2xl p-6 border border-blue-200/50 dark:border-blue-700/50 text-center max-w-2xl mx-auto"
+                      className="bg-gray-50 dark:bg-gray-900/60 border border-gray-200 dark:border-gray-800 rounded-2xl p-4 shadow-sm text-center max-w-2xl mx-auto space-y-2"
                     >
-                      <MessageCircle className="w-12 h-12 text-blue-500 mx-auto mb-4" />
-                      <h3 className="font-semibold text-gray-900 dark:text-white mb-2">
+                      <MessageCircle className="w-7 h-7 text-purple-400 mx-auto mb-2" />
+                      <h3 className="font-semibold text-gray-900 dark:text-white text-base mb-1">
                         Want to leave a vibe note?
                       </h3>
-                      <p className="text-gray-600 dark:text-gray-400 mb-4">
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
                         Log in to share your thoughts about their musical taste
                       </p>
                       <button
                         onClick={() => router.push('/')}
-                        className="px-6 py-2 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 transition-colors"
+                        className="px-6 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-2xl font-medium hover:from-purple-600 hover:to-pink-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 text-sm mx-auto"
                       >
+                        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none"><path d="M21.805 10.023h-9.765v3.954h5.617c-.242 1.242-1.484 3.648-5.617 3.648-3.375 0-6.133-2.789-6.133-6.25s2.758-6.25 6.133-6.25c1.922 0 3.211.82 3.953 1.523l2.703-2.633c-1.711-1.57-3.922-2.523-6.656-2.523-5.523 0-10 4.477-10 10s4.477 10 10 10c5.742 0 9.547-4.023 9.547-9.695 0-.652-.07-1.148-.156-1.523z" fill="white"/><path d="M12.04 22c4.84 0 8.96-3.977 8.96-8.977 0-.617-.07-1.219-.164-1.789h-8.796v3.789h5.617c-.242 1.242-1.484 3.648-5.617 3.648-3.375 0-6.133-2.789-6.133-6.25s2.758-6.25 6.133-6.25c1.922 0 3.211.82 3.953 1.523l2.703-2.633c-1.711-1.57-3.922-2.523-6.656-2.523-5.523 0-10 4.477-10 10s4.477 10 10 10c5.742 0 9.547-4.023 9.547-9.695 0-.652-.07-1.148-.156-1.523z" fill="#34A853"/><path d="M3.545 7.545l3.164 2.32c.867-1.664 2.523-2.82 4.331-2.82 1.242 0 2.367.492 3.211 1.289l2.703-2.633c-1.711-1.57-3.922-2.523-6.656-2.523-3.523 0-6.523 2.32-7.867 5.547z" fill="#FBBC05"/><path d="M12.04 4.5c1.922 0 3.211.82 3.953 1.523l2.703-2.633c-1.711-1.57-3.922-2.523-6.656-2.523-3.523 0-6.523 2.32-7.867 5.547l3.164 2.32c.867-1.664 2.523-2.82 4.331-2.82z" fill="#EA4335"/><path d="M21.805 10.023h-9.765v3.954h5.617c-.242 1.242-1.484 3.648-5.617 3.648-3.375 0-6.133-2.789-6.133-6.25s2.758-6.25 6.133-6.25c1.922 0 3.211.82 3.953 1.523l2.703-2.633c-1.711-1.57-3.922-2.523-6.656-2.523-5.523 0-10 4.477-10 10s4.477 10 10 10c5.742 0 9.547-4.023 9.547-9.695 0-.652-.07-1.148-.156-1.523z" fill="#4285F4"/></svg>
                         Log in with Spotify
                       </button>
                     </motion.div>
@@ -853,9 +854,16 @@ export default function UserProfilePage() {
                     ) : vibeNotes.length > 0 ? (
                       <div className="space-y-3">
                         <AnimatePresence>
-                          {vibeNotes.map((note: any) => (
-                            <VibeNote key={note._id} note={note} isOwner={user && note.authorId && user._id === note.authorId._id} onDelete={handleDeleteNote} />
-                          ))}
+                          {vibeNotes.map((note: any) => {
+                            const isTargetUser = user && profile && user._id === profile._id;
+                            const isAuthor = user && note.authorId && user._id === note.authorId._id;
+                            const canDelete = note.isAnonymous
+                              ? isTargetUser
+                              : (isTargetUser || isAuthor);
+                            return (
+                              <VibeNote key={note._id} note={note} isOwner={canDelete} onDelete={handleDeleteNote} />
+                            );
+                          })}
                         </AnimatePresence>
                       </div>
                     ) : (
@@ -998,56 +1006,64 @@ export default function UserProfilePage() {
                 )}
                 {!user && !isOwnProfile && (
                   <motion.div
-                    initial={{ opacity: 0, y: 20 }}
+                    initial={{ opacity: 0, y: 12 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="bg-gradient-to-br from-blue-50/50 to-indigo-50/50 dark:from-blue-900/20 dark:to-indigo-900/20 backdrop-blur-sm rounded-2xl p-6 border border-blue-200/50 dark:border-blue-700/50 text-center max-w-2xl mx-auto"
+                    className="bg-gray-50 dark:bg-gray-900/60 border border-gray-200 dark:border-gray-800 rounded-2xl p-4 shadow-sm text-center max-w-2xl mx-auto space-y-2"
                   >
-                    <MessageCircle className="w-12 h-12 text-blue-500 mx-auto mb-4" />
-                    <h3 className="font-semibold text-gray-900 dark:text-white mb-2">
+                    <MessageCircle className="w-7 h-7 text-purple-400 mx-auto mb-2" />
+                    <h3 className="font-semibold text-gray-900 dark:text-white text-base mb-1">
                       Want to leave a vibe note?
                     </h3>
-                    <p className="text-gray-600 dark:text-gray-400 mb-4">
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
                       Log in to share your thoughts about their musical taste
                     </p>
                     <button
                       onClick={() => router.push('/')}
-                      className="px-6 py-2 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 transition-colors"
+                      className="px-6 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-2xl font-medium hover:from-purple-600 hover:to-pink-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 text-sm mx-auto"
                     >
-                      Log in with Spotify
-                    </button>
-                  </motion.div>
-                )}
-                {/* Vibe Notes List */}
-                <div className="max-w-2xl mx-auto">
-                  <div className="mb-4 flex items-center gap-2">
-                    <Sparkles className="w-5 h-5 text-purple-400" />
-                    <div>
-                      <h2 className="text-lg font-bold text-gray-900 dark:text-white">Vibe Notes</h2>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">What others think about {isOwnProfile ? 'your' : 'their'} musical taste</p>
-                    </div>
-                  </div>
-                  {vibeNotesLoading ? (
-                    <div className="flex items-center justify-center py-8">
-                      <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: 'linear' }} className="w-6 h-6 border-2 border-purple-500 border-t-transparent rounded-full" />
-                    </div>
-                  ) : vibeNotes.length > 0 ? (
-                    <div className="space-y-3">
-                      <AnimatePresence>
-                        {vibeNotes.map((note: any) => (
-                          <VibeNote key={note._id} note={note} isOwner={user && note.authorId && user._id === note.authorId._id} onDelete={handleDeleteNote} />
-                        ))}
-                      </AnimatePresence>
-                    </div>
-                  ) : (
-                    <div className="text-center py-8">
-                      <MessageSquare className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                      <h3 className="text-base font-medium text-gray-900 dark:text-white mb-1">No vibe notes yet</h3>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">{isOwnProfile ? "No one has left you a vibe note yet. Share your profile to get some!" : "Be the first to leave a vibe note about their musical taste!"}</p>
-                    </div>
+                      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none"><path d="M21.805 10.023h-9.765v3.954h5.617c-.242 1.242-1.484 3.648-5.617 3.648-3.375 0-6.133-2.789-6.133-6.25s2.758-6.25 6.133-6.25c1.922 0 3.211.82 3.953 1.523l2.703-2.633c-1.711-1.57-3.922-2.523-6.656-2.523-5.523 0-10 4.477-10 10s4.477 10 10 10c5.742 0 9.547-4.023 9.547-9.695 0-.652-.07-1.148-.156-1.523z" fill="white"/><path d="M12.04 22c4.84 0 8.96-3.977 8.96-8.977 0-.617-.07-1.219-.164-1.789h-8.796v3.789h5.617c-.242 1.242-1.484 3.648-5.617 3.648-3.375 0-6.133-2.789-6.133-6.25s2.758-6.25 6.133-6.25c1.922 0 3.211.82 3.953 1.523l2.703-2.633c-1.711-1.57-3.922-2.523-6.656-2.523-5.523 0-10 4.477-10 10s4.477 10 10 10c5.742 0 9.547-4.023 9.547-9.695 0-.652-.07-1.148-.156-1.523z" fill="#34A853"/><path d="M3.545 7.545l3.164 2.32c.867-1.664 2.523-2.82 4.331-2.82 1.242 0 2.367.492 3.211 1.289l2.703-2.633c-1.711-1.57-3.922-2.523-6.656-2.523-3.523 0-6.523 2.32-7.867 5.547z" fill="#FBBC05"/><path d="M12.04 4.5c1.922 0 3.211.82 3.953 1.523l2.703-2.633c-1.711-1.57-3.922-2.523-6.656-2.523-3.523 0-6.523 2.32-7.867 5.547l3.164 2.32c.867-1.664 2.523-2.82 4.331-2.82z" fill="#EA4335"/><path d="M21.805 10.023h-9.765v3.954h5.617c-.242 1.242-1.484 3.648-5.617 3.648-3.375 0-6.133-2.789-6.133-6.25s2.758-6.25 6.133-6.25c1.922 0 3.211.82 3.953 1.523l2.703-2.633c-1.711-1.57-3.922-2.523-6.656-2.523-5.523 0-10 4.477-10 10s4.477 10 10 10c5.742 0 9.547-4.023 9.547-9.695 0-.652-.07-1.148-.156-1.523z" fill="#4285F4"/></svg>
+                        Log in with Spotify
+                      </button>
+                    </motion.div>
                   )}
-                </div>
-              </motion.div>
-            )}
+                  {/* Vibe Notes List */}
+                  <div className="max-w-2xl mx-auto">
+                    <div className="mb-4 flex items-center gap-2">
+                      <Sparkles className="w-5 h-5 text-purple-400" />
+                      <div>
+                        <h2 className="text-lg font-bold text-gray-900 dark:text-white">Vibe Notes</h2>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">What others think about {isOwnProfile ? 'your' : 'their'} musical taste</p>
+                      </div>
+                    </div>
+                    {vibeNotesLoading ? (
+                      <div className="flex items-center justify-center py-8">
+                        <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: 'linear' }} className="w-6 h-6 border-2 border-purple-500 border-t-transparent rounded-full" />
+                      </div>
+                    ) : vibeNotes.length > 0 ? (
+                      <div className="space-y-3">
+                        <AnimatePresence>
+                          {vibeNotes.map((note: any) => {
+                            const isTargetUser = user && profile && user._id === profile._id;
+                            const isAuthor = user && note.authorId && user._id === note.authorId._id;
+                            const canDelete = note.isAnonymous
+                              ? isTargetUser
+                              : (isTargetUser || isAuthor);
+                            return (
+                              <VibeNote key={note._id} note={note} isOwner={canDelete} onDelete={handleDeleteNote} />
+                            );
+                          })}
+                        </AnimatePresence>
+                      </div>
+                    ) : (
+                      <div className="text-center py-8">
+                        <MessageSquare className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                        <h3 className="text-base font-medium text-gray-900 dark:text-white mb-1">No vibe notes yet</h3>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">{isOwnProfile ? "No one has left you a vibe note yet. Share your profile to get some!" : "Be the first to leave a vibe note about their musical taste!"}</p>
+                      </div>
+                    )}
+                  </div>
+                </motion.div>
+              )}
           </AnimatePresence>
         </div>
 

@@ -13,6 +13,8 @@ import {
   Moon,
   LogIn,
   Radio,
+  Bookmark,
+  List,
 } from 'lucide-react';
 import { Button } from '@sonder/ui';
 import { useAuth } from '@/lib/auth-context';
@@ -158,6 +160,14 @@ export default function HomePage() {
                 {link.label}
               </a>
             ))}
+            <a
+              href="https://github.com/saalikmubeen/sonder.fm"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-gray-700 dark:text-gray-200 hover:text-green-600 dark:hover:text-green-400 text-base font-medium transition-colors"
+            >
+              GitHub
+            </a>
           </div>
           {/* Auth/CTA (Desktop) */}
           <div className="hidden md:flex items-center gap-2">
@@ -217,6 +227,15 @@ export default function HomePage() {
                     {link.label}
                   </a>
                 ))}
+                <a
+                  href="https://github.com/saalikmubeen/sonder.fm"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block px-3 py-2 rounded-md text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 text-base font-medium transition-colors"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  GitHub
+                </a>
                 <hr className="my-2 border-gray-200 dark:border-gray-800" />
                 <Button
                   variant="ghost"
@@ -268,7 +287,7 @@ export default function HomePage() {
               discover new sounds, and connect with friends—all in a
               beautiful, modern experience.
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+            <div className="flex flex-row gap-4 justify-center items-center mt-4">
               <Button
                 onClick={handleLogin}
                 size="lg"
@@ -276,14 +295,15 @@ export default function HomePage() {
               >
                 Connect Spotify
               </Button>
+              <Link
+                href="/jam/discover"
+                className="inline-flex items-center gap-2 px-8 py-4 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-2 border-gray-200 dark:border-gray-700 rounded-full font-semibold text-lg shadow transition-all duration-200 hover:border-gray-300 dark:hover:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 hover:scale-105 hover:shadow-2xl"
+                style={{ minHeight: '56px', display: 'flex', alignItems: 'center' }}
+              >
+                <Radio className="w-4 h-4" />
+                Discover Rooms
+              </Link>
             </div>
-            <Link
-              href="/jam/discover"
-              className="inline-flex items-center gap-2 px-6 py-3 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-2 border-gray-200 dark:border-gray-700 rounded-full font-medium hover:border-gray-300 dark:hover:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all"
-            >
-              <Radio className="w-4 h-4" />
-              Discover Rooms
-            </Link>
           </div>
         </motion.div>
       </section>
@@ -301,29 +321,57 @@ export default function HomePage() {
             Why Sonder.fm?
           </motion.h2>
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+
+
+             <FeatureCard
+              icon={<ArrowRight className="w-7 h-7" />}
+              title="Modern, Social & Fun"
+              description="A beautiful, modern experience designed for music lovers and social discovery."
+              delay={0.1}
+            />
+
             <FeatureCard
               icon={<Sparkles className="w-7 h-7" />}
               title="Personalized Feed"
               description="See what your friends are listening to and discover new music tailored to your taste."
-              delay={0.1}
+              delay={0.2}
             />
             <FeatureCard
               icon={<Users className="w-7 h-7" />}
               title="Social Profiles"
               description="Showcase your top tracks, artists, and playlists in a beautiful profile."
-              delay={0.2}
+              delay={0.3}
             />
             <FeatureCard
               icon={<Music className="w-7 h-7" />}
               title="Live Now Playing"
               description="Share your current vibe in real time with a live now playing status."
-              delay={0.3}
+              delay={0.4}
             />
             <FeatureCard
               icon={<Heart className="w-7 h-7" />}
-              title="Reactions & Messages"
-              description="React to friends' music and send messages to connect instantly."
-              delay={0.4}
+              title="Reactions & Vibe Notes"
+              description="React to friends' music and leave vibe notes to share your thoughts."
+              delay={0.5}
+            />
+            <FeatureCard
+              icon={<Bookmark className="w-7 h-7" />}
+              title="Bookmarks"
+              description="Save your favorite moments in songs and revisit them anytime."
+              delay={0.6}
+            />
+            <FeatureCard
+              icon={<Radio className="w-7 h-7" />}
+              title="Listening Rooms"
+              description="Join or create real-time listening rooms to vibe together with friends."
+              delay={0.7}
+            />
+
+            <FeatureCard
+              icon={<List className="w-7 h-7" />}
+              title="Room History & Export"
+              description="View your listening history in rooms and export playlists to Spotify with one click."
+              delay={0.8}
             />
           </div>
         </div>
@@ -487,6 +535,14 @@ export default function HomePage() {
               className="hover:text-green-600 dark:hover:text-green-400"
             >
               How it Works
+            </a>
+            <a
+              href="https://github.com/saalikmubeen/sonder.fm"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-green-600 dark:hover:text-green-400"
+            >
+              GitHub
             </a>
           </div>
         </div>

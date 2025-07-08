@@ -4,10 +4,10 @@ import type { VibeNote as VibeNoteType } from '@sonder/types';
 interface VibeNoteDocument extends Omit<VibeNoteType, '_id'>, Document {}
 
 const VibeNoteSchema = new Schema<VibeNoteDocument>({
-  targetUserId: { type: String, required: true },
+  targetUserId: { type: Schema.Types.ObjectId, ref: 'User' },
   note: { type: String, required: true, maxlength: 300 },
   isAnonymous: { type: Boolean, default: true },
-  authorId: { type: String },
+  authorId: { type: Schema.Types.ObjectId, ref: 'User' },
   createdAt: { type: Date, default: Date.now }
 });
 

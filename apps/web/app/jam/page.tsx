@@ -181,7 +181,7 @@ export default function JamPage() {
           </p>
           <Button
             onClick={() => router.push('/')}
-            className="bg-green-600 hover:bg-green-700 text-white"
+            className="bg-green-600 hover:bg-green-700 text-white mx-auto"
           >
             Log in with Spotify
           </Button>
@@ -244,7 +244,7 @@ export default function JamPage() {
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
                   Tags (optional) - Help others discover your vibe
                 </label>
-                
+
                 {/* Selected Tags */}
                 {selectedTags.length > 0 && (
                   <div className="flex flex-wrap gap-2 mb-3">
@@ -278,8 +278,8 @@ export default function JamPage() {
                         onClick={() => addTag(tag.name)}
                         disabled={selectedTags.includes(tag.name) || selectedTags.length >= 5}
                         className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed ${
-                          selectedTags.includes(tag.name) 
-                            ? tag.color + ' ring-2 ring-green-500' 
+                          selectedTags.includes(tag.name)
+                            ? tag.color + ' ring-2 ring-green-500'
                             : tag.color + ' hover:ring-2 hover:ring-gray-300 dark:hover:ring-gray-600'
                         }`}
                       >
