@@ -27,6 +27,7 @@ import followRoutes from './routes/follow';
 import jammingRoutes from './routes/jamming';
 import roomRoutes from './routes/room';
 import activityRoutes from './routes/activity';
+import waitlistRoutes from './routes/waitlist';
 
 // Import services
 import { setupSocket } from './services/socket';
@@ -89,6 +90,7 @@ app.use('/follow', followRoutes);
 app.use('/jamming', jammingRoutes);
 app.use('/rooms', roomRoutes);
 app.use('/activity', activityRoutes);
+app.use('/waitlist', waitlistRoutes);
 
 // Health check
 app.get('/health', (req, res) => {

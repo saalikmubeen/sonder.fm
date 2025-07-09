@@ -10,27 +10,33 @@ const router = express.Router();
 // Create a bookmark
 router.post('/', auth, async (req: AuthRequest, res) => {
   try {
-    const { trackId, timestampMs,  durationMs,  caption, metadata } = req.body;
+    const { trackId, timestampMs, durationMs, caption, metadata } =
+      req.body;
     const userId = req.userId!;
 
-    if (!trackId || timestampMs === undefined || !metadata || !durationMs) {
+    if (
+      !trackId ||
+      timestampMs === undefined ||
+      !metadata ||
+      !durationMs
+    ) {
       return res.status(400).json({
         success: false,
-        error: 'Track ID, timestamp, and metadata are required'
+        error: 'Track ID, timestamp, and metadata are required',
       });
     }
 
     if (timestampMs < 0) {
       return res.status(400).json({
         success: false,
-        error: 'Timestamp must be non-negative'
+        error: 'Timestamp must be non-negative',
       });
     }
 
     if (caption && caption.length > 500) {
       return res.status(400).json({
         success: false,
-        error: 'Caption must be 500 characters or less'
+        error: 'Caption must be 500 characters or less',
       });
     }
 
@@ -44,7 +50,7 @@ router.post('/', auth, async (req: AuthRequest, res) => {
     if (existingBookmark) {
       return res.status(400).json({
         success: false,
-        error: 'You have already bookmarked this exact moment'
+        error: 'You have already bookmarked this exact moment',
       });
     }
 
@@ -55,7 +61,7 @@ router.post('/', auth, async (req: AuthRequest, res) => {
       timestampMs,
       durationMs,
       caption: caption?.trim(),
-      metadata
+      metadata,
     });
 
     await bookmark.save();
@@ -74,13 +80,13 @@ router.post('/', auth, async (req: AuthRequest, res) => {
     res.json({
       success: true,
       message: 'Bookmark created successfully',
-      data: { bookmark }
+      data: { bookmark },
     });
   } catch (error) {
     console.error('Error creating bookmark:', error);
     res.status(500).json({
       success: false,
-      error: 'Failed to create bookmark'
+      error: 'Failed to create bookmark',
     });
   }
 });
@@ -97,7 +103,7 @@ router.get('/:slug', async (req, res) => {
     if (!targetUser) {
       return res.status(404).json({
         success: false,
-        error: 'User not found'
+        error: 'User not found',
       });
     }
 
@@ -109,7 +115,7 @@ router.get('/:slug', async (req, res) => {
 
     const response: APIResponse<{ bookmarks: any[] }> = {
       success: true,
-      data: { bookmarks }
+      data: { bookmarks },
     };
 
     res.json(response);
@@ -117,7 +123,7 @@ router.get('/:slug', async (req, res) => {
     console.error('Error fetching bookmarks:', error);
     res.status(500).json({
       success: false,
-      error: 'Failed to fetch bookmarks'
+      error: 'Failed to fetch bookmarks',
     });
   }
 });
@@ -135,7 +141,7 @@ router.get('/my/bookmarks', auth, async (req: AuthRequest, res) => {
 
     const response: APIResponse<{ bookmarks: any[] }> = {
       success: true,
-      data: { bookmarks }
+      data: { bookmarks },
     };
 
     res.json(response);
@@ -143,7 +149,7 @@ router.get('/my/bookmarks', auth, async (req: AuthRequest, res) => {
     console.error('Error fetching user bookmarks:', error);
     res.status(500).json({
       success: false,
-      error: 'Failed to fetch your bookmarks'
+      error: 'Failed to fetch your bookmarks',
     });
   }
 });
@@ -157,20 +163,21 @@ router.delete('/:bookmarkId', auth, async (req: AuthRequest, res) => {
     // Find bookmark first, then delete it
     const bookmark = await Bookmark.findOne({
       _id: bookmarkId,
-      userId
+      userId,
     });
 
     if (!bookmark) {
       return res.status(404).json({
         success: false,
-        error: 'Bookmark not found or you are not authorized to delete it'
+        error:
+          'Bookmark not found or you are not authorized to delete it',
       });
     }
 
     // Delete the bookmark
     await Bookmark.findOneAndDelete({
       _id: bookmarkId,
-      userId
+      userId,
     });
 
     // Log activity
@@ -183,13 +190,13 @@ router.delete('/:bookmarkId', auth, async (req: AuthRequest, res) => {
 
     res.json({
       success: true,
-      message: 'Bookmark deleted successfully'
+      message: 'Bookmark deleted successfully',
     });
   } catch (error) {
     console.error('Error deleting bookmark:', error);
     res.status(500).json({
       success: false,
-      error: 'Failed to delete bookmark'
+      error: 'Failed to delete bookmark',
     });
   }
 });
@@ -204,7 +211,7 @@ router.put('/:bookmarkId', auth, async (req: AuthRequest, res) => {
     if (caption && caption.length > 500) {
       return res.status(400).json({
         success: false,
-        error: 'Caption must be 500 characters or less'
+        error: 'Caption must be 500 characters or less',
       });
     }
 
@@ -217,20 +224,21 @@ router.put('/:bookmarkId', auth, async (req: AuthRequest, res) => {
     if (!bookmark) {
       return res.status(404).json({
         success: false,
-        error: 'Bookmark not found or you are not authorized to update it'
+        error:
+          'Bookmark not found or you are not authorized to update it',
       });
     }
 
     res.json({
       success: true,
       message: 'Bookmark updated successfully',
-      data: { bookmark }
+      data: { bookmark },
     });
   } catch (error) {
     console.error('Error updating bookmark:', error);
     res.status(500).json({
       success: false,
-      error: 'Failed to update bookmark'
+      error: 'Failed to update bookmark',
     });
   }
 });

@@ -184,9 +184,9 @@ export default function RoomHistoryPage() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white dark:bg-gray-900 rounded-3xl shadow-lg p-6 mb-6"
+          className="bg-white dark:bg-gray-900 rounded-3xl shadow-lg p-5 mb-6"
         >
-          <div className="flex items-center gap-4 mb-6">
+          <div className="flex items-center gap-4 mb-5">
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
@@ -212,15 +212,15 @@ export default function RoomHistoryPage() {
           </div>
 
           {/* Room Info */}
-          <div className="grid md:grid-cols-2 gap-6 mb-6">
+          <div className="grid md:grid-cols-2 gap-5 mb-5">
             {/* Host Info */}
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3">
               <Link href={`/u/${room.host.publicSlug}`}>
                 <motion.img
                   whileHover={{ scale: 1.1 }}
                   src={room.host.avatarUrl}
                   alt={room.host.displayName}
-                  className="w-16 h-16 rounded-full object-cover shadow-lg"
+                  className="w-14 h-14 rounded-full object-cover shadow-lg"
                 />
               </Link>
               <div>

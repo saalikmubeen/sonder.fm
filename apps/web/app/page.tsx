@@ -22,8 +22,8 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useTheme } from 'next-themes';
 import { useState } from 'react';
-
-
+import WaitlistSection from '@/components/WaitlistSection';
+import { useSearchParams } from 'next/navigation';
 
 import {
   Chart as ChartJS,
@@ -36,27 +36,33 @@ import {
   Legend,
 } from 'chart.js';
 import { Line } from 'react-chartjs-2';
+import { title } from 'process';
 
-ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend
+);
 
 const NAV_LINKS = [
   { label: 'Features', href: '#features' },
   { label: 'How it Works', href: '#how' },
 ];
 
-
-
-
 export default function HomePage() {
   const { user, login, loading } = useAuth();
-  console.log(user)
+  console.log(user);
   const router = useRouter();
   const { theme, setTheme } = useTheme();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const searchParams = useSearchParams();
+  const referrer = searchParams.get('ref');
 
-
-
- // Dummy line chart data
+  // Dummy line chart data
   const lineChartData = {
     labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
     datasets: [
@@ -280,7 +286,9 @@ export default function HomePage() {
             </span>
             <h1 className="text-5xl md:text-7xl font-extrabold mb-6 tracking-tight leading-tight">
               Connect. Share.{' '}
-              <span className="text-green-600 dark:text-green-400">Vibe.</span>
+              <span className="text-green-600 dark:text-green-400">
+                Vibe.
+              </span>
             </h1>
             <p className="text-lg md:text-2xl text-gray-600 dark:text-gray-300 mb-10">
               Sonder.fm is the new way to showcase your music taste,
@@ -298,7 +306,11 @@ export default function HomePage() {
               <Link
                 href="/jam/discover"
                 className="inline-flex items-center gap-2 px-8 py-4 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-2 border-gray-200 dark:border-gray-700 rounded-full font-semibold text-lg shadow transition-all duration-200 hover:border-gray-300 dark:hover:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 hover:scale-105 hover:shadow-2xl"
-                style={{ minHeight: '56px', display: 'flex', alignItems: 'center' }}
+                style={{
+                  minHeight: '56px',
+                  display: 'flex',
+                  alignItems: 'center',
+                }}
               >
                 <Radio className="w-4 h-4" />
                 Discover Rooms
@@ -307,6 +319,9 @@ export default function HomePage() {
           </div>
         </motion.div>
       </section>
+
+      {/* Waitlist Section */}
+      <WaitlistSection referrer={referrer || undefined} />
 
       {/* Features Section */}
       <section id="features" className="py-24">
@@ -321,9 +336,7 @@ export default function HomePage() {
             Why Sonder.fm?
           </motion.h2>
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-
-
-             <FeatureCard
+            <FeatureCard
               icon={<ArrowRight className="w-7 h-7" />}
               title="Modern, Social & Fun"
               description="A beautiful, modern experience designed for music lovers and social discovery."
@@ -377,103 +390,108 @@ export default function HomePage() {
         </div>
       </section>
 
-
-
-        {/* Chart Section */}
-        <section className="py-20">
-          <motion.div
-            initial={{ opacity: 0, y: 40 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1, ease: 'easeOut' }}
-            viewport={{ once: true }}
-          >
-            <div className="max-w-4xl mx-auto px-4">
-              <motion.h2
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8 }}
-                viewport={{ once: true }}
-                className="text-3xl md:text-4xl font-bold text-center mb-12"
-              >
-                Lead your music journey
-              </motion.h2>
-              <motion.div
-                initial={{ opacity: 0, scale: 0.97 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.8, delay: 0.2, ease: 'easeOut' }}
-                viewport={{ once: true }}
-                className="rounded-2xl bg-white/80 dark:bg-gray-900/80 border border-gray-200 dark:border-gray-800 shadow-xl p-0 flex flex-col items-center gap-4 backdrop-blur-lg min-h-[350px]"
-                whileHover={{
-                  scale: 1.07,
-                  y: -8,
-                  boxShadow: '0 8px 32px 0 rgba(16,185,129,0.18)',
-                }}
-              >
-                <div className="w-full h-[350px] flex items-center justify-center">
-                  <Line
-                    data={lineChartData}
-                    options={{
-                      responsive: true,
-                      maintainAspectRatio: false,
-                      plugins: {
-                        legend: {
-                          display: true,
-                          labels: {
-                            color: theme === 'dark' ? '#fff' : '#222',
-                            font: { size: 16, weight: 700 },
-                            boxWidth: 18,
-                            boxHeight: 18,
-                            padding: 24,
-                          },
-                        },
-                        title: { display: false },
-                        tooltip: {
-                          backgroundColor: theme === 'dark' ? '#222' : '#fff',
-                          titleColor: theme === 'dark' ? '#fff' : '#222',
-                          bodyColor: theme === 'dark' ? '#fff' : '#222',
-                          borderColor: theme === 'dark' ? '#333' : '#eee',
-                          borderWidth: 1,
-                          padding: 12,
-                          cornerRadius: 8,
-                          displayColors: false,
+      {/* Chart Section */}
+      <section className="py-20">
+        <motion.div
+          initial={{ opacity: 0, y: 40 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 1, ease: 'easeOut' }}
+          viewport={{ once: true }}
+        >
+          <div className="max-w-4xl mx-auto px-4">
+            <motion.h2
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8 }}
+              viewport={{ once: true }}
+              className="text-3xl md:text-4xl font-bold text-center mb-12"
+            >
+              Lead your music journey
+            </motion.h2>
+            <motion.div
+              initial={{ opacity: 0, scale: 0.97 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              transition={{
+                duration: 0.8,
+                delay: 0.2,
+                ease: 'easeOut',
+              }}
+              viewport={{ once: true }}
+              className="rounded-2xl bg-white/80 dark:bg-gray-900/80 border border-gray-200 dark:border-gray-800 shadow-xl p-0 flex flex-col items-center gap-4 backdrop-blur-lg min-h-[350px]"
+              whileHover={{
+                scale: 1.07,
+                y: -8,
+                boxShadow: '0 8px 32px 0 rgba(16,185,129,0.18)',
+              }}
+            >
+              <div className="w-full h-[350px] flex items-center justify-center">
+                <Line
+                  data={lineChartData}
+                  options={{
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                      legend: {
+                        display: true,
+                        labels: {
+                          color: theme === 'dark' ? '#fff' : '#222',
+                          font: { size: 16, weight: 700 },
+                          boxWidth: 18,
+                          boxHeight: 18,
+                          padding: 24,
                         },
                       },
-                      layout: {
-                        padding: 0,
+                      title: { display: false },
+                      tooltip: {
+                        backgroundColor:
+                          theme === 'dark' ? '#222' : '#fff',
+                        titleColor:
+                          theme === 'dark' ? '#fff' : '#222',
+                        bodyColor: theme === 'dark' ? '#fff' : '#222',
+                        borderColor:
+                          theme === 'dark' ? '#333' : '#eee',
+                        borderWidth: 1,
+                        padding: 12,
+                        cornerRadius: 8,
+                        displayColors: false,
                       },
-                      elements: {
-                        line: {
-                          borderWidth: 2.5,
-                          borderJoinStyle: 'round',
-                        },
-                        point: {
-                          radius: 5,
-                          hoverRadius: 8,
-                          borderWidth: 2,
+                    },
+                    layout: {
+                      padding: 0,
+                    },
+                    elements: {
+                      line: {
+                        borderWidth: 2.5,
+                        borderJoinStyle: 'round',
+                      },
+                      point: {
+                        radius: 5,
+                        hoverRadius: 8,
+                        borderWidth: 2,
+                      },
+                    },
+                    scales: {
+                      x: {
+                        grid: { display: false },
+                        ticks: {
+                          color: theme === 'dark' ? '#aaa' : '#444',
+                          font: { size: 15, weight: 600 },
+                          padding: 10,
                         },
                       },
-                      scales: {
-                        x: {
-                          grid: { display: false },
-                          ticks: {
-                            color: theme === 'dark' ? '#aaa' : '#444',
-                            font: { size: 15, weight: 600 },
-                            padding: 10,
-                          },
-                        },
-                        y: {
-                          grid: { display: false },
-                          ticks: { display: false },
-                        },
+                      y: {
+                        grid: { display: false },
+                        ticks: { display: false },
                       },
-                    }}
-                    className="w-full h-full"
-                  />
-                </div>
-              </motion.div>
-            </div>
-          </motion.div>
-        </section>
+                    },
+                  }}
+                  className="w-full h-full"
+                />
+              </div>
+            </motion.div>
+          </div>
+        </motion.div>
+      </section>
 
       {/* How it Works Section */}
       <section id="how" className="py-20">

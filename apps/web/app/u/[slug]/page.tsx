@@ -1,7 +1,11 @@
 'use client';
 
 import { useEffect, useState, useRef, useLayoutEffect } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import {
+  useQuery,
+  useMutation,
+  useQueryClient,
+} from '@tanstack/react-query';
 import { useParams, useRouter } from 'next/navigation';
 import { motion, AnimatePresence, animate } from 'framer-motion';
 import { useTheme } from 'next-themes';
@@ -35,13 +39,19 @@ import {
   EyeOff,
   Quote,
   Send,
-   MessageCircle,
-   Sparkles,
-   Heart,
+  MessageCircle,
+  Sparkles,
+  Heart,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 import { formatDuration, timeAgo } from '@sonder/utils';
-import { profileApi, bookmarkApi, followApi, noteApi, reactionApi } from '@/lib/api';
+import {
+  profileApi,
+  bookmarkApi,
+  followApi,
+  noteApi,
+  reactionApi,
+} from '@/lib/api';
 import BookmarkModal from '@/components/BookmarkModal';
 import toast from 'react-hot-toast';
 import { Card } from '@sonder/ui/components/Card';
@@ -52,10 +62,17 @@ import Link from 'next/link';
 import { profile } from 'console';
 
 // Minimal Tooltip component
-function Tooltip({ content, children }: { content: string; children: React.ReactNode }) {
+function Tooltip({
+  content,
+  children,
+}: {
+  content: string;
+  children: React.ReactNode;
+}) {
   const [show, setShow] = useState(false);
   return (
-    <span className="relative inline-block"
+    <span
+      className="relative inline-block"
       onMouseEnter={() => setShow(true)}
       onMouseLeave={() => setShow(false)}
       onFocus={() => setShow(true)}
@@ -119,7 +136,15 @@ type Section =
   | 'vibe_notes';
 
 // MarqueeText: Robust marquee effect for overflowing text
-function MarqueeText({ text, className = "", speed = 50 }: { text: string; className?: string; speed?: number }) {
+function MarqueeText({
+  text,
+  className = '',
+  speed = 50,
+}: {
+  text: string;
+  className?: string;
+  speed?: number;
+}) {
   const containerRef = useRef<HTMLDivElement>(null);
   const textRef = useRef<HTMLDivElement>(null);
   const [scrollDistance, setScrollDistance] = useState(0);
@@ -128,7 +153,9 @@ function MarqueeText({ text, className = "", speed = 50 }: { text: string; class
   useLayoutEffect(() => {
     function measure() {
       if (containerRef.current && textRef.current) {
-        const distance = textRef.current.scrollWidth - containerRef.current.clientWidth;
+        const distance =
+          textRef.current.scrollWidth -
+          containerRef.current.clientWidth;
         setScrollDistance(distance > 0 ? distance : 0);
         setIsOverflowing(distance > 0);
       }
@@ -139,7 +166,7 @@ function MarqueeText({ text, className = "", speed = 50 }: { text: string; class
   }, [text]);
 
   // Animation: left to right, then jump back, with pause at end
-  const duration = (scrollDistance / speed) || 6;
+  const duration = scrollDistance / speed || 6;
   const pause = 1.2; // seconds to pause at the end
 
   return (
@@ -170,16 +197,20 @@ function MarqueeText({ text, className = "", speed = 50 }: { text: string; class
           <div className="pointer-events-none absolute right-0 top-0 h-full w-8 bg-gradient-to-l from-black/80 dark:from-black/80 to-transparent" />
         </>
       ) : (
-        <span ref={textRef} className="inline-block">{text}</span>
+        <span ref={textRef} className="inline-block">
+          {text}
+        </span>
       )}
     </div>
   );
 }
 
-
-
 // Vibe Note Component
-function VibeNote({ note, isOwner, onDelete }: {
+function VibeNote({
+  note,
+  isOwner,
+  onDelete,
+}: {
   note: any;
   isOwner: boolean;
   onDelete: (noteId: string) => void;
@@ -194,16 +225,27 @@ function VibeNote({ note, isOwner, onDelete }: {
     >
       <div className="flex items-center gap-2 mb-1">
         <Quote className="w-4 h-4 text-purple-400 opacity-60" />
-        <span className="font-medium text-gray-900 dark:text-white text-sm line-clamp-2">{note.note}</span>
+        <span className="font-medium text-gray-900 dark:text-white text-sm line-clamp-2">
+          {note.note}
+        </span>
       </div>
       <div className="flex items-center justify-between mt-2">
         <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
           {note.isAnonymous ? (
-            <><EyeOff className="w-3 h-3" /><span>anonymous</span></>
+            <>
+              <EyeOff className="w-3 h-3" />
+              <span>anonymous</span>
+            </>
           ) : note.authorId ? (
-            <><Eye className="w-3 h-3" /><span>by {note.authorId.displayName}</span></>
+            <>
+              <Eye className="w-3 h-3" />
+              <span>by {note.authorId.displayName}</span>
+            </>
           ) : (
-            <><EyeOff className="w-3 h-3" /><span>anonymous</span></>
+            <>
+              <EyeOff className="w-3 h-3" />
+              <span>anonymous</span>
+            </>
           )}
           <span>•</span>
           <span>{timeAgo(new Date(note.createdAt))}</span>
@@ -245,7 +287,10 @@ function VibeNote({ note, isOwner, onDelete }: {
 }
 
 // Vibe Notes Form Component
-function VibeNotesForm({ profileSlug, onNoteAdded }: {
+function VibeNotesForm({
+  profileSlug,
+  onNoteAdded,
+}: {
   profileSlug: string;
   onNoteAdded: () => void;
 }) {
@@ -264,7 +309,9 @@ function VibeNotesForm({ profileSlug, onNoteAdded }: {
       onNoteAdded();
       toast.success('Vibe note added! ✨');
     } catch (error: any) {
-      toast.error(error.response?.data?.error || 'Failed to add note');
+      toast.error(
+        error.response?.data?.error || 'Failed to add note'
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -280,8 +327,12 @@ function VibeNotesForm({ profileSlug, onNoteAdded }: {
       <div className="flex items-center gap-2 mb-1">
         <MessageSquare className="w-5 h-5 text-purple-400" />
         <div>
-          <h3 className="font-semibold text-gray-900 dark:text-white text-base">Leave a vibe note</h3>
-          <p className="text-xs text-gray-500 dark:text-gray-400">Share your thoughts about their musical taste</p>
+          <h3 className="font-semibold text-gray-900 dark:text-white text-base">
+            Leave a vibe note
+          </h3>
+          <p className="text-xs text-gray-500 dark:text-gray-400">
+            Share your thoughts about their musical taste
+          </p>
         </div>
       </div>
       <div className="relative">
@@ -308,11 +359,21 @@ function VibeNotesForm({ profileSlug, onNoteAdded }: {
             />
             <span className="pointer-events-none absolute left-0 top-0 w-5 h-5 flex items-center justify-center">
               {isAnonymous && (
-                <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24"><circle cx="12" cy="12" r="6" fill="currentColor" /></svg>
+                <svg
+                  className="w-3 h-3 text-white"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="3"
+                  viewBox="0 0 24 24"
+                >
+                  <circle cx="12" cy="12" r="6" fill="currentColor" />
+                </svg>
               )}
             </span>
           </span>
-          <span className="text-xs text-gray-700 dark:text-gray-300">Leave anonymously</span>
+          <span className="text-xs text-gray-700 dark:text-gray-300">
+            Leave anonymously
+          </span>
         </label>
         <motion.button
           whileHover={{ scale: 1.02 }}
@@ -324,7 +385,11 @@ function VibeNotesForm({ profileSlug, onNoteAdded }: {
           {isSubmitting ? (
             <motion.div
               animate={{ rotate: 360 }}
-              transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+              transition={{
+                duration: 1,
+                repeat: Infinity,
+                ease: 'linear',
+              }}
               className="w-4 h-4 border-2 border-white border-t-transparent rounded-full"
             />
           ) : (
@@ -337,11 +402,6 @@ function VibeNotesForm({ profileSlug, onNoteAdded }: {
   );
 }
 
-
-
-
-
-
 export default function UserProfilePage() {
   const { slug } = useParams<{ slug: string }>();
   const router = useRouter();
@@ -353,7 +413,9 @@ export default function UserProfilePage() {
   const [mounted, setMounted] = useState(false);
   const [showBookmarkModal, setShowBookmarkModal] = useState(false);
   const [bookmarkLoading, setBookmarkLoading] = useState(false);
-  const [editingBookmarkId, setEditingBookmarkId] = useState<string | null>(null);
+  const [editingBookmarkId, setEditingBookmarkId] = useState<
+    string | null
+  >(null);
   const [editCaption, setEditCaption] = useState('');
   const queryClient = useQueryClient();
 
@@ -386,9 +448,7 @@ export default function UserProfilePage() {
   });
 
   // React Query for follow counts
-  const {
-    data: followCountsData,
-  } = useQuery({
+  const { data: followCountsData } = useQuery({
     queryKey: ['followCounts', slug],
     queryFn: () => followApi.getFollowCounts(slug),
     enabled: !!slug,
@@ -404,41 +464,59 @@ export default function UserProfilePage() {
       metadata: any;
     }) => bookmarkApi.createBookmark(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['bookmarks', slug] });
+      queryClient.invalidateQueries({
+        queryKey: ['bookmarks', slug],
+      });
       toast.success('Bookmark saved! 🎵');
       setShowBookmarkModal(false);
       setBookmarkLoading(false);
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.error || 'Failed to save bookmark');
+      toast.error(
+        error.response?.data?.error || 'Failed to save bookmark'
+      );
       setBookmarkLoading(false);
     },
   });
 
   // Update bookmark mutation
   const updateBookmarkMutation = useMutation({
-    mutationFn: ({ bookmarkId, caption }: { bookmarkId: string; caption: string }) =>
-      bookmarkApi.updateBookmark(bookmarkId, caption),
+    mutationFn: ({
+      bookmarkId,
+      caption,
+    }: {
+      bookmarkId: string;
+      caption: string;
+    }) => bookmarkApi.updateBookmark(bookmarkId, caption),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['bookmarks', slug] });
+      queryClient.invalidateQueries({
+        queryKey: ['bookmarks', slug],
+      });
       toast.success('Bookmark updated! ✨');
       setEditingBookmarkId(null);
       setEditCaption('');
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.error || 'Failed to update bookmark');
+      toast.error(
+        error.response?.data?.error || 'Failed to update bookmark'
+      );
     },
   });
 
   // Delete bookmark mutation
   const deleteBookmarkMutation = useMutation({
-    mutationFn: (bookmarkId: string) => bookmarkApi.deleteBookmark(bookmarkId),
+    mutationFn: (bookmarkId: string) =>
+      bookmarkApi.deleteBookmark(bookmarkId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['bookmarks', slug] });
+      queryClient.invalidateQueries({
+        queryKey: ['bookmarks', slug],
+      });
       toast.success('Bookmark deleted');
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.error || 'Failed to delete bookmark');
+      toast.error(
+        error.response?.data?.error || 'Failed to delete bookmark'
+      );
     },
   });
 
@@ -447,7 +525,9 @@ export default function UserProfilePage() {
     mutationFn: () => followApi.follow(slug),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['profile', slug] });
-      queryClient.invalidateQueries({ queryKey: ['followCounts', slug] });
+      queryClient.invalidateQueries({
+        queryKey: ['followCounts', slug],
+      });
       toast.success('Following user ✨');
     },
     onError: () => toast.error('Failed to follow user'),
@@ -457,24 +537,25 @@ export default function UserProfilePage() {
     mutationFn: () => followApi.unfollow(slug),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['profile', slug] });
-      queryClient.invalidateQueries({ queryKey: ['followCounts', slug] });
+      queryClient.invalidateQueries({
+        queryKey: ['followCounts', slug],
+      });
       toast.success('Unfollowed user');
     },
     onError: () => toast.error('Failed to unfollow user'),
   });
 
-
-
-   // Fetch vibe notes
-  const { data: vibeNotesData, isLoading: vibeNotesLoading, refetch: refetchVibeNotes } = useQuery({
+  // Fetch vibe notes
+  const {
+    data: vibeNotesData,
+    isLoading: vibeNotesLoading,
+    refetch: refetchVibeNotes,
+  } = useQuery({
     queryKey: ['vibeNotes', slug],
     queryFn: () => noteApi.getNotes(slug),
     enabled: !!slug && activeSection === 'vibe_notes',
   });
   const vibeNotes = vibeNotesData?.data?.notes || [];
-
-
-
 
   // Delete vibe note mutation
   const deleteNoteMutation = useMutation({
@@ -486,17 +567,16 @@ export default function UserProfilePage() {
     onError: () => toast.error('Failed to delete note'),
   });
 
-    // Reaction mutation
+  // Reaction mutation
   const reactionMutation = useMutation({
-    mutationFn: (emoji: string) => reactionApi.addReaction(slug, emoji),
+    mutationFn: (emoji: string) =>
+      reactionApi.addReaction(slug, emoji),
     onSuccess: () => {
       refetchProfile();
       toast.success('Reaction added! 🎵');
     },
     onError: () => toast.error('Failed to add reaction'),
   });
-
-
 
   const handleReaction = (emoji: string) => {
     if (!user) {
@@ -506,8 +586,7 @@ export default function UserProfilePage() {
     reactionMutation.mutate(emoji);
   };
 
-
-   const handleDeleteNote = (noteId: string) => {
+  const handleDeleteNote = (noteId: string) => {
     deleteNoteMutation.mutate(noteId);
   };
 
@@ -517,13 +596,19 @@ export default function UserProfilePage() {
 
   const profile = profileData?.data;
   const bookmarks = bookmarksData?.data?.bookmarks || [];
-  const followCounts = followCountsData?.data || { followerCount: 0, followingCount: 0 };
+  const followCounts = followCountsData?.data || {
+    followerCount: 0,
+    followingCount: 0,
+  };
 
   const openSpotifyUrl = (url: string) => {
     window.open(url, '_blank');
   };
 
-  const openSpotifyAtTimestamp = (spotifyUrl: string, timestampMs: number) => {
+  const openSpotifyAtTimestamp = (
+    spotifyUrl: string,
+    timestampMs: number
+  ) => {
     const timestampSeconds = Math.floor(timestampMs / 1000);
     window.open(`${spotifyUrl}#${timestampSeconds}`, '_blank');
   };
@@ -541,7 +626,9 @@ export default function UserProfilePage() {
     }
   };
 
-  const handleFollowCountClick = (type: 'followers' | 'following') => {
+  const handleFollowCountClick = (
+    type: 'followers' | 'following'
+  ) => {
     if (!user) {
       toast.error('Please log in to view followers');
       return;
@@ -554,7 +641,10 @@ export default function UserProfilePage() {
     if (!profile?.nowPlaying) return;
     setBookmarkLoading(true);
     const bookmarkData = {
-      trackId: profile.nowPlaying.spotifyUrl.split('/track/')[1]?.split('?')[0] || '',
+      trackId:
+        profile.nowPlaying.spotifyUrl
+          .split('/track/')[1]
+          ?.split('?')[0] || '',
       timestampMs: profile.nowPlaying.progressMs,
       durationMs: profile.nowPlaying.durationMs,
       caption: caption.trim() || undefined,
@@ -575,7 +665,10 @@ export default function UserProfilePage() {
     deleteBookmarkMutation.mutate(bookmarkId);
   };
 
-  const handleEditBookmark = (bookmarkId: string, caption: string) => {
+  const handleEditBookmark = (
+    bookmarkId: string,
+    caption: string
+  ) => {
     updateBookmarkMutation.mutate({ bookmarkId, caption });
   };
 
@@ -649,7 +742,10 @@ export default function UserProfilePage() {
         <div className="w-28 bg-white dark:bg-black fixed left-0 top-0 h-full flex flex-col">
           {/* Sonder.fm logo at the top */}
           <div className="flex items-center gap-2 h-16 px-4 select-none">
-            <Link href="/" className="font-bold text-lg text-black dark:text-white hover:text-green-500 transition-colors">
+            <Link
+              href="/"
+              className="font-bold text-lg text-black dark:text-white hover:text-green-500 transition-colors"
+            >
               Sonder.fm
             </Link>
           </div>
@@ -793,7 +889,9 @@ export default function UserProfilePage() {
                   editCaption={editCaption}
                   setEditingBookmarkId={setEditingBookmarkId}
                   setEditCaption={setEditCaption}
-                  onEditSave={(id: string) => handleEditBookmark(id, editCaption)}
+                  onEditSave={(id: string) =>
+                    handleEditBookmark(id, editCaption)
+                  }
                   onEditCancel={() => setEditingBookmarkId(null)}
                   profile={profile}
                   openSpotifyAtTimestamp={openSpotifyAtTimestamp}
@@ -827,13 +925,39 @@ export default function UserProfilePage() {
                         Want to leave a vibe note?
                       </h3>
                       <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
-                        Log in to share your thoughts about their musical taste
+                        Log in to share your thoughts about their
+                        musical taste
                       </p>
                       <button
                         onClick={() => router.push('/')}
                         className="px-6 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-2xl font-medium hover:from-purple-600 hover:to-pink-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 text-sm mx-auto"
                       >
-                        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none"><path d="M21.805 10.023h-9.765v3.954h5.617c-.242 1.242-1.484 3.648-5.617 3.648-3.375 0-6.133-2.789-6.133-6.25s2.758-6.25 6.133-6.25c1.922 0 3.211.82 3.953 1.523l2.703-2.633c-1.711-1.57-3.922-2.523-6.656-2.523-5.523 0-10 4.477-10 10s4.477 10 10 10c5.742 0 9.547-4.023 9.547-9.695 0-.652-.07-1.148-.156-1.523z" fill="white"/><path d="M12.04 22c4.84 0 8.96-3.977 8.96-8.977 0-.617-.07-1.219-.164-1.789h-8.796v3.789h5.617c-.242 1.242-1.484 3.648-5.617 3.648-3.375 0-6.133-2.789-6.133-6.25s2.758-6.25 6.133-6.25c1.922 0 3.211.82 3.953 1.523l2.703-2.633c-1.711-1.57-3.922-2.523-6.656-2.523-5.523 0-10 4.477-10 10s4.477 10 10 10c5.742 0 9.547-4.023 9.547-9.695 0-.652-.07-1.148-.156-1.523z" fill="#34A853"/><path d="M3.545 7.545l3.164 2.32c.867-1.664 2.523-2.82 4.331-2.82 1.242 0 2.367.492 3.211 1.289l2.703-2.633c-1.711-1.57-3.922-2.523-6.656-2.523-3.523 0-6.523 2.32-7.867 5.547z" fill="#FBBC05"/><path d="M12.04 4.5c1.922 0 3.211.82 3.953 1.523l2.703-2.633c-1.711-1.57-3.922-2.523-6.656-2.523-3.523 0-6.523 2.32-7.867 5.547l3.164 2.32c.867-1.664 2.523-2.82 4.331-2.82z" fill="#EA4335"/><path d="M21.805 10.023h-9.765v3.954h5.617c-.242 1.242-1.484 3.648-5.617 3.648-3.375 0-6.133-2.789-6.133-6.25s2.758-6.25 6.133-6.25c1.922 0 3.211.82 3.953 1.523l2.703-2.633c-1.711-1.57-3.922-2.523-6.656-2.523-5.523 0-10 4.477-10 10s4.477 10 10 10c5.742 0 9.547-4.023 9.547-9.695 0-.652-.07-1.148-.156-1.523z" fill="#4285F4"/></svg>
+                        <svg
+                          className="w-4 h-4"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                        >
+                          <path
+                            d="M21.805 10.023h-9.765v3.954h5.617c-.242 1.242-1.484 3.648-5.617 3.648-3.375 0-6.133-2.789-6.133-6.25s2.758-6.25 6.133-6.25c1.922 0 3.211.82 3.953 1.523l2.703-2.633c-1.711-1.57-3.922-2.523-6.656-2.523-5.523 0-10 4.477-10 10s4.477 10 10 10c5.742 0 9.547-4.023 9.547-9.695 0-.652-.07-1.148-.156-1.523z"
+                            fill="white"
+                          />
+                          <path
+                            d="M12.04 22c4.84 0 8.96-3.977 8.96-8.977 0-.617-.07-1.219-.164-1.789h-8.796v3.789h5.617c-.242 1.242-1.484 3.648-5.617 3.648-3.375 0-6.133-2.789-6.133-6.25s2.758-6.25 6.133-6.25c1.922 0 3.211.82 3.953 1.523l2.703-2.633c-1.711-1.57-3.922-2.523-6.656-2.523-5.523 0-10 4.477-10 10s4.477 10 10 10c5.742 0 9.547-4.023 9.547-9.695 0-.652-.07-1.148-.156-1.523z"
+                            fill="#34A853"
+                          />
+                          <path
+                            d="M3.545 7.545l3.164 2.32c.867-1.664 2.523-2.82 4.331-2.82 1.242 0 2.367.492 3.211 1.289l2.703-2.633c-1.711-1.57-3.922-2.523-6.656-2.523-3.523 0-6.523 2.32-7.867 5.547z"
+                            fill="#FBBC05"
+                          />
+                          <path
+                            d="M12.04 4.5c1.922 0 3.211.82 3.953 1.523l2.703-2.633c-1.711-1.57-3.922-2.523-6.656-2.523-3.523 0-6.523 2.32-7.867 5.547l3.164 2.32c.867-1.664 2.523-2.82 4.331-2.82z"
+                            fill="#EA4335"
+                          />
+                          <path
+                            d="M21.805 10.023h-9.765v3.954h5.617c-.242 1.242-1.484 3.648-5.617 3.648-3.375 0-6.133-2.789-6.133-6.25s2.758-6.25 6.133-6.25c1.922 0 3.211.82 3.953 1.523l2.703-2.633c-1.711-1.57-3.922-2.523-6.656-2.523-5.523 0-10 4.477-10 10s4.477 10 10 10c5.742 0 9.547-4.023 9.547-9.695 0-.652-.07-1.148-.156-1.523z"
+                            fill="#4285F4"
+                          />
+                        </svg>
                         Log in with Spotify
                       </button>
                     </motion.div>
@@ -843,25 +967,50 @@ export default function UserProfilePage() {
                     <div className="mb-4 flex items-center gap-2">
                       <Sparkles className="w-5 h-5 text-purple-400" />
                       <div>
-                        <h2 className="text-lg font-bold text-gray-900 dark:text-white">Vibe Notes</h2>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">What others think about {isOwnProfile ? 'your' : 'their'} musical taste</p>
+                        <h2 className="text-lg font-bold text-gray-900 dark:text-white">
+                          Vibe Notes
+                        </h2>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                          What others think about{' '}
+                          {isOwnProfile ? 'your' : 'their'} musical
+                          taste
+                        </p>
                       </div>
                     </div>
                     {vibeNotesLoading ? (
                       <div className="flex items-center justify-center py-8">
-                        <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: 'linear' }} className="w-6 h-6 border-2 border-purple-500 border-t-transparent rounded-full" />
+                        <motion.div
+                          animate={{ rotate: 360 }}
+                          transition={{
+                            duration: 1,
+                            repeat: Infinity,
+                            ease: 'linear',
+                          }}
+                          className="w-6 h-6 border-2 border-purple-500 border-t-transparent rounded-full"
+                        />
                       </div>
                     ) : vibeNotes.length > 0 ? (
                       <div className="space-y-3">
                         <AnimatePresence>
                           {vibeNotes.map((note: any) => {
-                            const isTargetUser = user && profile && user._id === profile._id;
-                            const isAuthor = user && note.authorId && user._id === note.authorId._id;
+                            const isTargetUser =
+                              user &&
+                              profile &&
+                              user._id === profile._id;
+                            const isAuthor =
+                              user &&
+                              note.authorId &&
+                              user._id === note.authorId._id;
                             const canDelete = note.isAnonymous
                               ? isTargetUser
-                              : (isTargetUser || isAuthor);
+                              : isTargetUser || isAuthor;
                             return (
-                              <VibeNote key={note._id} note={note} isOwner={canDelete} onDelete={handleDeleteNote} />
+                              <VibeNote
+                                key={note._id}
+                                note={note}
+                                isOwner={canDelete}
+                                onDelete={handleDeleteNote}
+                              />
                             );
                           })}
                         </AnimatePresence>
@@ -869,8 +1018,14 @@ export default function UserProfilePage() {
                     ) : (
                       <div className="text-center py-8">
                         <MessageSquare className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                        <h3 className="text-base font-medium text-gray-900 dark:text-white mb-1">No vibe notes yet</h3>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">{isOwnProfile ? "No one has left you a vibe note yet. Share your profile to get some!" : "Be the first to leave a vibe note about their musical taste!"}</p>
+                        <h3 className="text-base font-medium text-gray-900 dark:text-white mb-1">
+                          No vibe notes yet
+                        </h3>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                          {isOwnProfile
+                            ? 'No one has left you a vibe note yet. Share your profile to get some!'
+                            : 'Be the first to leave a vibe note about their musical taste!'}
+                        </p>
                       </div>
                     )}
                   </div>
@@ -981,7 +1136,9 @@ export default function UserProfilePage() {
                 editCaption={editCaption}
                 setEditingBookmarkId={setEditingBookmarkId}
                 setEditCaption={setEditCaption}
-                onEditSave={(id: string) => handleEditBookmark(id, editCaption)}
+                onEditSave={(id: string) =>
+                  handleEditBookmark(id, editCaption)
+                }
                 onEditCancel={() => setEditingBookmarkId(null)}
                 profile={profile}
                 openSpotifyAtTimestamp={openSpotifyAtTimestamp}
@@ -1015,55 +1172,112 @@ export default function UserProfilePage() {
                       Want to leave a vibe note?
                     </h3>
                     <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
-                      Log in to share your thoughts about their musical taste
+                      Log in to share your thoughts about their
+                      musical taste
                     </p>
                     <button
                       onClick={() => router.push('/')}
                       className="px-6 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-2xl font-medium hover:from-purple-600 hover:to-pink-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 text-sm mx-auto"
                     >
-                      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none"><path d="M21.805 10.023h-9.765v3.954h5.617c-.242 1.242-1.484 3.648-5.617 3.648-3.375 0-6.133-2.789-6.133-6.25s2.758-6.25 6.133-6.25c1.922 0 3.211.82 3.953 1.523l2.703-2.633c-1.711-1.57-3.922-2.523-6.656-2.523-5.523 0-10 4.477-10 10s4.477 10 10 10c5.742 0 9.547-4.023 9.547-9.695 0-.652-.07-1.148-.156-1.523z" fill="white"/><path d="M12.04 22c4.84 0 8.96-3.977 8.96-8.977 0-.617-.07-1.219-.164-1.789h-8.796v3.789h5.617c-.242 1.242-1.484 3.648-5.617 3.648-3.375 0-6.133-2.789-6.133-6.25s2.758-6.25 6.133-6.25c1.922 0 3.211.82 3.953 1.523l2.703-2.633c-1.711-1.57-3.922-2.523-6.656-2.523-5.523 0-10 4.477-10 10s4.477 10 10 10c5.742 0 9.547-4.023 9.547-9.695 0-.652-.07-1.148-.156-1.523z" fill="#34A853"/><path d="M3.545 7.545l3.164 2.32c.867-1.664 2.523-2.82 4.331-2.82 1.242 0 2.367.492 3.211 1.289l2.703-2.633c-1.711-1.57-3.922-2.523-6.656-2.523-3.523 0-6.523 2.32-7.867 5.547z" fill="#FBBC05"/><path d="M12.04 4.5c1.922 0 3.211.82 3.953 1.523l2.703-2.633c-1.711-1.57-3.922-2.523-6.656-2.523-3.523 0-6.523 2.32-7.867 5.547l3.164 2.32c.867-1.664 2.523-2.82 4.331-2.82z" fill="#EA4335"/><path d="M21.805 10.023h-9.765v3.954h5.617c-.242 1.242-1.484 3.648-5.617 3.648-3.375 0-6.133-2.789-6.133-6.25s2.758-6.25 6.133-6.25c1.922 0 3.211.82 3.953 1.523l2.703-2.633c-1.711-1.57-3.922-2.523-6.656-2.523-5.523 0-10 4.477-10 10s4.477 10 10 10c5.742 0 9.547-4.023 9.547-9.695 0-.652-.07-1.148-.156-1.523z" fill="#4285F4"/></svg>
-                        Log in with Spotify
-                      </button>
-                    </motion.div>
-                  )}
-                  {/* Vibe Notes List */}
-                  <div className="max-w-2xl mx-auto">
-                    <div className="mb-4 flex items-center gap-2">
-                      <Sparkles className="w-5 h-5 text-purple-400" />
-                      <div>
-                        <h2 className="text-lg font-bold text-gray-900 dark:text-white">Vibe Notes</h2>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">What others think about {isOwnProfile ? 'your' : 'their'} musical taste</p>
-                      </div>
+                      <svg
+                        className="w-4 h-4"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                      >
+                        <path
+                          d="M21.805 10.023h-9.765v3.954h5.617c-.242 1.242-1.484 3.648-5.617 3.648-3.375 0-6.133-2.789-6.133-6.25s2.758-6.25 6.133-6.25c1.922 0 3.211.82 3.953 1.523l2.703-2.633c-1.711-1.57-3.922-2.523-6.656-2.523-5.523 0-10 4.477-10 10s4.477 10 10 10c5.742 0 9.547-4.023 9.547-9.695 0-.652-.07-1.148-.156-1.523z"
+                          fill="white"
+                        />
+                        <path
+                          d="M12.04 22c4.84 0 8.96-3.977 8.96-8.977 0-.617-.07-1.219-.164-1.789h-8.796v3.789h5.617c-.242 1.242-1.484 3.648-5.617 3.648-3.375 0-6.133-2.789-6.133-6.25s2.758-6.25 6.133-6.25c1.922 0 3.211.82 3.953 1.523l2.703-2.633c-1.711-1.57-3.922-2.523-6.656-2.523-5.523 0-10 4.477-10 10s4.477 10 10 10c5.742 0 9.547-4.023 9.547-9.695 0-.652-.07-1.148-.156-1.523z"
+                          fill="#34A853"
+                        />
+                        <path
+                          d="M3.545 7.545l3.164 2.32c.867-1.664 2.523-2.82 4.331-2.82 1.242 0 2.367.492 3.211 1.289l2.703-2.633c-1.711-1.57-3.922-2.523-6.656-2.523-3.523 0-6.523 2.32-7.867 5.547z"
+                          fill="#FBBC05"
+                        />
+                        <path
+                          d="M12.04 4.5c1.922 0 3.211.82 3.953 1.523l2.703-2.633c-1.711-1.57-3.922-2.523-6.656-2.523-3.523 0-6.523 2.32-7.867 5.547l3.164 2.32c.867-1.664 2.523-2.82 4.331-2.82z"
+                          fill="#EA4335"
+                        />
+                        <path
+                          d="M21.805 10.023h-9.765v3.954h5.617c-.242 1.242-1.484 3.648-5.617 3.648-3.375 0-6.133-2.789-6.133-6.25s2.758-6.25 6.133-6.25c1.922 0 3.211.82 3.953 1.523l2.703-2.633c-1.711-1.57-3.922-2.523-6.656-2.523-5.523 0-10 4.477-10 10s4.477 10 10 10c5.742 0 9.547-4.023 9.547-9.695 0-.652-.07-1.148-.156-1.523z"
+                          fill="#4285F4"
+                        />
+                      </svg>
+                      Log in with Spotify
+                    </button>
+                  </motion.div>
+                )}
+                {/* Vibe Notes List */}
+                <div className="max-w-2xl mx-auto">
+                  <div className="mb-4 flex items-center gap-2">
+                    <Sparkles className="w-5 h-5 text-purple-400" />
+                    <div>
+                      <h2 className="text-lg font-bold text-gray-900 dark:text-white">
+                        Vibe Notes
+                      </h2>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        What others think about{' '}
+                        {isOwnProfile ? 'your' : 'their'} musical
+                        taste
+                      </p>
                     </div>
-                    {vibeNotesLoading ? (
-                      <div className="flex items-center justify-center py-8">
-                        <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: 'linear' }} className="w-6 h-6 border-2 border-purple-500 border-t-transparent rounded-full" />
-                      </div>
-                    ) : vibeNotes.length > 0 ? (
-                      <div className="space-y-3">
-                        <AnimatePresence>
-                          {vibeNotes.map((note: any) => {
-                            const isTargetUser = user && profile && user._id === profile._id;
-                            const isAuthor = user && note.authorId && user._id === note.authorId._id;
-                            const canDelete = note.isAnonymous
-                              ? isTargetUser
-                              : (isTargetUser || isAuthor);
-                            return (
-                              <VibeNote key={note._id} note={note} isOwner={canDelete} onDelete={handleDeleteNote} />
-                            );
-                          })}
-                        </AnimatePresence>
-                      </div>
-                    ) : (
-                      <div className="text-center py-8">
-                        <MessageSquare className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                        <h3 className="text-base font-medium text-gray-900 dark:text-white mb-1">No vibe notes yet</h3>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">{isOwnProfile ? "No one has left you a vibe note yet. Share your profile to get some!" : "Be the first to leave a vibe note about their musical taste!"}</p>
-                      </div>
-                    )}
                   </div>
-                </motion.div>
-              )}
+                  {vibeNotesLoading ? (
+                    <div className="flex items-center justify-center py-8">
+                      <motion.div
+                        animate={{ rotate: 360 }}
+                        transition={{
+                          duration: 1,
+                          repeat: Infinity,
+                          ease: 'linear',
+                        }}
+                        className="w-6 h-6 border-2 border-purple-500 border-t-transparent rounded-full"
+                      />
+                    </div>
+                  ) : vibeNotes.length > 0 ? (
+                    <div className="space-y-3">
+                      <AnimatePresence>
+                        {vibeNotes.map((note: any) => {
+                          const isTargetUser =
+                            user &&
+                            profile &&
+                            user._id === profile._id;
+                          const isAuthor =
+                            user &&
+                            note.authorId &&
+                            user._id === note.authorId._id;
+                          const canDelete = note.isAnonymous
+                            ? isTargetUser
+                            : isTargetUser || isAuthor;
+                          return (
+                            <VibeNote
+                              key={note._id}
+                              note={note}
+                              isOwner={canDelete}
+                              onDelete={handleDeleteNote}
+                            />
+                          );
+                        })}
+                      </AnimatePresence>
+                    </div>
+                  ) : (
+                    <div className="text-center py-8">
+                      <MessageSquare className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                      <h3 className="text-base font-medium text-gray-900 dark:text-white mb-1">
+                        No vibe notes yet
+                      </h3>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        {isOwnProfile
+                          ? 'No one has left you a vibe note yet. Share your profile to get some!'
+                          : 'Be the first to leave a vibe note about their musical taste!'}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </motion.div>
+            )}
           </AnimatePresence>
         </div>
 
@@ -1083,7 +1297,9 @@ export default function UserProfilePage() {
               >
                 <Icon className="w-6 h-6" />
                 {/* Hide label on mobile, show on sm+ */}
-                <span className="hidden sm:block text-xs font-medium">{label}</span>
+                <span className="hidden sm:block text-xs font-medium">
+                  {label}
+                </span>
                 {/* Green dot for active tab (mobile only) */}
                 {activeSection === id && (
                   <span className="block sm:hidden mt-1 w-2 h-2 bg-green-500 rounded-full" />
@@ -1168,7 +1384,10 @@ function ProfileSection({
                   whileHover={{ scale: 1.01 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={handleFollowToggle}
-                  disabled={followMutation.isPending || unfollowMutation.isPending}
+                  disabled={
+                    followMutation.isPending ||
+                    unfollowMutation.isPending
+                  }
                   className={`px-3 py-1.5 rounded-full font-medium text-xs transition-all flex items-center gap-1.5 ${
                     profile.isFollowing
                       ? 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
@@ -1192,7 +1411,7 @@ function ProfileSection({
               {isOwnProfile && user && (
                 <Link
                   href="/jam"
-                  className="px-3 py-1.5 rounded-full font-medium text-xs bg-green-600 text-white hover:bg-green-700 shadow-lg hover:shadow-xl transition-all flex items-center gap-1.5"
+                  className="px-3 py-1.5 rounded-full font-medium text-xs bg-gradient-to-r from-purple-500 to-pink-500  text-white  shadow-lg hover:from-purple-600 hover:to-pink-600 hover:shadow-xl transition-all flex items-center gap-1.5"
                 >
                   <Music className="w-3 h-3" />
                   Create a Jam
@@ -1204,7 +1423,9 @@ function ProfileSection({
               {/* Spotify Followers (subtle) */}
               {profile.spotifyProfile?.followers && (
                 <div className="text-xs text-gray-500 dark:text-gray-400">
-                  <span className="font-medium">{profile.spotifyProfile.followers.toLocaleString()}</span>
+                  <span className="font-medium">
+                    {profile.spotifyProfile.followers.toLocaleString()}
+                  </span>
                   <span className="ml-1">Spotify followers</span>
                 </div>
               )}
@@ -1213,14 +1434,18 @@ function ProfileSection({
                 onClick={() => handleFollowCountClick('followers')}
                 className="text-gray-900 dark:text-white hover:text-green-600 dark:hover:text-green-400 transition-colors text-xs"
               >
-                <span className="font-semibold">{followCounts.followerCount}</span>
+                <span className="font-semibold">
+                  {followCounts.followerCount}
+                </span>
                 <span className="ml-1">followers</span>
               </button>
               <button
                 onClick={() => handleFollowCountClick('following')}
                 className="text-gray-900 dark:text-white hover:text-green-600 dark:hover:text-green-400 transition-colors text-xs"
               >
-                <span className="font-semibold">{followCounts.followingCount}</span>
+                <span className="font-semibold">
+                  {followCounts.followingCount}
+                </span>
                 <span className="ml-1">following</span>
               </button>
             </div>
@@ -1239,12 +1464,12 @@ function ProfileSection({
                 className="relative flex-shrink-0"
                 animate={{
                   rotate: [0, 5, -5, 0],
-                  scale: [1, 1.02, 1]
+                  scale: [1, 1.02, 1],
                 }}
                 transition={{
                   duration: 4,
                   repeat: Infinity,
-                  ease: "easeInOut"
+                  ease: 'easeInOut',
                 }}
               >
                 <img
@@ -1267,7 +1492,14 @@ function ProfileSection({
                   <motion.span
                     animate={
                       profile.nowPlaying.isPlaying
-                        ? { scale: [1, 1.06, 1], backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'] }
+                        ? {
+                            scale: [1, 1.06, 1],
+                            backgroundPosition: [
+                              '0% 50%',
+                              '100% 50%',
+                              '0% 50%',
+                            ],
+                          }
                         : { scale: 1 }
                     }
                     transition={{
@@ -1284,7 +1516,8 @@ function ProfileSection({
                   <MarqueeText text={profile.nowPlaying.song} />
                 </h3>
                 <p className="text-xs text-gray-600 dark:text-gray-400 truncate w-full max-w-full overflow-hidden">
-                  {profile.nowPlaying.artist} • {profile.nowPlaying.album}
+                  {profile.nowPlaying.artist} •{' '}
+                  {profile.nowPlaying.album}
                 </p>
 
                 {/* Progress Bar */}
@@ -1294,11 +1527,15 @@ function ProfileSection({
                       className="h-full bg-green-500 rounded-full"
                       initial={{ width: 0 }}
                       animate={{
-                        width: `${(profile.nowPlaying.progressMs / profile.nowPlaying.durationMs) * 100}%`
+                        width: `${
+                          (profile.nowPlaying.progressMs /
+                            profile.nowPlaying.durationMs) *
+                          100
+                        }%`,
                       }}
                       transition={{
                         duration: 1,
-                        ease: "easeOut"
+                        ease: 'easeOut',
                       }}
                     />
                   </div>
@@ -1364,7 +1601,6 @@ function ProfileSection({
         </div>
       </motion.div>
 
-
       {/* Reactions */}
       <motion.div
         initial={{ opacity: 0, y: 12 }}
@@ -1374,21 +1610,27 @@ function ProfileSection({
       >
         <div className="flex items-center gap-2 mb-2">
           <Heart className="w-5 h-5 text-red-400" />
-          <h2 className="text-base font-bold text-gray-900 dark:text-white">Reactions</h2>
+          <h2 className="text-base font-bold text-gray-900 dark:text-white">
+            Reactions
+          </h2>
         </div>
         {/* Already added reactions */}
         <div className="flex flex-wrap gap-2 mb-2">
-          {Object.entries(profile.reactions || {}).map(([emoji, count]) => (
-            <div
-              key={emoji}
-              className="flex items-center gap-1 bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded-xl text-sm text-gray-700 dark:text-gray-300 shadow-sm border border-gray-200 dark:border-gray-700"
-            >
-              <span className="text-base">{emoji}</span>
-              <span className="font-medium">{String(count)}</span>
-            </div>
-          ))}
+          {Object.entries(profile.reactions || {}).map(
+            ([emoji, count]) => (
+              <div
+                key={emoji}
+                className="flex items-center gap-1 bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded-xl text-sm text-gray-700 dark:text-gray-300 shadow-sm border border-gray-200 dark:border-gray-700"
+              >
+                <span className="text-base">{emoji}</span>
+                <span className="font-medium">{String(count)}</span>
+              </div>
+            )
+          )}
           {Object.keys(profile.reactions || {}).length === 0 && (
-            <span className="text-xs text-gray-400 italic">No reactions yet</span>
+            <span className="text-xs text-gray-400 italic">
+              No reactions yet
+            </span>
           )}
         </div>
         {/* Divider */}
@@ -1396,8 +1638,23 @@ function ProfileSection({
         {/* Addable reactions */}
         {user && !isOwnProfile && (
           <div className="flex items-center gap-2 mt-1">
-            <span className="text-xs text-gray-400 mr-1">Add a reaction:</span>
-            {['🔥','💜','😭','✨','🎵','👍','😍','😂','😎','🤯','🥳','🫶'].map((emoji) => (
+            <span className="text-xs text-gray-400 mr-1">
+              Add a reaction:
+            </span>
+            {[
+              '🔥',
+              '💜',
+              '😭',
+              '✨',
+              '🎵',
+              '👍',
+              '😍',
+              '😂',
+              '😎',
+              '🤯',
+              '🥳',
+              '🫶',
+            ].map((emoji) => (
               <button
                 key={emoji}
                 onClick={() => handleReaction(emoji)}
@@ -1431,41 +1688,43 @@ function ProfileSection({
         </div>
 
         <div className="grid grid-cols-3 lg:grid-cols-4 gap-3">
-          {recentTracks.slice(0, 12).map((item: any, index: number) => (
-            <motion.div
-              key={`${item.trackId}-${index}`}
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.5 + index * 0.05 }}
-              whileHover={{ scale: 1.05 }}
-              onClick={() => openSpotifyUrl(item.trackUrl)}
-              className="relative group cursor-pointer overflow-hidden rounded-xl aspect-square bg-gray-200 dark:bg-gray-800"
-            >
-              {item.imageUrl ? (
-                <img
-                  src={item.imageUrl}
-                  alt={item.trackName}
-                  className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
-                />
-              ) : (
-                <div className="w-full h-full bg-gradient-to-br from-gray-300 to-gray-400 dark:from-gray-700 dark:to-gray-800 flex items-center justify-center">
-                  <Music className="w-6 h-6 text-gray-500 dark:text-gray-400" />
+          {recentTracks
+            .slice(0, 12)
+            .map((item: any, index: number) => (
+              <motion.div
+                key={`${item.trackId}-${index}`}
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.5 + index * 0.05 }}
+                whileHover={{ scale: 1.05 }}
+                onClick={() => openSpotifyUrl(item.trackUrl)}
+                className="relative group cursor-pointer overflow-hidden rounded-xl aspect-square bg-gray-200 dark:bg-gray-800"
+              >
+                {item.imageUrl ? (
+                  <img
+                    src={item.imageUrl}
+                    alt={item.trackName}
+                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-gradient-to-br from-gray-300 to-gray-400 dark:from-gray-700 dark:to-gray-800 flex items-center justify-center">
+                    <Music className="w-6 h-6 text-gray-500 dark:text-gray-400" />
+                  </div>
+                )}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                <div className="absolute bottom-2 left-2 right-2 text-white opacity-0 group-hover:opacity-100 transition-opacity">
+                  <h3 className="text-xs font-semibold truncate">
+                    {item.trackName}
+                  </h3>
+                  <p className="text-xs opacity-80">
+                    {timeAgo(new Date(item.playedAt))}
+                  </p>
                 </div>
-              )}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-              <div className="absolute bottom-2 left-2 right-2 text-white opacity-0 group-hover:opacity-100 transition-opacity">
-                <h3 className="text-xs font-semibold truncate">
-                  {item.trackName}
-                </h3>
-                <p className="text-xs opacity-80">
-                  {timeAgo(new Date(item.playedAt))}
-                </p>
-              </div>
-              <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                <ExternalLink className="w-3 h-3 text-white" />
-              </div>
-            </motion.div>
-          ))}
+                <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <ExternalLink className="w-3 h-3 text-white" />
+                </div>
+              </motion.div>
+            ))}
         </div>
       </motion.div>
 
@@ -1491,35 +1750,37 @@ function ProfileSection({
         </div>
 
         <div className="grid grid-cols-3 lg:grid-cols-4 gap-3">
-          {shortTracks.slice(0, 12).map((track: any, index: number) => (
-            <motion.div
-              key={track.id}
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.7 + index * 0.05 }}
-              whileHover={{ scale: 1.05 }}
-              onClick={() => openSpotifyUrl(track.url)}
-              className="relative group cursor-pointer overflow-hidden rounded-xl aspect-square"
-            >
-              <img
-                src={track.album.imageUrl}
-                alt={track.album.name}
-                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-              <div className="absolute bottom-2 left-2 right-2 text-white opacity-0 group-hover:opacity-100 transition-opacity">
-                <h3 className="text-xs font-semibold truncate">
-                  {track.name}
-                </h3>
-                <p className="text-xs opacity-80 truncate">
-                  {track.artists.map((a: any) => a.name).join(', ')}
-                </p>
-              </div>
-              <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                <ExternalLink className="w-3 h-3 text-white" />
-              </div>
-            </motion.div>
-          ))}
+          {shortTracks
+            .slice(0, 12)
+            .map((track: any, index: number) => (
+              <motion.div
+                key={track.id}
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.7 + index * 0.05 }}
+                whileHover={{ scale: 1.05 }}
+                onClick={() => openSpotifyUrl(track.url)}
+                className="relative group cursor-pointer overflow-hidden rounded-xl aspect-square"
+              >
+                <img
+                  src={track.album.imageUrl}
+                  alt={track.album.name}
+                  className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                <div className="absolute bottom-2 left-2 right-2 text-white opacity-0 group-hover:opacity-100 transition-opacity">
+                  <h3 className="text-xs font-semibold truncate">
+                    {track.name}
+                  </h3>
+                  <p className="text-xs opacity-80 truncate">
+                    {track.artists.map((a: any) => a.name).join(', ')}
+                  </p>
+                </div>
+                <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <ExternalLink className="w-3 h-3 text-white" />
+                </div>
+              </motion.div>
+            ))}
         </div>
       </motion.div>
 
@@ -1545,35 +1806,37 @@ function ProfileSection({
         </div>
 
         <div className="grid grid-cols-3 lg:grid-cols-4 gap-3">
-          {longTracks.slice(0, 12).map((track: any, index: number) => (
-            <motion.div
-              key={track.id}
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.9 + index * 0.05 }}
-              whileHover={{ scale: 1.05 }}
-              onClick={() => openSpotifyUrl(track.url)}
-              className="relative group cursor-pointer overflow-hidden rounded-xl aspect-square"
-            >
-              <img
-                src={track.album.imageUrl}
-                alt={track.album.name}
-                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-              <div className="absolute bottom-2 left-2 right-2 text-white opacity-0 group-hover:opacity-100 transition-opacity">
-                <h3 className="text-xs font-semibold truncate">
-                  {track.name}
-                </h3>
-                <p className="text-xs opacity-80 truncate">
-                  {track.artists.map((a: any) => a.name).join(', ')}
-                </p>
-              </div>
-              <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                <ExternalLink className="w-3 h-3 text-white" />
-              </div>
-            </motion.div>
-          ))}
+          {longTracks
+            .slice(0, 12)
+            .map((track: any, index: number) => (
+              <motion.div
+                key={track.id}
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.9 + index * 0.05 }}
+                whileHover={{ scale: 1.05 }}
+                onClick={() => openSpotifyUrl(track.url)}
+                className="relative group cursor-pointer overflow-hidden rounded-xl aspect-square"
+              >
+                <img
+                  src={track.album.imageUrl}
+                  alt={track.album.name}
+                  className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                <div className="absolute bottom-2 left-2 right-2 text-white opacity-0 group-hover:opacity-100 transition-opacity">
+                  <h3 className="text-xs font-semibold truncate">
+                    {track.name}
+                  </h3>
+                  <p className="text-xs opacity-80 truncate">
+                    {track.artists.map((a: any) => a.name).join(', ')}
+                  </p>
+                </div>
+                <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <ExternalLink className="w-3 h-3 text-white" />
+                </div>
+              </motion.div>
+            ))}
         </div>
       </motion.div>
 
@@ -1659,35 +1922,37 @@ function ProfileSection({
         </div>
 
         <div className="grid grid-cols-3 lg:grid-cols-4 gap-3">
-          {longArtists.slice(0, 12).map((artist: any, index: number) => (
-            <motion.div
-              key={artist.id}
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 1.3 + index * 0.05 }}
-              whileHover={{ scale: 1.05 }}
-              onClick={() => openSpotifyUrl(artist.url)}
-              className="relative group cursor-pointer overflow-hidden rounded-xl aspect-square"
-            >
-              <img
-                src={artist.imageUrl}
-                alt={artist.name}
-                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-              <div className="absolute bottom-2 left-2 right-2 text-white opacity-0 group-hover:opacity-100 transition-opacity">
-                <h3 className="text-xs font-semibold truncate">
-                  {artist.name}
-                </h3>
-                <p className="text-xs opacity-80">
-                  {artist.followers?.toLocaleString()} followers
-                </p>
-              </div>
-              <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                <ExternalLink className="w-3 h-3 text-white" />
-              </div>
-            </motion.div>
-          ))}
+          {longArtists
+            .slice(0, 12)
+            .map((artist: any, index: number) => (
+              <motion.div
+                key={artist.id}
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 1.3 + index * 0.05 }}
+                whileHover={{ scale: 1.05 }}
+                onClick={() => openSpotifyUrl(artist.url)}
+                className="relative group cursor-pointer overflow-hidden rounded-xl aspect-square"
+              >
+                <img
+                  src={artist.imageUrl}
+                  alt={artist.name}
+                  className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                <div className="absolute bottom-2 left-2 right-2 text-white opacity-0 group-hover:opacity-100 transition-opacity">
+                  <h3 className="text-xs font-semibold truncate">
+                    {artist.name}
+                  </h3>
+                  <p className="text-xs opacity-80">
+                    {artist.followers?.toLocaleString()} followers
+                  </p>
+                </div>
+                <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <ExternalLink className="w-3 h-3 text-white" />
+                </div>
+              </motion.div>
+            ))}
         </div>
       </motion.div>
     </motion.div>
@@ -2007,7 +2272,15 @@ function BookmarksSection({
         <div className="flex items-center gap-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 text-gray-600 dark:text-gray-300 text-sm">
           <Info className="w-4 h-4 text-green-400" />
           <span>
-            Play a song on <span className="font-medium text-green-600">Spotify</span>, then open your <span className="font-medium text-green-600">Sonder.fm</span> profile to bookmark that exact moment in the song.
+            Play a song on{' '}
+            <span className="font-medium text-green-600">
+              Spotify
+            </span>
+            , then open your{' '}
+            <span className="font-medium text-green-600">
+              Sonder.fm
+            </span>{' '}
+            profile to bookmark that exact moment in the song.
           </span>
         </div>
       </div>
@@ -2037,7 +2310,9 @@ function BookmarksSection({
             {isOwnProfile && (
               <div className="flex items-center justify-center gap-2 text-xs text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-900/30 rounded-lg px-3 py-2">
                 <Info className="w-4 h-4" />
-                <span>Play music → Visit profile → Click bookmark icon</span>
+                <span>
+                  Play music → Visit profile → Click bookmark icon
+                </span>
               </div>
             )}
           </motion.div>
@@ -2059,8 +2334,15 @@ function BookmarksSection({
                     src={bookmark.metadata.album.imageUrl}
                     alt={bookmark.metadata.album.name}
                     onClick={() => {
-                      console.log('Album clicked:', bookmark.metadata.spotifyUrl, bookmark.timestampMs);
-                      openSpotifyAtTimestamp(bookmark.metadata.spotifyUrl, bookmark.timestampMs);
+                      console.log(
+                        'Album clicked:',
+                        bookmark.metadata.spotifyUrl,
+                        bookmark.timestampMs
+                      );
+                      openSpotifyAtTimestamp(
+                        bookmark.metadata.spotifyUrl,
+                        bookmark.timestampMs
+                      );
                     }}
                     className="w-14 h-14 md:w-16 md:h-16 rounded-lg object-cover shadow-md border-2 border-white dark:border-gray-900 cursor-pointer hover:scale-105 transition-transform relative z-10"
                   />
@@ -2075,7 +2357,9 @@ function BookmarksSection({
                     <h3 className="font-semibold text-base text-gray-900 dark:text-white truncate">
                       {bookmark.metadata.name}
                     </h3>
-                    <Tooltip content={`The moment saved in the song.`}>
+                    <Tooltip
+                      content={`The moment saved in the song.`}
+                    >
                       <div className="flex items-center gap-1 text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-900/30 rounded-full px-2 py-0.5 cursor-pointer">
                         <Clock className="w-3 h-3" />
                         <span className="text-xs font-medium">
@@ -2090,17 +2374,27 @@ function BookmarksSection({
                       {bookmark.durationMs ? (
                         <div
                           className="absolute top-1/2 w-4 h-4 rounded-full bg-green-500 border-2 border-white dark:border-gray-900 shadow -translate-x-1/2 -translate-y-1/2 z-20"
-                          style={{ left: `${Math.min(100, Math.max(0, (bookmark.timestampMs / bookmark.durationMs) * 100))}%` }}
+                          style={{
+                            left: `${Math.min(
+                              100,
+                              Math.max(
+                                0,
+                                (bookmark.timestampMs /
+                                  bookmark.durationMs) *
+                                  100
+                              )
+                            )}%`,
+                          }}
                         />
                       ) : (
-                        <div
-                          className="absolute top-1/2 left-1/2 w-4 h-4 rounded-full bg-green-500 border-2 border-white dark:border-gray-900 shadow -translate-x-1/2 -translate-y-1/2 z-20"
-                        />
+                        <div className="absolute top-1/2 left-1/2 w-4 h-4 rounded-full bg-green-500 border-2 border-white dark:border-gray-900 shadow -translate-x-1/2 -translate-y-1/2 z-20" />
                       )}
                     </div>
                   </div>
                   <p className="text-gray-600 dark:text-gray-400 text-xs truncate mb-1">
-                    {bookmark.metadata.artists.map((a: any) => a.name).join(', ')}
+                    {bookmark.metadata.artists
+                      .map((a: any) => a.name)
+                      .join(', ')}
                   </p>
 
                   {/* Caption */}
@@ -2109,7 +2403,9 @@ function BookmarksSection({
                       <input
                         type="text"
                         value={editCaption}
-                        onChange={(e) => setEditCaption(e.target.value)}
+                        onChange={(e) =>
+                          setEditCaption(e.target.value)
+                        }
                         placeholder="Add a caption..."
                         className="flex-1 text-xs bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-600 rounded-lg px-2 py-1 focus:outline-none focus:ring-2 focus:ring-purple-500"
                         maxLength={500}
@@ -2153,7 +2449,9 @@ function BookmarksSection({
                           <Edit3 className="w-4 h-4" />
                         </button>
                         <button
-                          onClick={() => onDeleteBookmark(bookmark._id)}
+                          onClick={() =>
+                            onDeleteBookmark(bookmark._id)
+                          }
                           className="flex items-center justify-center w-8 h-8 rounded-full border border-transparent hover:border-red-300 dark:hover:border-red-700 bg-transparent hover:bg-red-100/60 dark:hover:bg-red-900/40 text-red-500 dark:text-red-300 transition-colors focus:outline-none focus:ring-2 focus:ring-red-400"
                           title="Delete bookmark"
                         >
