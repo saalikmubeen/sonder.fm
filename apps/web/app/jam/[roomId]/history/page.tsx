@@ -96,8 +96,13 @@ export default function RoomHistoryPage() {
 
   // Export playlist mutation
   const exportMutation = useMutation({
-    mutationFn: ({ name, description }: { name?: string; description?: string }) =>
-      roomsApi.exportPlaylist(roomId, name, description),
+    mutationFn: ({
+      name,
+      description,
+    }: {
+      name?: string;
+      description?: string;
+    }) => roomsApi.exportPlaylist(roomId, name, description),
     onSuccess: (data) => {
       toast.success('Playlist exported to Spotify! 🎵');
       setShowExportModal(false);
@@ -110,7 +115,9 @@ export default function RoomHistoryPage() {
       }
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.error || 'Failed to export playlist');
+      toast.error(
+        error.response?.data?.error || 'Failed to export playlist'
+      );
     },
   });
 
@@ -142,7 +149,11 @@ export default function RoomHistoryPage() {
       <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex items-center justify-center">
         <motion.div
           animate={{ rotate: 360 }}
-          transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+          transition={{
+            duration: 1,
+            repeat: Infinity,
+            ease: 'linear',
+          }}
           className="w-8 h-8 border-2 border-purple-500 border-t-transparent rounded-full"
         />
       </div>
@@ -164,7 +175,8 @@ export default function RoomHistoryPage() {
             Room Not Found
           </h1>
           <p className="text-gray-600 dark:text-gray-400 mb-6">
-            This room doesn't exist or you don't have permission to view it.
+            This room doesn't exist or you don't have permission to
+            view it.
           </p>
           <button
             onClick={() => router.push('/jam/discover')}
@@ -204,7 +216,11 @@ export default function RoomHistoryPage() {
               </p>
             </div>
             <div className="flex items-center gap-2">
-              <div className={`w-3 h-3 rounded-full ${room.isActive ? 'bg-green-500' : 'bg-gray-400'}`} />
+              <div
+                className={`w-3 h-3 rounded-full ${
+                  room.isActive ? 'bg-green-500' : 'bg-gray-400'
+                }`}
+              />
               <span className="text-sm text-gray-500 dark:text-gray-400">
                 {room.isActive ? 'Active' : 'Ended'}
               </span>
@@ -226,7 +242,9 @@ export default function RoomHistoryPage() {
               <div>
                 <div className="flex items-center gap-2 mb-1">
                   <Crown className="w-4 h-4 text-yellow-500" />
-                  <span className="text-sm text-gray-500 dark:text-gray-400">Hosted by</span>
+                  <span className="text-sm text-gray-500 dark:text-gray-400">
+                    Hosted by
+                  </span>
                 </div>
                 <Link
                   href={`/u/${room.host.publicSlug}`}
@@ -273,7 +291,7 @@ export default function RoomHistoryPage() {
                 Join Room
               </motion.button>
             )}
-            
+
             {history.length > 0 && (
               <motion.button
                 whileHover={{ scale: 1.02 }}
@@ -385,7 +403,9 @@ export default function RoomHistoryPage() {
                         </Link>
                         <div className="text-xs text-gray-500 dark:text-gray-400">
                           <div>Played by</div>
-                          <div className="font-medium">{item.playedBy.displayName}</div>
+                          <div className="font-medium">
+                            {item.playedBy.displayName}
+                          </div>
                         </div>
                       </div>
 
@@ -450,15 +470,20 @@ export default function RoomHistoryPage() {
                   </label>
                   <textarea
                     value={playlistDescription}
-                    onChange={(e) => setPlaylistDescription(e.target.value)}
-                    placeholder={`Exported from Sonder.fm room "${room.name}" on ${new Date().toLocaleDateString()}`}
+                    onChange={(e) =>
+                      setPlaylistDescription(e.target.value)
+                    }
+                    placeholder={`Exported from Sonder.fm room "${
+                      room.name
+                    }" on ${new Date().toLocaleDateString()}`}
                     rows={3}
                     className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all placeholder-gray-400 dark:placeholder-gray-500 text-gray-900 dark:text-white"
                   />
                 </div>
 
                 <div className="text-sm text-gray-500 dark:text-gray-400">
-                  This will create a private playlist with {history.length} songs in your Spotify account.
+                  This will create a private playlist with{' '}
+                  {history.length} songs in your Spotify account.
                 </div>
               </div>
 

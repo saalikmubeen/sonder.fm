@@ -1,6 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
+import { Suspense } from 'react';
 
 // Disable static generation for this page
 export const dynamic = 'force-dynamic';
@@ -53,7 +54,7 @@ const NAV_LINKS = [
   { label: 'How it Works', href: '#how' },
 ];
 
-export default function HomePage() {
+function HomePageContent() {
   const { user, login, loading } = useAuth();
   console.log(user);
   const router = useRouter();
@@ -566,6 +567,28 @@ export default function HomePage() {
         </div>
       </footer>
     </div>
+  );
+}
+
+export default function HomePage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex items-center justify-center">
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{
+              duration: 1,
+              repeat: Infinity,
+              ease: 'linear',
+            }}
+            className="w-8 h-8 border-2 border-green-500 border-t-transparent rounded-full"
+          />
+        </div>
+      }
+    >
+      <HomePageContent />
+    </Suspense>
   );
 }
 

@@ -5,7 +5,11 @@ import { Follow } from '../models/Follow';
 
 export class RoomSyncService {
   // Sync in-memory room to database
-  static async syncRoomToDatabase(roomId: string, name?: string, tags?: string[]) {
+  static async syncRoomToDatabase(
+    roomId: string,
+    name?: string,
+    tags?: string[]
+  ) {
     try {
       const memoryRoom = RoomManager.getRoom(roomId);
       if (!memoryRoom) return;
@@ -15,7 +19,9 @@ export class RoomSyncService {
 
       if (!dbRoom) {
         // Create new room in database
-        const host = await User.findOne({ spotifyId: memoryRoom.hostSpotifyId });
+        const host = await User.findOne({
+          spotifyId: memoryRoom.hostSpotifyId,
+        });
         if (!host) return;
 
         dbRoom = new Room({
@@ -34,7 +40,9 @@ export class RoomSyncService {
       // Update participants
       const participantIds = await Promise.all(
         memoryRoom.members.map(async (member) => {
-          const user = await User.findOne({ spotifyId: member.spotifyId });
+          const user = await User.findOne({
+            spotifyId: member.spotifyId,
+          });
           return user?._id;
         })
       );
@@ -56,16 +64,23 @@ export class RoomSyncService {
   }
 
   // Add song to history when a new track is played
-  static async addSongToHistory(roomId: string, trackInfo: any, playedBySpotifyId: string) {
+  static async addSongToHistory(
+    roomId: string,
+    trackInfo: any,
+    playedBySpotifyId: string
+  ) {
     try {
-      const playedByUser = await User.findOne({ spotifyId: playedBySpotifyId });
+      const playedByUser = await User.findOne({
+        spotifyId: playedBySpotifyId,
+      });
       if (!playedByUser) return;
 
       const dbRoom = await Room.findOne({ roomId });
       if (!dbRoom) return;
 
       // Check if this is actually a new track (avoid duplicates)
-      const lastSong = dbRoom.songHistory[dbRoom.songHistory.length - 1];
+      const lastSong =
+        dbRoom.songHistory[dbRoom.songHistory.length - 1];
       if (lastSong && lastSong.trackId === trackInfo.id) {
         return; // Same track, don't add duplicate
       }
@@ -90,7 +105,9 @@ export class RoomSyncService {
       }
 
       await dbRoom.save();
-      console.log(`Added song "${trackInfo.name}" to room ${roomId} history`);
+      console.log(
+        `Added song "${trackInfo.name}" to room ${roomId} history`
+      );
     } catch (error) {
       console.error('Error adding song to history:', error);
     }
@@ -102,7 +119,7 @@ export class RoomSyncService {
       await Room.findOneAndUpdate(
         { roomId },
         {
-          participants: [],
+          // participants: [],
           lastActive: new Date(),
         }
       );
@@ -121,37 +138,44 @@ export class RoomSyncService {
         isPublic: true,
         tags: { $in: tagFilters },
         lastActive: { $gte: fifteenMinutesAgo },
-        participants: { $ne: [] }
+        participants: { $ne: [] },
       })
-      .populate('hostId', 'displayName avatarUrl publicSlug')
-      .populate('participants', 'displayName avatarUrl publicSlug')
-      .sort({ lastActive: -1 });
+        .populate('hostId', 'displayName avatarUrl publicSlug')
+        .populate('participants', 'displayName avatarUrl publicSlug')
+        .sort({ lastActive: -1 });
 
       // Filter by memory state
       const memoryRooms = RoomManager.getRoomsMap();
-      const activeRooms = rooms.filter(room => memoryRooms.has(room.roomId));
+      const activeRooms = rooms.filter((room) =>
+        memoryRooms.has(room.roomId)
+      );
 
       // Get user's following list if authenticated
       let userFollowing: string[] = [];
       if (userId) {
-        const follows = await Follow.find({ followerId: userId })
-          .populate('followingId', '_id');
-        userFollowing = follows.map(f => f.followingId._id.toString());
+        const follows = await Follow.find({
+          followerId: userId,
+        }).populate('followingId', '_id');
+        userFollowing = follows.map((f) =>
+          f.followingId._id.toString()
+        );
       }
 
       // Enhance rooms
-      const enhancedRooms = activeRooms.map(room => {
+      const enhancedRooms = activeRooms.map((room) => {
         const memoryRoom = memoryRooms.get(room.roomId);
-        const hasFriends = room.participants.some(participant =>
+        const hasFriends = room.participants.some((participant) =>
           userFollowing.includes(participant._id.toString())
         );
-        const currentTrack = memoryRoom?.currentTrack || room.currentTrack;
+        const currentTrack =
+          memoryRoom?.currentTrack || room.currentTrack;
 
         return {
           roomId: room.roomId,
           name: room.name,
           host: room.hostId,
-          participantCount: memoryRoom?.members.length || room.participants.length,
+          participantCount:
+            memoryRoom?.members.length || room.participants.length,
           participants: room.participants,
           currentTrack,
           tags: room.tags || [],
@@ -170,46 +194,59 @@ export class RoomSyncService {
   }
 
   // Get recent rooms by tags
-  static async getRecentRoomsByTags(tagFilters: string[], userId?: string) {
+  static async getRecentRoomsByTags(
+    tagFilters: string[],
+    userId?: string
+  ) {
     try {
-      const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+      const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+      // const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
       const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000);
 
       const rooms = await Room.find({
         isPublic: true,
         tags: { $in: tagFilters },
         lastActive: {
-          $gte: oneHourAgo,
-          $lte: fifteenMinutesAgo
+          $gte: oneDayAgo,
+          $lte: fifteenMinutesAgo,
         },
-        songHistory: { $ne: [] }
+        songHistory: { $ne: [] },
       })
-      .populate('hostId', 'displayName avatarUrl publicSlug')
-      .populate('participants', 'displayName avatarUrl publicSlug')
-      .populate('songHistory.playedBy', 'displayName avatarUrl publicSlug')
-      .sort({ lastActive: -1 })
-      .limit(20);
+        .populate('hostId', 'displayName avatarUrl publicSlug')
+        .populate('participants', 'displayName avatarUrl publicSlug')
+        .populate(
+          'songHistory.playedBy',
+          'displayName avatarUrl publicSlug'
+        )
+        .sort({ lastActive: -1 })
+        .limit(20);
 
       // Filter out active rooms
       const memoryRooms = RoomManager.getRoomsMap();
-      const endedRooms = rooms.filter(room => !memoryRooms.has(room.roomId));
+      const endedRooms = rooms.filter(
+        (room) => !memoryRooms.has(room.roomId)
+      );
 
       // Get user's following list if authenticated
       let userFollowing: string[] = [];
       if (userId) {
-        const follows = await Follow.find({ followerId: userId })
-          .populate('followingId', '_id');
-        userFollowing = follows.map(f => f.followingId._id.toString());
+        const follows = await Follow.find({
+          followerId: userId,
+        }).populate('followingId', '_id');
+        userFollowing = follows.map((f) =>
+          f.followingId._id.toString()
+        );
       }
 
       // Enhance rooms
-      const enhancedRooms = endedRooms.map(room => {
-        const hasFriends = room.participants.some(participant =>
+      const enhancedRooms = endedRooms.map((room) => {
+        const hasFriends = room.participants.some((participant) =>
           userFollowing.includes(participant._id.toString())
         );
-        const lastPlayedTrack = room.songHistory.length > 0
-          ? room.songHistory[room.songHistory.length - 1]
-          : null;
+        const lastPlayedTrack =
+          room.songHistory.length > 0
+            ? room.songHistory[room.songHistory.length - 1]
+            : null;
 
         return {
           roomId: room.roomId,
@@ -243,43 +280,50 @@ export class RoomSyncService {
       const dbRooms = await Room.find({
         isPublic: true,
         lastActive: { $gte: fifteenMinutesAgo },
-        participants: { $ne: [] } // Only rooms with participants
+        participants: { $ne: [] }, // Only rooms with participants
       })
-      .populate('hostId', 'displayName avatarUrl publicSlug')
-      .populate('participants', 'displayName avatarUrl publicSlug')
-      .sort({ lastActive: -1 });
+        .populate('hostId', 'displayName avatarUrl publicSlug')
+        .populate('participants', 'displayName avatarUrl publicSlug')
+        .sort({ lastActive: -1 });
 
       // Get in-memory rooms
       const memoryRooms = RoomManager.getRoomsMap();
 
       // Only return rooms that exist in BOTH memory and database
-      const activeRooms = dbRooms.filter(room => memoryRooms.has(room.roomId));
+      const activeRooms = dbRooms.filter((room) =>
+        memoryRooms.has(room.roomId)
+      );
 
       // Get user's following list if authenticated
       let userFollowing: string[] = [];
       if (userId) {
-        const follows = await Follow.find({ followerId: userId })
-          .populate('followingId', '_id');
-        userFollowing = follows.map(f => f.followingId._id.toString());
+        const follows = await Follow.find({
+          followerId: userId,
+        }).populate('followingId', '_id');
+        userFollowing = follows.map((f) =>
+          f.followingId._id.toString()
+        );
       }
 
       // Enhance with in-memory data and friend information
-      const enhancedRooms = activeRooms.map(room => {
+      const enhancedRooms = activeRooms.map((room) => {
         const memoryRoom = memoryRooms.get(room.roomId);
 
         // Check if any participants are friends
-        const hasFriends = room.participants.some(participant =>
+        const hasFriends = room.participants.some((participant) =>
           userFollowing.includes(participant._id.toString())
         );
 
         // Get current track from memory (most up-to-date)
-        const currentTrack = memoryRoom?.currentTrack || room.currentTrack;
+        const currentTrack =
+          memoryRoom?.currentTrack || room.currentTrack;
 
         return {
           roomId: room.roomId,
           name: room.name,
           host: room.hostId,
-          participantCount: memoryRoom?.members.length || room.participants.length,
+          participantCount:
+            memoryRoom?.members.length || room.participants.length,
           participants: room.participants,
           currentTrack,
           tags: room.tags || [],
@@ -300,7 +344,7 @@ export class RoomSyncService {
   // Get recently ended rooms (in database but not in memory)
   static async getRecentlyEndedRooms(userId?: string) {
     try {
-      const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000)
+      const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
       const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000); // Last hour
       const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000);
 
@@ -311,39 +355,48 @@ export class RoomSyncService {
           $gte: oneDayAgo, // only rooms that ended in the last hour
           // $lte: fifteenMinutesAgo // but not in the last 15 minutes
         },
-        songHistory: { $ne: [] } // Only rooms that had some activity
+        songHistory: { $ne: [] }, // Only rooms that had some activity
       })
-      .populate('hostId', 'displayName avatarUrl publicSlug')
-      .populate('participants', 'displayName avatarUrl publicSlug')
-      .populate('songHistory.playedBy', 'displayName avatarUrl publicSlug')
-      .sort({ lastActive: -1 })
-      .limit(20);
+        .populate('hostId', 'displayName avatarUrl publicSlug')
+        .populate('participants', 'displayName avatarUrl publicSlug')
+        .populate(
+          'songHistory.playedBy',
+          'displayName avatarUrl publicSlug'
+        )
+        .sort({ lastActive: -1 })
+        .limit(20);
 
       // Get in-memory rooms to exclude active ones
       const memoryRooms = RoomManager.getRoomsMap();
 
       // Only return rooms that are NOT in memory (ended)
-      const endedRooms = dbRooms.filter(room => !memoryRooms.has(room.roomId));
+      const endedRooms = dbRooms.filter(
+        (room) => !memoryRooms.has(room.roomId)
+      );
 
       // Get user's following list if authenticated
       let userFollowing: string[] = [];
       if (userId) {
-        const follows = await Follow.find({ followerId: userId })
-          .populate('followingId', '_id');
-        userFollowing = follows.map(f => f.followingId._id.toString());
+        const follows = await Follow.find({
+          followerId: userId,
+        }).populate('followingId', '_id');
+        userFollowing = follows.map((f) =>
+          f.followingId._id.toString()
+        );
       }
 
       // Enhance with friend information and last played track
-      const enhancedRooms = endedRooms.map(room => {
+      const enhancedRooms = endedRooms.map((room) => {
         // Check if any participants were friends
-        const hasFriends = room.participants.some(participant =>
+        const hasFriends = room.participants.some((participant) =>
           userFollowing.includes(participant._id.toString())
         );
 
         // Get last played track from history
-        const lastPlayedTrack = room.songHistory.length > 0
-          ? room.songHistory[room.songHistory.length - 1]
-          : null;
+        const lastPlayedTrack =
+          room.songHistory.length > 0
+            ? room.songHistory[room.songHistory.length - 1]
+            : null;
 
         return {
           roomId: room.roomId,
@@ -369,17 +422,22 @@ export class RoomSyncService {
   }
 
   // Search rooms by name
-  static async searchRooms(query: string, userId?: string, activeOnly: boolean = true, tagFilters: string[] = []) {
+  static async searchRooms(
+    query: string,
+    userId?: string,
+    activeOnly: boolean = true,
+    tagFilters: string[] = []
+  ) {
     try {
       const searchRegex = new RegExp(query, 'i');
-      const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000);
+      // const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000);
 
       let searchCriteria: any = {
         isPublic: true,
         $or: [
           { name: searchRegex },
-          { 'hostId.displayName': searchRegex }
-        ]
+          { 'hostId.displayName': searchRegex },
+        ],
       };
 
       // Add tag filters
@@ -388,7 +446,7 @@ export class RoomSyncService {
       }
 
       if (activeOnly) {
-        searchCriteria.lastActive = { $gte: fifteenMinutesAgo };
+        // searchCriteria.lastActive = { $gte: fifteenMinutesAgo };
         searchCriteria.participants = { $ne: [] };
       }
 
@@ -401,36 +459,43 @@ export class RoomSyncService {
       // Filter by memory state if activeOnly
       const memoryRooms = RoomManager.getRoomsMap();
       const filteredRooms = activeOnly
-        ? rooms.filter(room => memoryRooms.has(room.roomId))
+        ? rooms.filter((room) => memoryRooms.has(room.roomId))
         : rooms;
 
       // Get user's following list if authenticated
       let userFollowing: string[] = [];
       if (userId) {
-        const follows = await Follow.find({ followerId: userId })
-          .populate('followingId', '_id');
-        userFollowing = follows.map(f => f.followingId._id.toString());
+        const follows = await Follow.find({
+          followerId: userId,
+        }).populate('followingId', '_id');
+        userFollowing = follows.map((f) =>
+          f.followingId._id.toString()
+        );
       }
 
       // Enhance rooms
-      const enhancedRooms = filteredRooms.map(room => {
+      const enhancedRooms = filteredRooms.map((room) => {
         const memoryRoom = memoryRooms.get(room.roomId);
         const isActive = !!memoryRoom;
 
-        const hasFriends = room.participants.some(participant =>
+        const hasFriends = room.participants.some((participant) =>
           userFollowing.includes(participant._id.toString())
         );
 
-        const currentTrack = memoryRoom?.currentTrack || room.currentTrack;
-        const lastPlayedTrack = !isActive && room.songHistory.length > 0
-          ? room.songHistory[room.songHistory.length - 1]
-          : null;
+        const currentTrack =
+          memoryRoom?.currentTrack || room.currentTrack;
+        const lastPlayedTrack =
+          !isActive && room.songHistory.length > 0
+            ? room.songHistory[room.songHistory.length - 1]
+            : null;
 
         return {
           roomId: room.roomId,
           name: room.name,
           host: room.hostId,
-          participantCount: isActive ? memoryRoom.members.length : room.participants.length,
+          participantCount: isActive
+            ? memoryRoom.members.length
+            : room.participants.length,
           participants: room.participants,
           currentTrack: isActive ? currentTrack : undefined,
           lastPlayedTrack: !isActive ? lastPlayedTrack : undefined,
