@@ -135,8 +135,8 @@ router.delete('/:noteId', auth, async (req: AuthRequest, res) => {
     ) {
       await note.deleteOne();
       return res.json({
-        success: true,
-        message: 'Vibe note deleted successfully'
+      success: true,
+      message: 'Vibe note deleted successfully'
       });
     }
 

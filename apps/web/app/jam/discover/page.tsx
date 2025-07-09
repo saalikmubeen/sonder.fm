@@ -229,8 +229,53 @@ export default function RoomDiscoveryPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-black">
-      <div className="max-w-6xl mx-auto px-4 py-8">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex">
+      {/* Sidebar */}
+      <div className="w-64 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 p-6 hidden lg:block">
+        <div className="mb-8">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">People</h2>
+          <div className="space-y-4">
+            {currentRooms.slice(0, 5).map(room => (
+              <div key={room.roomId} className="flex items-center gap-3">
+                <img
+                  src={room.host.avatarUrl}
+                  alt={room.host.displayName}
+                  className="w-8 h-8 rounded-full"
+                />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                    {room.host.displayName}
+                  </p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                    {room.name}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {popularTags.length > 0 && (
+          <div>
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Trending Tags</h2>
+            <div className="flex flex-wrap gap-2">
+              {popularTags.slice(0, 8).map((tag: any) => (
+                <button
+                  key={tag.name}
+                  onClick={() => toggleTag(tag.name)}
+                  className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${getTagColor(tag.name)}`}
+                >
+                  <Hash className="w-3 h-3" />
+                  {tag.name}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Main Content */}
+      <div className="flex-1 min-w-0 p-8">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -591,7 +636,7 @@ function RoomCard({
       initial={{ opacity: 0, y: 50 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay }}
-      className="bg-white dark:bg-gray-900 rounded-2xl shadow-lg p-6"
+className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6 hover:border-purple-500 dark:hover:border-purple-500 transition-colors"
     >
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-xl font-bold text-gray-900 dark:text-white">
