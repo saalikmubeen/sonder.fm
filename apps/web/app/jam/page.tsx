@@ -246,7 +246,7 @@ export default function JamPage() {
           animate={{ opacity: 1, y: 0 }}
           className="text-center max-w-md"
         >
-          <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-emerald-500 rounded-full flex items-center justify-center mx-auto mb-6">
+          <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center mx-auto mb-6">
             <Music className="w-8 h-8 text-white" />
           </div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
@@ -258,7 +258,7 @@ export default function JamPage() {
           </p>
           <Button
             onClick={() => router.push('/')}
-            className="bg-green-600 hover:bg-green-700 text-white mx-auto"
+            className="bg-gradient-to-br from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 transition-colors text-white mx-auto"
           >
             Log in with Spotify
           </Button>
