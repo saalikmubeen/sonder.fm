@@ -33,16 +33,26 @@ import { useTheme } from 'next-themes';
 function ActivityItem({ activity }: { activity: any }) {
   const getActivityIcon = (type: string) => {
     switch (type) {
-      case 'room_join': return <Radio className="w-4 h-4 text-green-500" />;
-      case 'room_create': return <Crown className="w-4 h-4 text-yellow-500" />;
-      case 'vibe_note': return <MessageSquare className="w-4 h-4 text-blue-500" />;
-      case 'reaction': return <Heart className="w-4 h-4 text-pink-500" />;
-      case 'follow': return <UserPlus className="w-4 h-4 text-purple-500" />;
-      case 'bookmark': return <Bookmark className="w-4 h-4 text-indigo-500" />;
-      case 'theme_change': return <Sparkles className="w-4 h-4 text-orange-500" />;
-      case 'track_play': return <Play className="w-4 h-4 text-green-600" />;
-      case 'playlist_export': return <ExternalLink className="w-4 h-4 text-blue-600" />;
-      default: return <Activity className="w-4 h-4 text-gray-500" />;
+      case 'room_join':
+        return <Radio className="w-4 h-4 text-green-500" />;
+      case 'room_create':
+        return <Crown className="w-4 h-4 text-yellow-500" />;
+      case 'vibe_note':
+        return <MessageSquare className="w-4 h-4 text-blue-500" />;
+      case 'reaction':
+        return <Heart className="w-4 h-4 text-pink-500" />;
+      case 'follow':
+        return <UserPlus className="w-4 h-4 text-purple-500" />;
+      case 'bookmark':
+        return <Bookmark className="w-4 h-4 text-indigo-500" />;
+      case 'theme_change':
+        return <Sparkles className="w-4 h-4 text-orange-500" />;
+      case 'track_play':
+        return <Play className="w-4 h-4 text-green-600" />;
+      case 'playlist_export':
+        return <ExternalLink className="w-4 h-4 text-blue-600" />;
+      default:
+        return <Activity className="w-4 h-4 text-gray-500" />;
     }
   };
 
@@ -51,59 +61,103 @@ function ActivityItem({ activity }: { activity: any }) {
       case 'room_join':
         return (
           <>
-            joined room <span className="font-medium text-green-600 dark:text-green-400">{activity.roomName}</span>
+            joined room{' '}
+            <span className="font-medium text-green-600 dark:text-green-400">
+              {activity.roomName}
+            </span>
           </>
         );
       case 'room_create':
         return (
           <>
-            created room <span className="font-medium text-yellow-600 dark:text-yellow-400">{activity.roomName}</span>
+            created room{' '}
+            <span className="font-medium text-yellow-600 dark:text-yellow-400">
+              {activity.roomName}
+            </span>
           </>
         );
       case 'vibe_note':
         return (
           <>
-            left a vibe note {activity.targetUserName && (
-              <>for <Link href={`/u/${activity.targetUserSlug}`} className="font-medium text-blue-600 dark:text-blue-400 hover:underline">{activity.targetUserName}</Link></>
+            left a vibe note{' '}
+            {activity.targetUserName && (
+              <>
+                for{' '}
+                <Link
+                  href={`/u/${activity.targetUserSlug}`}
+                  className="font-medium text-blue-600 dark:text-blue-400 hover:underline"
+                >
+                  {activity.targetUserName}
+                </Link>
+              </>
             )}
           </>
         );
       case 'reaction':
         return (
           <>
-            reacted {activity.metadata?.emoji} {activity.targetUserName && (
-              <>to <Link href={`/u/${activity.targetUserSlug}`} className="font-medium text-pink-600 dark:text-pink-400 hover:underline">{activity.targetUserName}</Link></>
+            reacted {activity.metadata?.emoji}{' '}
+            {activity.targetUserName && (
+              <>
+                to{' '}
+                <Link
+                  href={`/u/${activity.targetUserSlug}`}
+                  className="font-medium text-pink-600 dark:text-pink-400 hover:underline"
+                >
+                  {activity.targetUserName}
+                </Link>
+              </>
             )}
           </>
         );
       case 'follow':
         return (
           <>
-            followed <Link href={`/u/${activity.targetUserSlug}`} className="font-medium text-purple-600 dark:text-purple-400 hover:underline">{activity.targetUserName}</Link>
+            followed{' '}
+            <Link
+              href={`/u/${activity.targetUserSlug}`}
+              className="font-medium text-purple-600 dark:text-purple-400 hover:underline"
+            >
+              {activity.targetUserName}
+            </Link>
           </>
         );
       case 'bookmark':
         return (
           <>
-            bookmarked <span className="font-medium text-indigo-600 dark:text-indigo-400">{activity.trackName}</span> by {activity.trackArtist}
+            bookmarked{' '}
+            <span className="font-medium text-indigo-600 dark:text-indigo-400">
+              {activity.trackName}
+            </span>{' '}
+            by {activity.trackArtist}
           </>
         );
       case 'theme_change':
         return (
           <>
-            changed theme to <span className="font-medium text-orange-600 dark:text-orange-400">{activity.metadata?.theme}</span>
+            changed theme to{' '}
+            <span className="font-medium text-orange-600 dark:text-orange-400">
+              {activity.metadata?.theme}
+            </span>
           </>
         );
       case 'track_play':
         return (
           <>
-            played <span className="font-medium text-green-600 dark:text-green-400">{activity.trackName}</span> in {activity.roomName}
+            played{' '}
+            <span className="font-medium text-green-600 dark:text-green-400">
+              {activity.trackName}
+            </span>{' '}
+            in {activity.roomName}
           </>
         );
       case 'playlist_export':
         return (
           <>
-            exported playlist from <span className="font-medium text-blue-600 dark:text-blue-400">{activity.roomName}</span>
+            exported playlist from{' '}
+            <span className="font-medium text-blue-600 dark:text-blue-400">
+              {activity.roomName}
+            </span>
           </>
         );
       default:
@@ -125,24 +179,27 @@ function ActivityItem({ activity }: { activity: any }) {
           className="w-10 h-10 rounded-full object-cover shadow-md"
         />
       </Link>
-      
+
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 mb-1">
           {getActivityIcon(activity.type)}
           <div className="text-sm text-gray-700 dark:text-gray-300">
-            <Link href={`/u/${activity.actorSlug}`} className="font-semibold hover:underline">
+            <Link
+              href={`/u/${activity.actorSlug}`}
+              className="font-semibold hover:underline"
+            >
               {activity.actorName}
             </Link>{' '}
             {getActivityText(activity)}
           </div>
         </div>
-        
+
         <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
           <Clock className="w-3 h-3" />
           {timeAgo(new Date(activity.createdAt))}
         </div>
       </div>
-      
+
       {activity.trackImage && (
         <img
           src={activity.trackImage}
@@ -175,9 +232,12 @@ export default function ActivityFeedPage() {
     isLoading: feedLoading,
   } = useInfiniteQuery({
     queryKey: ['activity-feed', filterType],
-    queryFn: ({ pageParam }) => activityApi.getFeed(20, pageParam, filterType || undefined),
-    getNextPageParam: (lastPage) => lastPage.data?.nextCursor || undefined,
+    queryFn: ({ pageParam }) =>
+      activityApi.getFeed(20, pageParam, filterType || undefined),
+    getNextPageParam: (lastPage) =>
+      lastPage.data?.nextCursor || undefined,
     enabled: !!user && activeTab === 'feed',
+    initialPageParam: undefined,
   });
 
   // Fetch user's own activities
@@ -189,18 +249,32 @@ export default function ActivityFeedPage() {
     isLoading: myLoading,
   } = useInfiniteQuery({
     queryKey: ['my-activities', filterType],
-    queryFn: ({ pageParam }) => activityApi.getMyActivities(20, pageParam, filterType || undefined),
-    getNextPageParam: (lastPage) => lastPage.data?.nextCursor || undefined,
+    queryFn: ({ pageParam }: { pageParam?: string }) =>
+      activityApi.getMyActivities(
+        20,
+        pageParam,
+        filterType || undefined
+      ),
+    getNextPageParam: (lastPage: any) =>
+      lastPage.data?.nextCursor || undefined,
     enabled: !!user && activeTab === 'me',
+    initialPageParam: undefined,
   });
 
-  const feedActivities = feedData?.pages.flatMap(page => page.data?.activities || []) || [];
-  const myActivities = myData?.pages.flatMap(page => page.data?.activities || []) || [];
-  const currentActivities = activeTab === 'feed' ? feedActivities : myActivities;
+  const feedActivities =
+    feedData?.pages.flatMap((page) => page.data?.activities || []) ||
+    [];
+  const myActivities =
+    myData?.pages.flatMap((page) => page.data?.activities || []) ||
+    [];
+  const currentActivities =
+    activeTab === 'feed' ? feedActivities : myActivities;
   const isLoading = activeTab === 'feed' ? feedLoading : myLoading;
   const hasNextPage = activeTab === 'feed' ? hasNextFeed : hasNextMy;
-  const isFetchingNextPage = activeTab === 'feed' ? isFetchingNextFeed : isFetchingNextMy;
-  const fetchNextPage = activeTab === 'feed' ? fetchNextFeed : fetchNextMy;
+  const isFetchingNextPage =
+    activeTab === 'feed' ? isFetchingNextFeed : isFetchingNextMy;
+  const fetchNextPage =
+    activeTab === 'feed' ? fetchNextFeed : fetchNextMy;
 
   const activityTypes = [
     { value: '', label: 'All Activity', icon: Activity },
@@ -217,7 +291,11 @@ export default function ActivityFeedPage() {
       <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex items-center justify-center">
         <motion.div
           animate={{ rotate: 360 }}
-          transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+          transition={{
+            duration: 1,
+            repeat: Infinity,
+            ease: 'linear',
+          }}
           className="w-8 h-8 border-2 border-purple-500 border-t-transparent rounded-full"
         />
       </div>
@@ -239,7 +317,8 @@ export default function ActivityFeedPage() {
             Activity Feed
           </h1>
           <p className="text-gray-600 dark:text-gray-400 mb-6">
-            Please log in to see your activity feed and what your friends are up to.
+            Please log in to see your activity feed and what your
+            friends are up to.
           </p>
           <button
             onClick={() => router.push('/')}
@@ -271,7 +350,7 @@ export default function ActivityFeedPage() {
                   Activity Feed
                 </h1>
                 <p className="text-gray-600 dark:text-gray-400">
-                  See what's happening in your musical world
+                  See what&apos;s happening in your musical world
                 </p>
               </div>
             </div>
@@ -280,7 +359,9 @@ export default function ActivityFeedPage() {
             {mounted && (
               <motion.button
                 whileTap={{ scale: 0.95 }}
-                onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                onClick={() =>
+                  setTheme(theme === 'dark' ? 'light' : 'dark')
+                }
                 className="p-3 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
                 aria-label="Toggle theme"
               >
@@ -358,13 +439,14 @@ export default function ActivityFeedPage() {
         >
           <div className="p-6 border-b border-gray-200 dark:border-gray-800">
             <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-              {activeTab === 'feed' ? 'Friends Activity' : 'Your Activity'}
+              {activeTab === 'feed'
+                ? 'Friends Activity'
+                : 'Your Activity'}
             </h2>
             <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-              {activeTab === 'feed' 
+              {activeTab === 'feed'
                 ? 'See what your friends are listening to and doing'
-                : 'Your recent activity on Sonder.fm'
-              }
+                : 'Your recent activity on Sonder.fm'}
             </p>
           </div>
 
@@ -373,16 +455,23 @@ export default function ActivityFeedPage() {
               <div className="flex items-center justify-center py-12">
                 <motion.div
                   animate={{ rotate: 360 }}
-                  transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                  transition={{
+                    duration: 1,
+                    repeat: Infinity,
+                    ease: 'linear',
+                  }}
                   className="w-8 h-8 border-2 border-purple-500 border-t-transparent rounded-full"
                 />
               </div>
             ) : currentActivities.length > 0 ? (
               <div className="divide-y divide-gray-100 dark:divide-gray-800">
                 {currentActivities.map((activity) => (
-                  <ActivityItem key={activity._id} activity={activity} />
+                  <ActivityItem
+                    key={activity._id}
+                    activity={activity}
+                  />
                 ))}
-                
+
                 {hasNextPage && (
                   <div className="p-6 text-center">
                     <motion.button
@@ -396,7 +485,11 @@ export default function ActivityFeedPage() {
                         <div className="flex items-center gap-2">
                           <motion.div
                             animate={{ rotate: 360 }}
-                            transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                            transition={{
+                              duration: 1,
+                              repeat: Infinity,
+                              ease: 'linear',
+                            }}
                             className="w-4 h-4 border-2 border-current border-t-transparent rounded-full"
                           />
                           Loading...
@@ -415,10 +508,9 @@ export default function ActivityFeedPage() {
                   No activity yet
                 </h3>
                 <p className="text-gray-500 dark:text-gray-400 max-w-sm mx-auto">
-                  {activeTab === 'feed' 
-                    ? 'Follow some friends to see their activity here, or they haven\'t been active recently.'
-                    : 'Start using Sonder.fm to see your activity here. Join rooms, bookmark songs, and connect with friends!'
-                  }
+                  {activeTab === 'feed'
+                    ? "Follow some friends to see their activity here, or they haven't been active recently."
+                    : 'Start using Sonder.fm to see your activity here. Join rooms, bookmark songs, and connect with friends!'}
                 </p>
                 {activeTab === 'feed' && (
                   <Link

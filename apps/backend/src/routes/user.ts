@@ -40,7 +40,7 @@ router.get('/me', auth, async (req: AuthRequest, res) => {
 router.put('/me', auth, async (req: AuthRequest, res) => {
   try {
     const { displayName, vibeSummary } = req.body;
-    const userId = req.userId;
+    const userId = req.userId!;
 
     const user = await User.findById(userId);
 

@@ -300,7 +300,7 @@ export class RoomSyncService {
   // Get recently ended rooms (in database but not in memory)
   static async getRecentlyEndedRooms(userId?: string) {
     try {
-      // const oneDay = new Date(Date.now() - 24 * 60 * 60 * 1000)
+      const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000)
       const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000); // Last hour
       const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000);
 
@@ -308,7 +308,7 @@ export class RoomSyncService {
       const dbRooms = await Room.find({
         isPublic: true,
         lastActive: {
-          $gte: oneHourAgo, // only rooms that ended in the last hour
+          $gte: oneDayAgo, // only rooms that ended in the last hour
           // $lte: fifteenMinutesAgo // but not in the last 15 minutes
         },
         songHistory: { $ne: [] } // Only rooms that had some activity

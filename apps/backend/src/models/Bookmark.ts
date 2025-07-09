@@ -1,7 +1,7 @@
 import mongoose, { Schema, Document } from 'mongoose';
 import type { Bookmark as BookmarkType } from '@sonder/types';
 
-interface BookmarkDocument extends Omit<BookmarkType, '_id'>, Document {}
+export interface BookmarkDocument extends Omit<BookmarkType, '_id'>, Document {}
 
 const BookmarkSchema = new Schema<BookmarkDocument>({
   userId: { type: String, required: true },

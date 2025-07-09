@@ -1,6 +1,6 @@
 import express from 'express';
 import { User } from '../models/User';
-import { Bookmark } from '../models/Bookmark';
+import { Bookmark, BookmarkDocument } from '../models/Bookmark';
 import { auth, AuthRequest } from '../middleware/auth';
 import type { APIResponse } from '@sonder/types';
 import { ActivityLogger } from '../utils/activityLogger';
@@ -154,25 +154,31 @@ router.delete('/:bookmarkId', auth, async (req: AuthRequest, res) => {
     const { bookmarkId } = req.params;
     const userId = req.userId!;
 
-    // Find and delete bookmark if user is the owner
-    const result = await Bookmark.findOneAndDelete({
+    // Find bookmark first, then delete it
+    const bookmark = await Bookmark.findOne({
       _id: bookmarkId,
       userId
     });
 
-    if (!result) {
+    if (!bookmark) {
       return res.status(404).json({
         success: false,
         error: 'Bookmark not found or you are not authorized to delete it'
       });
     }
 
+    // Delete the bookmark
+    await Bookmark.findOneAndDelete({
+      _id: bookmarkId,
+      userId
+    });
+
     // Log activity
     ActivityLogger.bookmarkDelete(
       userId,
-      result.trackId,
-      result.metadata.name,
-      result.metadata.artists.map((a: any) => a.name).join(', ')
+      bookmark.trackId,
+      bookmark.metadata.name,
+      bookmark.metadata.artists.map((a: any) => a.name).join(', ')
     );
 
     res.json({
