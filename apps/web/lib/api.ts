@@ -328,6 +328,33 @@ export const bookmarkApi = {
   },
 };
 
+export const activityApi = {
+  getFeed: async (limit: number = 20, cursor?: string, type?: string) => {
+    const params = new URLSearchParams();
+    params.append('limit', limit.toString());
+    if (cursor) params.append('cursor', cursor);
+    if (type) params.append('type', type);
+    
+    const response = await api.get(`/activity/feed?${params.toString()}`);
+    return response.data;
+  },
+
+  getMyActivities: async (limit: number = 20, cursor?: string, type?: string) => {
+    const params = new URLSearchParams();
+    params.append('limit', limit.toString());
+    if (cursor) params.append('cursor', cursor);
+    if (type) params.append('type', type);
+    
+    const response = await api.get(`/activity/me?${params.toString()}`);
+    return response.data;
+  },
+
+  getStats: async () => {
+    const response = await api.get('/activity/stats');
+    return response.data;
+  },
+};
+
 export async function refreshSpotifyToken() {
   const token = typeof window !== 'undefined' ? localStorage.getItem('sonder_token') : null;
   if (!token) throw new Error('No JWT found');

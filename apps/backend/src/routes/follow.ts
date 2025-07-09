@@ -4,6 +4,7 @@ import { User } from '../models/User';
 import { Follow } from '../models/Follow';
 import { auth, AuthRequest } from '../middleware/auth';
 import type { APIResponse } from '@sonder/types';
+import { ActivityLogger } from '../utils/activityLogger';
 
 const router = express.Router();
 
@@ -77,6 +78,9 @@ router.post('/:slug', auth, validateSlug, handleValidationErrors, async (req: Au
 
     await follow.save();
 
+    // Log activity
+    ActivityLogger.follow(followerId, targetUser._id.toString());
+
     res.json({
       success: true,
       message: 'Successfully followed user'
@@ -118,6 +122,9 @@ router.delete('/:slug', auth, validateSlug, handleValidationErrors, async (req: 
         error: 'You are not following this user'
       });
     }
+
+    // Log activity
+    ActivityLogger.unfollow(followerId, targetUser._id.toString());
 
     res.json({
       success: true,

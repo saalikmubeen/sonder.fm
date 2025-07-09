@@ -3,6 +3,7 @@ import { User } from '../models/User';
 import { Follow } from '../models/Follow';
 import { auth, AuthRequest } from '../middleware/auth';
 import type { APIResponse } from '@sonder/types';
+import { ActivityLogger } from '../utils/activityLogger';
 
 const router = express.Router();
 
@@ -54,6 +55,14 @@ router.put('/me', auth, async (req: AuthRequest, res) => {
     if (vibeSummary) user.vibeSummary = vibeSummary;
 
     await user.save();
+
+    // Log activity
+    const changes = [];
+    if (displayName) changes.push('display name');
+    if (vibeSummary) changes.push('vibe summary');
+    if (changes.length > 0) {
+      ActivityLogger.profileUpdate(userId, changes);
+    }
 
     res.json({
       success: true,

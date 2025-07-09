@@ -3,6 +3,7 @@ import { User } from '../models/User';
 import { VibeNote } from '../models/VibeNote';
 import { auth, optionalAuth, AuthRequest } from '../middleware/auth';
 import type { APIResponse } from '@sonder/types';
+import { ActivityLogger } from '../utils/activityLogger';
 
 const router = express.Router();
 
@@ -49,6 +50,11 @@ router.post('/:slug', optionalAuth, async (req: AuthRequest, res) => {
 
     // Populate author info if not anonymous
     await vibeNote.populate('authorId', 'displayName avatarUrl');
+
+    // Log activity (only if not anonymous and user is authenticated)
+    if (!isAnonymous && userId) {
+      ActivityLogger.vibeNote(userId, targetUser._id.toString(), isAnonymous, note);
+    }
 
     res.json({
       success: true,

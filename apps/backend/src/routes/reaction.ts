@@ -3,6 +3,7 @@ import { User } from '../models/User';
 import { Reaction } from '../models/Reaction';
 import { auth, optionalAuth, AuthRequest } from '../middleware/auth';
 import type { APIResponse } from '@sonder/types';
+import { ActivityLogger } from '../utils/activityLogger';
 
 const router = express.Router();
 
@@ -65,6 +66,11 @@ router.post('/:slug', optionalAuth, async (req: AuthRequest, res) => {
     reactions.forEach(r => {
       reactionCounts[r._id] = r.count;
     });
+
+    // Log activity (only if authenticated)
+    if (userId) {
+      ActivityLogger.reaction(userId, targetUser._id.toString(), emoji);
+    }
 
     res.json({
       success: true,

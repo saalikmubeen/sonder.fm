@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken';
 import { User } from '../models/User';
 import { RoomManager } from '../models/JammingRoom';
 import { RoomSyncService } from './roomSync';
+import { ActivityLogger } from '../utils/activityLogger';
 
 interface JammingSocketData {
   userId: string;
@@ -288,7 +289,18 @@ export const setupJammingSocket = (io: Server) => {
       if (trackId) {
         const updatedRoom = RoomManager.getRoom(roomId);
         if (updatedRoom?.currentTrack) {
-          RoomSyncService.addSongToHistory(roomId, updatedRoom.currentTrack, user.spotifyId);
+          await RoomSyncService.addSongToHistory(roomId, updatedRoom.currentTrack, user.spotifyId);
+          
+          // Log track play activity
+          ActivityLogger.trackPlay(
+            userId,
+            roomId,
+            updatedRoom.name,
+            trackId,
+            updatedRoom.currentTrack.name,
+            updatedRoom.currentTrack.artist,
+            updatedRoom.currentTrack.albumArt
+          );
         }
       }
 

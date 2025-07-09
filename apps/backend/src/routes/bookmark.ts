@@ -3,6 +3,7 @@ import { User } from '../models/User';
 import { Bookmark } from '../models/Bookmark';
 import { auth, AuthRequest } from '../middleware/auth';
 import type { APIResponse } from '@sonder/types';
+import { ActivityLogger } from '../utils/activityLogger';
 
 const router = express.Router();
 
@@ -58,6 +59,17 @@ router.post('/', auth, async (req: AuthRequest, res) => {
     });
 
     await bookmark.save();
+
+    // Log activity
+    ActivityLogger.bookmark(
+      userId,
+      trackId,
+      metadata.name,
+      metadata.artists.map((a: any) => a.name).join(', '),
+      metadata.album.imageUrl,
+      timestampMs,
+      caption
+    );
 
     res.json({
       success: true,
@@ -154,6 +166,14 @@ router.delete('/:bookmarkId', auth, async (req: AuthRequest, res) => {
         error: 'Bookmark not found or you are not authorized to delete it'
       });
     }
+
+    // Log activity
+    ActivityLogger.bookmarkDelete(
+      userId,
+      result.trackId,
+      result.metadata.name,
+      result.metadata.artists.map((a: any) => a.name).join(', ')
+    );
 
     res.json({
       success: true,

@@ -10,6 +10,7 @@ import type { APIResponse, PublicProfile } from '@sonder/types';
 import { buildSpotifyProfile } from '../services/spotify';
 import { CryptoUtils, SpotifyAPI } from '@sonder/utils';
 import mongoose from 'mongoose';
+import { ActivityLogger } from '../utils/activityLogger';
 
 import { getRecentlyPlayed } from '../services/spotify';
 
@@ -312,6 +313,9 @@ router.put('/:slug/theme', auth, async (req, res) => {
 
     user.profileTheme = theme;
     await user.save();
+
+    // Log activity
+    ActivityLogger.themeChange(userId, theme);
 
     res.json({
       success: true,

@@ -5,6 +5,7 @@ import { RoomSyncService } from '../services/roomSync';
 import { RoomManager } from '../models/JammingRoom';
 import { User } from '../models/User';
 import type { APIResponse } from '@sonder/types';
+import { ActivityLogger } from '../utils/activityLogger';
 
 const router = express.Router();
 
@@ -186,6 +187,15 @@ router.post('/:roomId/export-playlist', auth, async (req: AuthRequest, res) => {
         console.error('Failed to add tracks to playlist:', await addTracksResponse.text());
       }
     }
+
+    // Log activity
+    ActivityLogger.playlistExport(
+      user._id.toString(),
+      roomId,
+      room.name,
+      playlistName,
+      room.songHistory.length
+    );
 
     const response: APIResponse<{ playlist: any }> = {
       success: true,

@@ -7,6 +7,7 @@ import { RoomSyncService } from '../services/roomSync';
 import { v4 as uuidv4 } from 'uuid';
 import { Room } from '../models/Room';
 import { Tag } from '../models/Tag';
+import { ActivityLogger } from '../utils/activityLogger';
 
 const router = express.Router();
 
@@ -48,6 +49,9 @@ router.post('/rooms/create', auth, async (req: AuthRequest, res) => {
 
     // Sync to database with tags
     await RoomSyncService.syncRoomToDatabase(roomId, name, processedTags);
+
+    // Log activity
+    ActivityLogger.roomCreate(user._id.toString(), roomId, name);
 
     const response: APIResponse<{ room: any; isHost: boolean; roomId: string }> = {
       success: true,
@@ -187,6 +191,9 @@ router.post('/rooms/:roomId/join', auth, async (req: AuthRequest, res) => {
     // Sync to database
     await RoomSyncService.syncRoomToDatabase(roomId);
 
+    // Log activity
+    ActivityLogger.roomJoin(user._id.toString(), roomId, room.name);
+
     const response: APIResponse<{ room: any; isHost: boolean }> = {
       success: true,
       data: {
@@ -218,6 +225,12 @@ router.post('/rooms/:roomId/leave', auth, async (req: AuthRequest, res) => {
       await RoomSyncService.cleanupRoom(roomId);
     } else {
       await RoomSyncService.syncRoomToDatabase(roomId);
+    }
+
+    // Log activity
+    const roomToLog = RoomManager.getRoom(roomId);
+    if (roomToLog) {
+      ActivityLogger.roomLeave(userId, roomId, roomToLog.name);
     }
 
     res.json({
