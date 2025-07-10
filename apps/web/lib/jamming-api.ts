@@ -10,9 +10,9 @@ const getToken = () => {
 
 export const jammingApi = {
   // Create a new room
-  createRoom: async (name: string, tags: string[] = []) => {
-    console.log(`🔵 Frontend: Creating room with name ${name}`);
-    const response = await apiClient.post(`/jamming/rooms/create`, { name, tags });
+  createRoom: async (name: string, tags: string[] = [], isPublic: boolean = true) => {
+    console.log(`🔵 Frontend: Creating room with name ${name}, isPublic: ${isPublic}`);
+    const response = await apiClient.post(`/jamming/rooms/create`, { name, tags, isPublic });
     console.log(`🔵 Frontend: Create room response:`, response.data);
     return response.data;
   },

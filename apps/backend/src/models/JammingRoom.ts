@@ -26,13 +26,14 @@ export interface JammingRoom {
     lastUpdated: Date;
   };
   createdAt: Date;
+  isPublic: boolean;
 }
 
 // In-memory storage
 export class RoomManager {
   private static rooms = new Map<string, JammingRoom>();
 
-  static createRoom(roomId: string, host: { userId: string; spotifyId: string; displayName: string; avatarUrl: string; publicSlug: string; name: string }): JammingRoom {
+  static createRoom(roomId: string, host: { userId: string; spotifyId: string; displayName: string; avatarUrl: string; publicSlug: string; name: string, isPublic: boolean }): JammingRoom {
     console.log(`RoomManager: Creating room ${roomId} with host ${host.displayName}`);
     const room: JammingRoom = {
       roomId,
@@ -46,6 +47,7 @@ export class RoomManager {
         lastUpdated: new Date(),
       },
       createdAt: new Date(),
+      isPublic: host.isPublic,
     };
 
     this.rooms.set(roomId, room);

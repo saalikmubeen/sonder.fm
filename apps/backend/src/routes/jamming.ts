@@ -22,7 +22,7 @@ router.post('/rooms/create', auth, async (req: AuthRequest, res) => {
   try {
     const user = req.user!;
     const roomId = uuidv4();
-    const { name, tags = [] } = req.body;
+    const { name, tags = [], isPublic = true } = req.body;
 
     // Check if user is already hosting a room
     const userId = user._id.toString();
@@ -44,14 +44,17 @@ router.post('/rooms/create', auth, async (req: AuthRequest, res) => {
       displayName: user.displayName,
       avatarUrl: user.avatarUrl,
       publicSlug: user.publicSlug,
-      name: name
+      name: name,
+      isPublic: isPublic
     });
 
     // Sync to database with tags
-    await RoomSyncService.syncRoomToDatabase(roomId, name, processedTags);
+    await RoomSyncService.syncRoomToDatabase(roomId, name, processedTags, isPublic);
 
     // Log activity
-    ActivityLogger.roomCreate(user._id.toString(), roomId, name);
+    if (isPublic) {
+      ActivityLogger.roomCreate(user._id.toString(), roomId, name);
+    }
 
     const response: APIResponse<{ room: any; isHost: boolean; roomId: string }> = {
       success: true,
@@ -81,7 +84,7 @@ async function processRoomTags(tags: string[]): Promise<string[]> {
     if (typeof tag !== 'string') continue;
 
     const cleanTag = tag.toLowerCase().trim();
-    
+
     // Validate tag format
     if (!cleanTag || cleanTag.length > 20 || !/^[a-zA-Z0-9\s\-]+$/.test(cleanTag)) {
       continue;
@@ -93,9 +96,9 @@ async function processRoomTags(tags: string[]): Promise<string[]> {
     try {
       await Tag.findOneAndUpdate(
         { name: cleanTag },
-        { 
+        {
           $inc: { usageCount: 1 },
-          $setOnInsert: { 
+          $setOnInsert: {
             name: cleanTag,
             category: 'custom'
           }

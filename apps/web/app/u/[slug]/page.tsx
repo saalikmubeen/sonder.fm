@@ -915,13 +915,7 @@ export default function UserProfilePage() {
                 />
               )}
               {activeSection === 'vibe_notes' && (
-                <motion.div
-                  key="vibes-desktop"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
-                  className="space-y-8"
-                >
+                <div className="max-w-2xl mx-auto p-4 md:p-8">
                   {/* Vibe Notes Form (for others) */}
                   {user && !isOwnProfile && (
                     <div className="max-w-2xl mx-auto">
@@ -984,10 +978,10 @@ export default function UserProfilePage() {
                     <div className="mb-4 flex items-center gap-2">
                       <Sparkles className="w-5 h-5 text-purple-400" />
                       <div>
-                        <h2 className="text-lg font-bold text-gray-900 dark:text-white">
+                        <h2 className="text-lg md:text-2xl font-bold text-gray-900 dark:text-white">
                           Vibe Notes
                         </h2>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                        <p className="text-sm md:text-base text-gray-500 dark:text-gray-400">
                           What others think about{' '}
                           {isOwnProfile ? 'your' : 'their'} musical
                           taste
@@ -1046,7 +1040,7 @@ export default function UserProfilePage() {
                       </div>
                     )}
                   </div>
-                </motion.div>
+                </div>
               )}
             </AnimatePresence>
           </div>
@@ -1173,13 +1167,7 @@ export default function UserProfilePage() {
               />
             )}
             {activeSection === 'vibe_notes' && (
-              <motion.div
-                key="vibes"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                className="space-y-8"
-              >
+              <div className="max-w-2xl mx-auto p-4 md:p-8">
                 {/* Vibe Notes Form (for others) */}
                 {user && !isOwnProfile && (
                   <div className="max-w-2xl mx-auto">
@@ -1242,10 +1230,10 @@ export default function UserProfilePage() {
                   <div className="mb-4 flex items-center gap-2">
                     <Sparkles className="w-5 h-5 text-purple-400" />
                     <div>
-                      <h2 className="text-lg font-bold text-gray-900 dark:text-white">
+                      <h2 className="text-lg md:text-2xl font-bold text-gray-900 dark:text-white">
                         Vibe Notes
                       </h2>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                      <p className="text-sm md:text-base text-gray-500 dark:text-gray-400">
                         What others think about{' '}
                         {isOwnProfile ? 'your' : 'their'} musical
                         taste
@@ -1304,7 +1292,7 @@ export default function UserProfilePage() {
                     </div>
                   )}
                 </div>
-              </motion.div>
+              </div>
             )}
           </AnimatePresence>
         </div>
@@ -2298,16 +2286,12 @@ function BookmarksSection({
       {/* Subtle Instructional Banner */}
       <div className="mb-5">
         <div className="flex items-center gap-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 text-gray-600 dark:text-gray-300 text-sm">
-          <Info className="w-4 h-4 text-green-400" />
+          <Info className="w-4 h-4 text-purple-400" />
           <span>
             Play a song on{' '}
-            <span className="font-medium text-green-600">
-              Spotify
-            </span>
+            <span className="font-medium text-green-600">Spotify</span>
             , then open your{' '}
-            <span className="font-medium text-green-600">
-              Sonder.fm
-            </span>{' '}
+            <span className="font-medium text-purple-600">Sonder.fm</span>{' '}
             profile to bookmark that exact moment in the song.
           </span>
         </div>
@@ -2322,21 +2306,21 @@ function BookmarksSection({
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="bg-gradient-to-br from-green-100 to-emerald-100 dark:from-green-800/40 dark:to-emerald-800/40 rounded-2xl p-8 max-w-md mx-auto"
+            className="bg-gray-50 dark:bg-gray-900/60 border border-gray-200 dark:border-gray-800 rounded-2xl p-8 max-w-md mx-auto"
           >
-            <div className="w-16 h-16 bg-gradient-to-br from-green-600 to-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4">
+            <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-purple-700 rounded-full flex items-center justify-center mx-auto mb-4">
               <Bookmark className="w-8 h-8 text-white" />
             </div>
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
               No bookmarks yet
             </h3>
-            <p className="text-gray-600 dark:text-gray-400 text-sm mb-4">
+            <p className="text-gray-500 dark:text-gray-400 text-sm mb-4">
               {isOwnProfile
                 ? 'Start playing a song on Spotify, then visit your profile to bookmark special moments!'
                 : `${profile.displayName} hasn't bookmarked any musical moments yet.`}
             </p>
             {isOwnProfile && (
-              <div className="flex items-center justify-center gap-2 text-xs text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-900/30 rounded-lg px-3 py-2">
+              <div className="flex items-center justify-center gap-2 text-xs text-purple-600 dark:text-purple-400 bg-purple-100 dark:bg-purple-900/30 rounded-lg px-3 py-2">
                 <Info className="w-4 h-4" />
                 <span>
                   Play music → Visit profile → Click bookmark icon
@@ -2388,7 +2372,7 @@ function BookmarksSection({
                     <Tooltip
                       content={`The moment saved in the song.`}
                     >
-                      <div className="flex items-center gap-1 text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-900/30 rounded-full px-2 py-0.5 cursor-pointer">
+                      <div className="flex items-center gap-1 text-purple-600 dark:text-purple-400 bg-purple-100 dark:bg-purple-900/30 rounded-full px-2 py-0.5 cursor-pointer">
                         <Clock className="w-3 h-3" />
                         <span className="text-xs font-medium">
                           {formatTime(bookmark.timestampMs)}
@@ -2401,7 +2385,7 @@ function BookmarksSection({
                       {/* Marker: if duration is available, use it; else, use 50% */}
                       {bookmark.durationMs ? (
                         <div
-                          className="absolute top-1/2 w-4 h-4 rounded-full bg-green-500 border-2 border-white dark:border-gray-900 shadow -translate-x-1/2 -translate-y-1/2 z-20"
+                          className="absolute top-1/2 w-4 h-4 rounded-full bg-purple-500 border-2 border-white dark:border-gray-900 shadow -translate-x-1/2 -translate-y-1/2 z-20"
                           style={{
                             left: `${Math.min(
                               100,
@@ -2415,7 +2399,7 @@ function BookmarksSection({
                           }}
                         />
                       ) : (
-                        <div className="absolute top-1/2 left-1/2 w-4 h-4 rounded-full bg-green-500 border-2 border-white dark:border-gray-900 shadow -translate-x-1/2 -translate-y-1/2 z-20" />
+                        <div className="absolute top-1/2 left-1/2 w-4 h-4 rounded-full bg-purple-500 border-2 border-white dark:border-gray-900 shadow -translate-x-1/2 -translate-y-1/2 z-20" />
                       )}
                     </div>
                   </div>
@@ -2441,7 +2425,7 @@ function BookmarksSection({
                       />
                       <button
                         onClick={() => onEditSave(bookmark._id)}
-                        className="p-1 text-green-600 hover:bg-green-100 dark:hover:bg-green-900/30 rounded"
+                        className="p-1 text-purple-600 hover:bg-purple-100 dark:hover:bg-purple-900/30 rounded"
                       >
                         <Check className="w-3 h-3" />
                       </button>

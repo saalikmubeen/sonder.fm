@@ -8,7 +8,8 @@ export class RoomSyncService {
   static async syncRoomToDatabase(
     roomId: string,
     name?: string,
-    tags?: string[]
+    tags?: string[],
+    isPublic?: boolean
   ) {
     try {
       const memoryRoom = RoomManager.getRoom(roomId);
@@ -29,7 +30,7 @@ export class RoomSyncService {
           name: name || roomId, // Use provided name or roomId as fallback
           hostId: host._id,
           hostSpotifyId: memoryRoom.hostSpotifyId,
-          isPublic: true,
+          isPublic: isPublic,
           participants: [],
           tags: tags || [],
           currentTrack: memoryRoom.currentTrack,

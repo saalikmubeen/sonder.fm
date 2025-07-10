@@ -28,6 +28,7 @@ export default function JamPage() {
   const [isJoining, setIsJoining] = useState(false);
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [showRoomList, setShowRoomList] = useState(false);
+  const [isPublic, setIsPublic] = useState(true);
   const router = useRouter();
   const { user, loading } = useAuth();
 
@@ -107,7 +108,8 @@ export default function JamPage() {
     try {
       const createResponse = await jammingApi.createRoom(
         roomName.trim(),
-        selectedTags
+        selectedTags,
+        isPublic
       );
       if (!createResponse.success) {
         toast.error(createResponse.error || 'Failed to create room.');
@@ -314,6 +316,22 @@ export default function JamPage() {
                   className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all placeholder-gray-400 dark:placeholder-gray-500 text-gray-900 dark:text-white"
                   disabled={isCreating || isJoining}
                 />
+              </div>
+
+              {/* Public Room Toggle */}
+              <div className="flex items-center gap-2 mb-2">
+                <button
+                  type="button"
+                  onClick={() => setIsPublic((v) => !v)}
+                  className={`w-5 h-5 rounded border border-purple-300 dark:border-purple-700 bg-white dark:bg-gray-900 flex items-center justify-center transition-all duration-150 shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-300 dark:focus:ring-purple-700 ${isPublic ? 'ring-2 ring-purple-400' : ''}`}
+                  aria-pressed={isPublic}
+                  aria-label="Toggle public room"
+                >
+                  {isPublic && (
+                    <svg className="w-3 h-3 text-purple-500" fill="currentColor" viewBox="0 0 20 20"><circle cx="10" cy="10" r="6" /></svg>
+                  )}
+                </button>
+                <span className="text-xs text-gray-700 dark:text-gray-300 select-none">Public room</span>
               </div>
 
               {/* Tags Section */}
