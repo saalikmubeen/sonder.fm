@@ -23,7 +23,7 @@ export default function Providers({
           {/* </JammingProvider> */}
         </AuthProvider>
       </ThemeProviderClient>
-      <ReactQueryDevtools initialIsOpen={false} />
+      {/* <ReactQueryDevtools initialIsOpen={false} /> */}
     </QueryClientProvider>
   );
 }

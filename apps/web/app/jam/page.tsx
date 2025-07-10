@@ -234,7 +234,7 @@ export default function JamPage() {
             repeat: Infinity,
             ease: 'linear',
           }}
-          className="w-8 h-8 border-2 border-green-500 border-t-transparent rounded-full"
+          className="w-8 h-8 border-2 border-purple-500 border-t-transparent rounded-full"
         />
       </div>
     );
@@ -323,15 +323,25 @@ export default function JamPage() {
                 <button
                   type="button"
                   onClick={() => setIsPublic((v) => !v)}
-                  className={`w-5 h-5 rounded border border-purple-300 dark:border-purple-700 bg-white dark:bg-gray-900 flex items-center justify-center transition-all duration-150 shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-300 dark:focus:ring-purple-700 ${isPublic ? 'ring-2 ring-purple-400' : ''}`}
+                  className={`w-5 h-5 rounded border border-purple-300 dark:border-purple-700 bg-white dark:bg-gray-900 flex items-center justify-center transition-all duration-150 shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-300 dark:focus:ring-purple-700 ${
+                    isPublic ? 'ring-2 ring-purple-400' : ''
+                  }`}
                   aria-pressed={isPublic}
                   aria-label="Toggle public room"
                 >
                   {isPublic && (
-                    <svg className="w-3 h-3 text-purple-500" fill="currentColor" viewBox="0 0 20 20"><circle cx="10" cy="10" r="6" /></svg>
+                    <svg
+                      className="w-3 h-3 text-purple-500"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
+                      <circle cx="10" cy="10" r="6" />
+                    </svg>
                   )}
                 </button>
-                <span className="text-xs text-gray-700 dark:text-gray-300 select-none">Public room</span>
+                <span className="text-xs text-gray-700 dark:text-gray-300 select-none">
+                  Public room
+                </span>
               </div>
 
               {/* Tags Section */}
@@ -381,7 +391,7 @@ export default function JamPage() {
                         }
                         className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed ${
                           selectedTags.includes(tag.name)
-                            ? tag.color + ' ring-2 ring-green-500'
+                            ? tag.color + ' ring-2 ring-purple-500'
                             : tag.color +
                               ' hover:ring-2 hover:ring-gray-300 dark:hover:ring-gray-600'
                         }`}
@@ -559,17 +569,17 @@ export default function JamPage() {
           className="grid md:grid-cols-3 gap-6"
         >
           <FeatureCard
-            icon={<Music className="w-6 h-6" />}
+            icon={<Music className="w-4 h-4" />}
             title="Synchronized Playback"
             description="Listen to the same song at the exact same time with perfect sync across all devices."
           />
           <FeatureCard
-            icon={<Users className="w-6 h-6" />}
+            icon={<Users className="w-4 h-4" />}
             title="Host Controls"
             description="The room creator controls playback. Everyone else enjoys the shared musical journey."
           />
           <FeatureCard
-            icon={<Sparkles className="w-6 h-6" />}
+            icon={<Sparkles className="w-4 h-4" />}
             title="Temporary Rooms"
             description="Rooms are ephemeral - they exist only while you're jamming together."
           />
@@ -588,8 +598,8 @@ export default function JamPage() {
 
           <div className="grid md:grid-cols-3 gap-6">
             <div className="text-center">
-              <div className="w-12 h-12 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-green-600 dark:text-green-400 font-bold text-lg">
+              <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span className="text-purple-600 dark:text-purple-400 font-bold text-lg">
                   1
                 </span>
               </div>
@@ -603,8 +613,8 @@ export default function JamPage() {
             </div>
 
             <div className="text-center">
-              <div className="w-12 h-12 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-green-600 dark:text-green-400 font-bold text-lg">
+              <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span className="text-purple-600 dark:text-purple-400 font-bold text-lg">
                   2
                 </span>
               </div>
@@ -618,8 +628,8 @@ export default function JamPage() {
             </div>
 
             <div className="text-center">
-              <div className="w-12 h-12 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-green-600 dark:text-green-400 font-bold text-lg">
+              <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span className="text-purple-600 dark:text-purple-400 font-bold text-lg">
                   3
                 </span>
               </div>
@@ -652,7 +662,7 @@ function FeatureCard({
       whileHover={{ y: -4, scale: 1.02 }}
       className="bg-white dark:bg-gray-900 rounded-2xl shadow-lg p-6 text-center"
     >
-      <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-500 rounded-full flex items-center justify-center mx-auto mb-4 text-white">
+      <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center mx-auto mb-4 text-white">
         {icon}
       </div>
       <h3 className="font-semibold text-gray-900 dark:text-white mb-2">

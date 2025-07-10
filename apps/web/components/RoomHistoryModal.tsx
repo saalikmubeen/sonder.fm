@@ -68,8 +68,13 @@ export default function RoomHistoryModal({
 
   // Export playlist mutation
   const exportMutation = useMutation({
-    mutationFn: ({ name, description }: { name?: string; description?: string }) =>
-      roomsApi.exportPlaylist(roomId, name, description),
+    mutationFn: ({
+      name,
+      description,
+    }: {
+      name?: string;
+      description?: string;
+    }) => roomsApi.exportPlaylist(roomId, name, description),
     onSuccess: (data) => {
       toast.success('Playlist exported to Spotify! 🎵');
       setShowExportModal(false);
@@ -82,7 +87,9 @@ export default function RoomHistoryModal({
       }
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.error || 'Failed to export playlist');
+      toast.error(
+        error.response?.data?.error || 'Failed to export playlist'
+      );
     },
   });
 
@@ -151,7 +158,7 @@ export default function RoomHistoryModal({
                     whileTap={{ scale: 0.98 }}
                     onClick={handleExport}
                     disabled={exportMutation.isPending}
-                    className="w-full px-4 py-3 bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-2xl font-medium hover:from-green-600 hover:to-emerald-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    className="w-full px-4 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-2xl font-medium hover:from-purple-600 hover:to-pink-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                   >
                     {exportMutation.isPending ? (
                       <Loader2 className="w-4 h-4 animate-spin" />
@@ -169,7 +176,11 @@ export default function RoomHistoryModal({
                   <div className="flex items-center justify-center py-12">
                     <motion.div
                       animate={{ rotate: 360 }}
-                      transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                      transition={{
+                        duration: 1,
+                        repeat: Infinity,
+                        ease: 'linear',
+                      }}
                       className="w-8 h-8 border-2 border-purple-500 border-t-transparent rounded-full"
                     />
                   </div>
@@ -182,7 +193,8 @@ export default function RoomHistoryModal({
                       Failed to load history
                     </h3>
                     <p className="text-gray-500 dark:text-gray-400 mb-4">
-                      Something went wrong while fetching the room history.
+                      Something went wrong while fetching the room
+                      history.
                     </p>
                     <button
                       onClick={() => refetch()}
@@ -248,7 +260,9 @@ export default function RoomHistoryModal({
 
                           {/* Played By */}
                           <div className="flex items-center gap-2">
-                            <Link href={`/u/${item.playedBy.publicSlug}`}>
+                            <Link
+                              href={`/u/${item.playedBy.publicSlug}`}
+                            >
                               <motion.img
                                 whileHover={{ scale: 1.1 }}
                                 src={item.playedBy.avatarUrl}
@@ -308,9 +322,11 @@ export default function RoomHistoryModal({
                       <input
                         type="text"
                         value={playlistName}
-                        onChange={(e) => setPlaylistName(e.target.value)}
+                        onChange={(e) =>
+                          setPlaylistName(e.target.value)
+                        }
                         placeholder={`Room ${roomId} - Sonder.fm`}
-                        className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all placeholder-gray-400 dark:placeholder-gray-500 text-gray-900 dark:text-white"
+                        className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all placeholder-gray-400 dark:placeholder-gray-500 text-gray-900 dark:text-white"
                       />
                     </div>
 
@@ -320,15 +336,18 @@ export default function RoomHistoryModal({
                       </label>
                       <textarea
                         value={playlistDescription}
-                        onChange={(e) => setPlaylistDescription(e.target.value)}
+                        onChange={(e) =>
+                          setPlaylistDescription(e.target.value)
+                        }
                         placeholder={`Exported from Sonder.fm room on ${new Date().toLocaleDateString()}`}
                         rows={3}
-                        className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all placeholder-gray-400 dark:placeholder-gray-500 text-gray-900 dark:text-white"
+                        className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all placeholder-gray-400 dark:placeholder-gray-500 text-gray-900 dark:text-white"
                       />
                     </div>
 
                     <div className="text-sm text-gray-500 dark:text-gray-400">
-                      This will create a private playlist with {history.length} songs in your Spotify account.
+                      This will create a private playlist with{' '}
+                      {history.length} songs in your Spotify account.
                     </div>
                   </div>
 
@@ -344,7 +363,7 @@ export default function RoomHistoryModal({
                       whileTap={{ scale: 0.98 }}
                       onClick={handleConfirmExport}
                       disabled={exportMutation.isPending}
-                      className="flex-1 px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-lg font-medium hover:from-green-600 hover:to-emerald-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                      className="flex-1 px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg font-medium hover:from-purple-600 hover:to-pink-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                     >
                       {exportMutation.isPending ? (
                         <Loader2 className="w-4 h-4 animate-spin" />

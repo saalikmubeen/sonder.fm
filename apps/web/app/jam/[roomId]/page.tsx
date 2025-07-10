@@ -1,6 +1,11 @@
 'use client';
 
-import React, { useState, useEffect, useRef, useLayoutEffect } from 'react';
+import React, {
+  useState,
+  useEffect,
+  useRef,
+  useLayoutEffect,
+} from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useParams, useRouter } from 'next/navigation';
 import {
@@ -20,7 +25,7 @@ import {
   Bookmark,
   Sun,
   Moon,
-  Clock
+  Clock,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 import { jammingApi } from '@/lib/jamming-api';
@@ -79,7 +84,15 @@ interface ChatMessage {
 }
 
 // MarqueeText: Robust marquee effect for overflowing text (copied from /u/[slug])
-function MarqueeText({ text, className = "", speed = 25 }: { text: string; className?: string; speed?: number }) {
+function MarqueeText({
+  text,
+  className = '',
+  speed = 25,
+}: {
+  text: string;
+  className?: string;
+  speed?: number;
+}) {
   const containerRef = useRef<HTMLDivElement>(null);
   const textRef = useRef<HTMLDivElement>(null);
   const [scrollDistance, setScrollDistance] = useState(0);
@@ -88,7 +101,9 @@ function MarqueeText({ text, className = "", speed = 25 }: { text: string; class
   useLayoutEffect(() => {
     function measure() {
       if (containerRef.current && textRef.current) {
-        const distance = textRef.current.scrollWidth - containerRef.current.clientWidth;
+        const distance =
+          textRef.current.scrollWidth -
+          containerRef.current.clientWidth;
         setScrollDistance(distance > 0 ? distance : 0);
         setIsOverflowing(distance > 0);
       }
@@ -99,7 +114,7 @@ function MarqueeText({ text, className = "", speed = 25 }: { text: string; class
   }, [text]);
 
   // Animation: left to right, then jump back, with pause at end
-  const duration = (scrollDistance / speed) || 6;
+  const duration = scrollDistance / speed || 6;
   const pause = 1.2; // seconds to pause at the end
 
   return (
@@ -130,7 +145,9 @@ function MarqueeText({ text, className = "", speed = 25 }: { text: string; class
           <div className="pointer-events-none absolute right-0 top-0 h-full w-8 bg-gradient-to-l from-black/80 dark:from-black/80 to-transparent" />
         </>
       ) : (
-        <span ref={textRef} className="inline-block">{text}</span>
+        <span ref={textRef} className="inline-block">
+          {text}
+        </span>
       )}
     </div>
   );
@@ -142,7 +159,9 @@ export default function JammingRoomPage() {
   const { user, loading } = useAuth();
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
-  useEffect(() => { setMounted(true); }, []);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const roomId = params.roomId as string;
 
@@ -166,12 +185,14 @@ export default function JammingRoomPage() {
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [isChatOpen, setIsChatOpen] = useState(false);
-  const [typingUsers, setTypingUsers] = useState<Set<string>>(new Set());
+  const [typingUsers, setTypingUsers] = useState<Set<string>>(
+    new Set()
+  );
   const [isTyping, setIsTyping] = useState(false);
   const chatMessagesRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  const socket = useJammingStore(state => state.socket);
+  const socket = useJammingStore((state) => state.socket);
   const hasJoinedRef = useRef(false);
 
   // Add this state at the top of your component:
@@ -183,7 +204,8 @@ export default function JammingRoomPage() {
   // Auto-scroll chat to bottom
   useEffect(() => {
     if (chatMessagesRef.current) {
-      chatMessagesRef.current.scrollTop = chatMessagesRef.current.scrollHeight;
+      chatMessagesRef.current.scrollTop =
+        chatMessagesRef.current.scrollHeight;
     }
   }, [chatMessages]);
 
@@ -194,10 +216,12 @@ export default function JammingRoomPage() {
     const initializeRoom = async () => {
       try {
         setIsJoining(true);
-        console.log(`Initializing room: ${roomId} for user: ${user.displayName}`);
+        console.log(
+          `Initializing room: ${roomId} for user: ${user.displayName}`
+        );
 
         // Add a small delay to ensure room is fully created if coming from create flow
-        await new Promise(resolve => setTimeout(resolve, 500));
+        await new Promise((resolve) => setTimeout(resolve, 500));
 
         // First, join the room via API
         console.log(`Attempting to join room: ${roomId}`);
@@ -210,17 +234,25 @@ export default function JammingRoomPage() {
 
           // Set initial playback state
           if (response.data.room.playbackState) {
-            setCurrentPosition(response.data.room.playbackState.positionMs);
+            setCurrentPosition(
+              response.data.room.playbackState.positionMs
+            );
           }
         }
       } catch (error: any) {
         console.error('Error joining room:', error);
 
         if (error.response?.status === 404) {
-          setRoomError('Room not found. It may have been deleted or never existed.');
-          toast.error('Room not found. Please create a new room from the main jam page.');
+          setRoomError(
+            'Room not found. It may have been deleted or never existed.'
+          );
+          toast.error(
+            'Room not found. Please create a new room from the main jam page.'
+          );
         } else {
-          setRoomError(error.response?.data?.error || 'Failed to join room');
+          setRoomError(
+            error.response?.data?.error || 'Failed to join room'
+          );
           toast.error('Failed to join room. Please try again.');
         }
       } finally {
@@ -233,7 +265,7 @@ export default function JammingRoomPage() {
 
   useEffect(() => {
     if (room && socket && !hasJoinedRef.current) {
-      console.log("Emitting Join room", room.roomId)
+      console.log('Emitting Join room', room.roomId);
       socket.emit('join_room', room.roomId);
       hasJoinedRef.current = true;
     }
@@ -249,17 +281,21 @@ export default function JammingRoomPage() {
     };
 
     const handleChatMessage = (message: ChatMessage) => {
-      setChatMessages(prev => [...prev, message]);
+      setChatMessages((prev) => [...prev, message]);
     };
 
     const handleChatError = (error: { error: string }) => {
       toast.error(error.error);
     };
 
-    const handleUserTyping = (data: { userId: string; displayName: string; isTyping: boolean }) => {
+    const handleUserTyping = (data: {
+      userId: string;
+      displayName: string;
+      isTyping: boolean;
+    }) => {
       if (data.userId === user?._id) return; // Don't show own typing
 
-      setTypingUsers(prev => {
+      setTypingUsers((prev) => {
         const newSet = new Set(prev);
         if (data.isTyping) {
           newSet.add(data.displayName);
@@ -303,8 +339,13 @@ export default function JammingRoomPage() {
     if (room?.currentTrack) {
       // Calculate real current position using lastUpdated
       let realPosition = room.playbackState.positionMs;
-      if (room.playbackState.isPlaying && room.playbackState.lastUpdated) {
-        const lastUpdated = new Date(room.playbackState.lastUpdated).getTime();
+      if (
+        room.playbackState.isPlaying &&
+        room.playbackState.lastUpdated
+      ) {
+        const lastUpdated = new Date(
+          room.playbackState.lastUpdated
+        ).getTime();
         const now = Date.now();
         const elapsed = Math.max(0, now - lastUpdated);
         realPosition = Math.min(
@@ -319,9 +360,11 @@ export default function JammingRoomPage() {
           clearInterval(progressInterval.current);
         }
         progressInterval.current = setInterval(() => {
-          setCurrentPosition(prev => {
+          setCurrentPosition((prev) => {
             const newPosition = prev + 1000;
-            return newPosition > room.currentTrack!.durationMs ? room.currentTrack!.durationMs : newPosition;
+            return newPosition > room.currentTrack!.durationMs
+              ? room.currentTrack!.durationMs
+              : newPosition;
           });
         }, 1000);
       } else {
@@ -337,7 +380,12 @@ export default function JammingRoomPage() {
         progressInterval.current = null;
       }
     };
-  }, [room?.playbackState.isPlaying, room?.currentTrack, room?.playbackState.positionMs, room?.playbackState.lastUpdated]);
+  }, [
+    room?.playbackState.isPlaying,
+    room?.currentTrack,
+    room?.playbackState.positionMs,
+    room?.playbackState.lastUpdated,
+  ]);
 
   // Chat functions
   const sendMessage = () => {
@@ -388,7 +436,11 @@ export default function JammingRoomPage() {
 
     if (room.playbackState.isPlaying) return;
 
-    socket.emit('host_play', { roomId: room.roomId, trackId: room.currentTrack.id, positionMs: currentPosition });
+    socket.emit('host_play', {
+      roomId: room.roomId,
+      trackId: room.currentTrack.id,
+      positionMs: currentPosition,
+    });
   };
 
   const handlePause = () => {
@@ -398,8 +450,13 @@ export default function JammingRoomPage() {
     if (!room.playbackState.isPlaying) return;
 
     let latestPosition = currentPosition;
-    if (room.playbackState.isPlaying && room.playbackState.lastUpdated) {
-      const lastUpdated = new Date(room.playbackState.lastUpdated).getTime();
+    if (
+      room.playbackState.isPlaying &&
+      room.playbackState.lastUpdated
+    ) {
+      const lastUpdated = new Date(
+        room.playbackState.lastUpdated
+      ).getTime();
       const now = Date.now();
       const elapsed = Math.max(0, now - lastUpdated);
       latestPosition = Math.min(
@@ -414,7 +471,10 @@ export default function JammingRoomPage() {
       progressInterval.current = null;
     }
 
-    socket.emit('host_pause', { roomId: room.roomId, positionMs: latestPosition });
+    socket.emit('host_pause', {
+      roomId: room.roomId,
+      positionMs: latestPosition,
+    });
   };
 
   const handleSeek = (positionMs: number) => {
@@ -449,7 +509,11 @@ export default function JammingRoomPage() {
     setShowSearch(false);
     setSearchQuery('');
     setSearchResults([]);
-    socket.emit('host_play', { roomId: room.roomId, trackId: track.id, positionMs: 0 });
+    socket.emit('host_play', {
+      roomId: room.roomId,
+      trackId: track.id,
+      positionMs: 0,
+    });
   };
 
   // Leave room
@@ -484,7 +548,9 @@ export default function JammingRoomPage() {
       setBookmarkLoading(false);
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.error || 'Failed to save bookmark');
+      toast.error(
+        error.response?.data?.error || 'Failed to save bookmark'
+      );
       setBookmarkLoading(false);
     },
   });
@@ -493,7 +559,10 @@ export default function JammingRoomPage() {
     if (!room || !room.currentTrack) return;
     setBookmarkLoading(true);
     const bookmarkData = {
-      trackId: room.currentTrack.spotifyUrl?.split('/track/')[1]?.split('?')[0] || '',
+      trackId:
+        room.currentTrack.spotifyUrl
+          ?.split('/track/')[1]
+          ?.split('?')[0] || '',
       timestampMs: currentPosition,
       durationMs: room.currentTrack.durationMs,
       caption: caption.trim() || undefined,
@@ -520,8 +589,12 @@ export default function JammingRoomPage() {
         >
           <motion.div
             animate={{ rotate: 360 }}
-            transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-            className="w-8 h-8 border-2 border-green-500 border-t-transparent rounded-full mx-auto mb-4"
+            transition={{
+              duration: 1,
+              repeat: Infinity,
+              ease: 'linear',
+            }}
+            className="w-8 h-8 border-2 border-purple-500 border-t-transparent rounded-full mx-auto mb-4"
           />
           <p className="text-gray-600 dark:text-gray-400">
             {loading ? 'Loading...' : 'Joining room...'}
@@ -539,7 +612,7 @@ export default function JammingRoomPage() {
           animate={{ opacity: 1, y: 0 }}
           className="text-center max-w-md"
         >
-          <Music className="w-16 h-16 text-green-500 mx-auto mb-6" />
+          <Music className="w-16 h-16 text-purple-500 mx-auto mb-6" />
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
             Authentication Required
           </h1>
@@ -548,7 +621,7 @@ export default function JammingRoomPage() {
           </p>
           <button
             onClick={() => router.push('/')}
-            className="px-6 py-3 bg-green-600 text-white rounded-2xl font-medium hover:bg-green-700 transition-colors"
+            className="px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-2xl font-medium hover:from-purple-600 hover:to-pink-600 transition-colors"
           >
             Log in with Spotify
           </button>
@@ -576,7 +649,7 @@ export default function JammingRoomPage() {
           </p>
           <button
             onClick={() => router.push('/jam')}
-            className="px-6 py-3 bg-green-600 text-white rounded-2xl font-medium hover:bg-green-700 transition-colors"
+            className="px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-2xl font-medium hover:from-purple-600 hover:to-pink-600 transition-colors"
           >
             Back to Jamming
           </button>
@@ -594,7 +667,11 @@ export default function JammingRoomPage() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex">
       {/* Main Content */}
-      <div className={`flex-1 transition-all duration-300 ${isChatOpen ? 'mr-80' : ''}`}>
+      <div
+        className={`flex-1 transition-all duration-300 ${
+          isChatOpen ? 'mr-80' : ''
+        }`}
+      >
         <div className="max-w-4xl mx-auto px-4 py-8">
           {/* Header (with Theme Toggle at end) */}
           <motion.div
@@ -616,7 +693,13 @@ export default function JammingRoomPage() {
                   {room.name}
                 </h1>
                 <p className="text-sm text-gray-500 dark:text-gray-400">
-                  {isHost ? 'You are the host' : `Hosted by ${room.members.find(m => m.userId === room.hostId)?.displayName}`}
+                  {isHost
+                    ? 'You are the host'
+                    : `Hosted by ${
+                        room.members.find(
+                          (m) => m.userId === room.hostId
+                        )?.displayName
+                      }`}
                 </p>
               </div>
             </div>
@@ -629,13 +712,13 @@ export default function JammingRoomPage() {
                 onClick={() => setIsChatOpen(!isChatOpen)}
                 className={`p-2 rounded-full transition-colors relative ${
                   isChatOpen
-                    ? 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400'
+                    ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400'
                     : 'hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-400'
                 }`}
               >
                 <MessageCircle className="w-5 h-5" />
                 {chatMessages.length > 0 && !isChatOpen && (
-                  <span className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full"></span>
+                  <span className="absolute -top-1 -right-1 w-3 h-3 bg-purple-500 rounded-full"></span>
                 )}
               </motion.button>
 
@@ -651,7 +734,9 @@ export default function JammingRoomPage() {
               {mounted && (
                 <motion.button
                   whileTap={{ scale: 0.95 }}
-                  onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                  onClick={() =>
+                    setTheme(theme === 'dark' ? 'light' : 'dark')
+                  }
                   className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
                   aria-label="Toggle theme"
                 >
@@ -688,15 +773,25 @@ export default function JammingRoomPage() {
                 {/* Album Art - full height on desktop, centered on mobile */}
                 <div className="flex justify-center sm:block sm:h-full">
                   <motion.img
-                    animate={isPlaying
-                      ? { rotate: [0, 12, -12, 0], scale: [1, 1.08, 0.96, 1] }
-                      : { rotate: 0, scale: 1 }
+                    animate={
+                      isPlaying
+                        ? {
+                            rotate: [0, 12, -12, 0],
+                            scale: [1, 1.08, 0.96, 1],
+                          }
+                        : { rotate: 0, scale: 1 }
                     }
-                    transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+                    transition={{
+                      duration: 2,
+                      repeat: Infinity,
+                      ease: 'easeInOut',
+                    }}
                     src={room.currentTrack.albumArt}
                     alt={room.currentTrack.album}
                     className="w-24 h-24 sm:w-40 sm:h-full sm:max-h-56 rounded-xl object-cover shadow-lg border border-gray-700 transition-all duration-300 mb-2 sm:mb-0"
-                    style={{ boxShadow: '0 4px 16px 0 rgba(0,0,0,0.25)' }}
+                    style={{
+                      boxShadow: '0 4px 16px 0 rgba(0,0,0,0.25)',
+                    }}
                   />
                 </div>
                 {/* Info/Controls - stacked and centered on mobile, left-aligned on desktop */}
@@ -717,31 +812,55 @@ export default function JammingRoomPage() {
                           type="range"
                           min={0}
                           max={room.currentTrack.durationMs}
-                          value={pendingSeek !== null ? pendingSeek : currentPosition}
-                          onChange={e => {
-                            const newPosition = Number(e.target.value);
+                          value={
+                            pendingSeek !== null
+                              ? pendingSeek
+                              : currentPosition
+                          }
+                          onChange={(e) => {
+                            const newPosition = Number(
+                              e.target.value
+                            );
                             setPendingSeek(newPosition);
                           }}
-                          onMouseUp={e => {
-                            if (pendingSeek !== null && socket && room) {
-                              socket.emit('host_seek', { roomId: room.roomId, positionMs: pendingSeek });
+                          onMouseUp={(e) => {
+                            if (
+                              pendingSeek !== null &&
+                              socket &&
+                              room
+                            ) {
+                              socket.emit('host_seek', {
+                                roomId: room.roomId,
+                                positionMs: pendingSeek,
+                              });
                               setCurrentPosition(pendingSeek);
                               setPendingSeek(null);
                               if (
                                 room.currentTrack &&
-                                pendingSeek >= room.currentTrack.durationMs &&
+                                pendingSeek >=
+                                  room.currentTrack.durationMs &&
                                 !room.playbackState.isPlaying
                               ) {
                                 handlePlay();
                               }
                             }
                           }}
-                          className="w-full accent-green-500 h-1 rounded-full bg-gray-700 transition-all duration-200"
+                          className="w-full accent-purple-500 h-1 rounded-full bg-gray-700 transition-all duration-200"
                           style={{ minHeight: 0, maxHeight: 6 }}
                         />
                         <div className="flex justify-between text-[10px] sm:text-[11px] text-gray-400 mt-0.5 w-full">
-                          <span>{formatDuration(pendingSeek !== null ? pendingSeek : currentPosition)}</span>
-                          <span>{formatDuration(room.currentTrack.durationMs)}</span>
+                          <span>
+                            {formatDuration(
+                              pendingSeek !== null
+                                ? pendingSeek
+                                : currentPosition
+                            )}
+                          </span>
+                          <span>
+                            {formatDuration(
+                              room.currentTrack.durationMs
+                            )}
+                          </span>
                         </div>
                       </>
                     ) : (
@@ -750,55 +869,74 @@ export default function JammingRoomPage() {
                           <motion.div
                             initial={{ width: 0 }}
                             animate={{ width: `${progressPercent}%` }}
-                            className="h-full bg-gradient-to-r from-green-500 to-emerald-500 rounded-full"
+                            className="h-full bg-gradient-to-r from-purple-500 to-pink-500 rounded-full"
                           />
                         </div>
                         <div className="flex justify-between text-[10px] sm:text-[11px] text-gray-400 mt-0.5 w-full">
-                          <span>{formatDuration(currentPosition)}</span>
-                          <span>{formatDuration(room.currentTrack.durationMs)}</span>
+                          <span>
+                            {formatDuration(currentPosition)}
+                          </span>
+                          <span>
+                            {formatDuration(
+                              room.currentTrack.durationMs
+                            )}
+                          </span>
                         </div>
                       </>
                     )}
                   </div>
                   {/* Controls - centered and stacked on mobile, row on desktop */}
-                  <div className="flex flex-row justify-center sm:justify-start items-center gap-3 mt-4 w-full">
-                    {isHost && room?.currentTrack && (
-                      <button
-                        onClick={
-                          (room.playbackState.isPlaying && currentPosition < room.currentTrack.durationMs)
-                            ? handlePause
-                            : handlePlay
-                        }
-                        className="w-12 h-12 sm:w-10 sm:h-10 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full flex items-center justify-center text-white shadow-lg hover:shadow-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-green-400"
-                        aria-label={
-                          (room.playbackState.isPlaying && currentPosition < room.currentTrack.durationMs)
-                            ? 'Pause'
-                            : 'Play'
-                        }
-                        style={{ boxShadow: '0 2px 8px 0 rgba(16,185,129,0.25)' }}
+                  <div className="flex flex-row justify-center sm:justify-between items-center gap-3 mt-4 w-full">
+                    <div className="flex items-center gap-3">
+                      {isHost && room?.currentTrack && (
+                        <button
+                          onClick={
+                            room.playbackState.isPlaying &&
+                            currentPosition <
+                              room.currentTrack.durationMs
+                              ? handlePause
+                              : handlePlay
+                          }
+                          className="w-12 h-12 sm:w-10 sm:h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center text-white shadow-lg hover:shadow-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-purple-400"
+                          aria-label={
+                            room.playbackState.isPlaying &&
+                            currentPosition <
+                              room.currentTrack.durationMs
+                              ? 'Pause'
+                              : 'Play'
+                          }
+                          style={{
+                            boxShadow:
+                              '0 2px 8px 0 rgba(168,85,247,0.25)',
+                          }}
+                        >
+                          {room.playbackState.isPlaying &&
+                          currentPosition <
+                            room.currentTrack.durationMs ? (
+                            <Pause className="w-5 h-5" />
+                          ) : (
+                            <Play className="w-5 h-5 ml-0.5" />
+                          )}
+                        </button>
+                      )}
+                      <motion.a
+                        whileHover={{ scale: 1.05 }}
+                        href={room.currentTrack.spotifyUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-1 px-3 py-2 sm:px-2 sm:py-1 bg-gray-100 dark:bg-gray-800 text-xs text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors rounded-full"
                       >
-                        {(room.playbackState.isPlaying && currentPosition < room.currentTrack.durationMs)
-                          ? <Pause className="w-5 h-5" />
-                          : <Play className="w-5 h-5 ml-0.5" />}
-                      </button>
-                    )}
-                    <motion.a
-                      whileHover={{ scale: 1.05 }}
-                      href={room.currentTrack.spotifyUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-1 px-3 py-2 sm:px-2 sm:py-1 bg-gray-100 dark:bg-gray-800 text-xs text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors rounded-full"
-                    >
-                      <ExternalLink className="w-4 h-4 sm:w-3.5 sm:h-3.5" />
-                      Open in Spotify
-                    </motion.a>
+                        <ExternalLink className="w-4 h-4 sm:w-3.5 sm:h-3.5" />
+                        Open in Spotify
+                      </motion.a>
+                    </div>
                     {room.currentTrack && (
                       <button
                         onClick={() => setShowBookmarkModal(true)}
-                        className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors ml-2"
+                        className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
                         title="Bookmark this moment"
                       >
-                        <Bookmark className="w-5 h-5 text-green-500" />
+                        <Bookmark className="w-5 h-5 text-purple-500" />
                       </button>
                     )}
                   </div>
@@ -811,14 +949,16 @@ export default function JammingRoomPage() {
                   No track selected
                 </h2>
                 <p className="text-gray-400 text-[11px] sm:text-xs">
-                  {isHost ? 'Search and select a track to start jamming' : 'Waiting for the host to select a track'}
+                  {isHost
+                    ? 'Search and select a track to start jamming'
+                    : 'Waiting for the host to select a track'}
                 </p>
               </div>
             )}
           </motion.div>
 
           {/* Host Controls */}
-          { isHost && (
+          {isHost && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -840,7 +980,9 @@ export default function JammingRoomPage() {
                       type="text"
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      onKeyPress={(e) => e.key === 'Enter' && searchTracks()}
+                      onKeyPress={(e) =>
+                        e.key === 'Enter' && searchTracks()
+                      }
                       placeholder="Search for tracks..."
                       className="w-full pl-10 pr-3 py-2 sm:py-3 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 rounded-xl focus:outline-none  focus:ring-2 focus:ring-purple-500 focus:border-transparent  transition-all placeholder-gray-400 dark:placeholder-gray-500 text-gray-900 dark:text-white text-sm"
                     />
@@ -930,17 +1072,20 @@ export default function JammingRoomPage() {
                         href={`/u/${member.publicSlug}`}
                         className="font-medium text-gray-900 dark:text-white hover:underline text-sm"
                       >
-                        {member.userId === user?._id ? 'you' : member.displayName}
+                        {member.userId === user?._id
+                          ? 'you'
+                          : member.displayName}
                       </Link>
                       {member.userId === room.hostId && (
                         <Crown className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-yellow-500" />
                       )}
                     </div>
-
                   </div>
                   <div className="flex items-center gap-1">
-                    <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-green-500 rounded-full"></div>
-                    <span className="text-xs text-gray-500 dark:text-gray-400">Online</span>
+                    <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-purple-500 rounded-full"></div>
+                    <span className="text-xs text-gray-500 dark:text-gray-400">
+                      Online
+                    </span>
                   </div>
                 </motion.div>
               ))}
@@ -956,13 +1101,19 @@ export default function JammingRoomPage() {
             initial={{ x: 320 }}
             animate={{ x: 0 }}
             exit={{ x: 320 }}
-            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+            transition={{
+              type: 'spring',
+              damping: 25,
+              stiffness: 200,
+            }}
             className="fixed right-0 top-0 w-full sm:w-96 md:w-[420px] bg-white dark:bg-gray-900 border-l border-gray-200 dark:border-gray-800 shadow-xl z-50 flex flex-col h-[100dvh]"
             style={{ height: '100dvh', maxHeight: '100dvh' }}
           >
             {/* Chat Header */}
             <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-800">
-              <h3 className="font-semibold text-gray-900 dark:text-white">Room Chat</h3>
+              <h3 className="font-semibold text-gray-900 dark:text-white">
+                Room Chat
+              </h3>
               <button
                 onClick={() => setIsChatOpen(false)}
                 className="p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
@@ -998,16 +1149,18 @@ export default function JammingRoomPage() {
                             {isOwn ? 'you' : message.displayName}
                           </span>
                           <span className="text-xs text-gray-500 dark:text-gray-400">
-                            {new Date(message.timestamp).toLocaleTimeString([], {
+                            {new Date(
+                              message.timestamp
+                            ).toLocaleTimeString([], {
                               hour: '2-digit',
-                              minute: '2-digit'
+                              minute: '2-digit',
                             })}
                           </span>
                         </div>
                         <div
                           className={`inline-block px-3 py-2 rounded-2xl text-sm max-w-[200px] break-words ${
                             isOwn
-                              ? 'bg-green-500 text-white dark:bg-green-600 dark:text-white'
+                              ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white'
                               : 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white'
                           }`}
                         >
@@ -1028,11 +1181,18 @@ export default function JammingRoomPage() {
                 >
                   <div className="flex gap-1">
                     <div className="w-1 h-1 bg-gray-400 rounded-full animate-bounce"></div>
-                    <div className="w-1 h-1 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                    <div className="w-1 h-1 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                    <div
+                      className="w-1 h-1 bg-gray-400 rounded-full animate-bounce"
+                      style={{ animationDelay: '0.1s' }}
+                    ></div>
+                    <div
+                      className="w-1 h-1 bg-gray-400 rounded-full animate-bounce"
+                      style={{ animationDelay: '0.2s' }}
+                    ></div>
                   </div>
                   <span>
-                    {Array.from(typingUsers).join(', ')} {typingUsers.size === 1 ? 'is' : 'are'} typing...
+                    {Array.from(typingUsers).join(', ')}{' '}
+                    {typingUsers.size === 1 ? 'is' : 'are'} typing...
                   </span>
                 </motion.div>
               )}
@@ -1046,9 +1206,13 @@ export default function JammingRoomPage() {
                   value={newMessage}
                   onFocus={() => {
                     // Scroll chat into view on mobile
-                    if (window.innerWidth < 640 && chatMessagesRef.current) {
+                    if (
+                      window.innerWidth < 640 &&
+                      chatMessagesRef.current
+                    ) {
                       setTimeout(() => {
-                        chatMessagesRef.current!.scrollTop = chatMessagesRef.current!.scrollHeight;
+                        chatMessagesRef.current!.scrollTop =
+                          chatMessagesRef.current!.scrollHeight;
                       }, 200);
                     }
                   }}
@@ -1074,7 +1238,7 @@ export default function JammingRoomPage() {
                   whileTap={{ scale: 0.95 }}
                   onClick={sendMessage}
                   disabled={!newMessage.trim()}
-                  className="p-2 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="p-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl hover:from-purple-600 hover:to-pink-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <Send className="w-4 h-4" />
                 </motion.button>

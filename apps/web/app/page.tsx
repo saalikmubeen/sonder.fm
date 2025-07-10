@@ -1,6 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
+import Image from 'next/image';
 import { Suspense } from 'react';
 
 // Disable static generation for this page
@@ -54,6 +55,468 @@ const NAV_LINKS = [
   { label: 'How it Works', href: '#how' },
 ];
 
+function ScreenshotsSection() {
+  const desktopScreens = [
+    '/jam_desktop.png',
+    '/export_desktop.png',
+    '/room_desktop.png',
+  ];
+  const mobileScreens = [
+    '/profile_mobile.jpg',
+    '/bookmarks_mobile.jpg',
+    '/tracks_mobile.jpg',
+  ];
+  return (
+    <section className="py-24">
+      <div className="max-w-5xl mx-auto px-4">
+        <motion.h2
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8 }}
+          viewport={{ once: true }}
+          className="text-4xl md:text-5xl font-bold text-center mb-6"
+        >
+          See Sonder.fm in Action
+        </motion.h2>
+        <motion.p
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          viewport={{ once: true }}
+          className="text-lg text-gray-600 dark:text-gray-300 text-center mb-12"
+        >
+          A glimpse of the beautiful, modern music experience
+          you&apos;ll love.
+        </motion.p>
+        {/* Room Screenshot - full row */}
+        <div className="flex justify-center w-full mb-16">
+          <div className="w-full max-w-4xl">
+            <motion.div
+              initial={{ opacity: 0, y: 40, scale: 0.97 }}
+              whileInView={{ opacity: 1, y: 0, scale: 1 }}
+              whileHover={{
+                scale: 1.05,
+                y: -12,
+                rotate: 0.5,
+              }}
+              transition={{
+                duration: 0.7,
+                type: 'spring',
+                stiffness: 120,
+                damping: 15,
+              }}
+              viewport={{ once: true }}
+              className="relative rounded-3xl bg-white/90 dark:bg-gray-900/90 border border-gray-200 dark:border-gray-700 shadow-2xl overflow-hidden w-full mx-auto group cursor-pointer backdrop-blur-sm"
+              style={{ aspectRatio: '16/10' }}
+            >
+              {/* Screenshot container */}
+              <div className="relative w-full h-full">
+                <Image
+                  src="/room_desktop.png"
+                  alt="Sonder.fm Room - Listen Together"
+                  fill
+                  style={{ objectFit: 'cover' }}
+                  className="w-full h-full object-cover object-top transition-all duration-500 group-hover:scale-110"
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 1000px"
+                  priority={true}
+                  draggable={false}
+                />
+              </div>
+
+              {/* Enhanced label overlay */}
+              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent p-8">
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.3 }}
+                  className="text-center"
+                >
+                  <h3 className="text-white font-bold text-xl mb-3 tracking-wide">
+                    Room - Listen Together
+                  </h3>
+                  <p className="text-gray-200 text-sm mb-3 opacity-90">
+                    Real-time music rooms for shared listening
+                    experiences
+                  </p>
+                  <motion.div
+                    initial={{ width: 0 }}
+                    whileInView={{ width: '80px' }}
+                    transition={{
+                      delay: 0.5,
+                      duration: 0.8,
+                      ease: 'easeOut',
+                    }}
+                    className="h-1 bg-gradient-to-r from-purple-400 to-pink-500 mx-auto rounded-full"
+                  />
+                </motion.div>
+              </div>
+
+              {/* Subtle gradient overlay for depth */}
+              <div className="absolute inset-0 pointer-events-none bg-gradient-to-t from-black/20 via-transparent to-white/10 dark:from-black/40 dark:to-white/5" />
+
+              {/* Enhanced hover border effect */}
+              <div className="absolute inset-0 pointer-events-none opacity-0 group-hover:opacity-100 transition-all duration-500 border-2 border-purple-400/60 rounded-3xl shadow-xl shadow-purple-400/20" />
+
+              {/* Premium shine effect on hover */}
+              <motion.div
+                className="absolute inset-0 pointer-events-none opacity-0 group-hover:opacity-30 transition-opacity duration-700 rounded-3xl"
+                style={{
+                  background: `linear-gradient(120deg, transparent, rgba(168, 85, 247, 0.4), transparent)`,
+                  transform: 'translateX(-100%) skewX(-15deg)',
+                }}
+                whileHover={{
+                  transform: 'translateX(150%) skewX(-15deg)',
+                  transition: {
+                    duration: 1.2,
+                    ease: 'easeInOut',
+                  },
+                }}
+              />
+
+              {/* Corner accent with pulse effect */}
+              <motion.div
+                className="absolute top-4 right-4 w-3 h-3 bg-purple-400 rounded-full opacity-60 group-hover:opacity-100 transition-opacity duration-300"
+                animate={{
+                  scale: [1, 1.2, 1],
+                }}
+                transition={{
+                  duration: 2,
+                  repeat: Infinity,
+                  ease: 'easeInOut',
+                }}
+              />
+
+              {/* Featured badge */}
+              <div className="absolute top-4 left-4 px-3 py-1 bg-gradient-to-r from-purple-500/90 to-pink-500/90 text-white text-xs font-bold rounded-full backdrop-blur-sm opacity-80 group-hover:opacity-100 transition-opacity duration-300">
+                Featured
+              </div>
+            </motion.div>
+          </div>
+        </div>
+        {/* Other Desktop Screenshots */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 px-4 md:px-0">
+          {desktopScreens
+            .filter((src) => src !== '/room_desktop.png')
+            .map((src, i) => {
+              const isJamDesktop = src.includes('jam_desktop');
+              const isExportDesktop = src.includes('export_desktop');
+
+              // Get descriptive labels
+              let label = '';
+              if (isJamDesktop) label = 'Music Jam Session';
+              else if (isExportDesktop) label = 'Export to Spotify';
+
+              return (
+                <motion.div
+                  key={src}
+                  initial={{ opacity: 0, y: 40, scale: 0.97 }}
+                  whileInView={{ opacity: 1, y: 0, scale: 1 }}
+                  whileHover={{
+                    scale: 1.05,
+                    y: -12,
+                    rotate: i % 2 === 0 ? 1 : -1,
+                  }}
+                  transition={{
+                    duration: 0.7,
+                    delay: 0.1 * i,
+                    type: 'spring',
+                    stiffness: 120,
+                    damping: 15,
+                  }}
+                  viewport={{ once: true }}
+                  className="relative rounded-3xl bg-white/90 dark:bg-gray-900/90 border border-gray-200 dark:border-gray-700 shadow-2xl overflow-hidden w-full group cursor-pointer backdrop-blur-sm"
+                  style={{ aspectRatio: '16/10' }}
+                >
+                  {/* Screenshot container */}
+                  <div className="relative w-full h-full">
+                    <Image
+                      src={src}
+                      alt={`Sonder.fm ${label} screenshot`}
+                      fill
+                      style={{ objectFit: 'cover' }}
+                      className="w-full h-full object-cover object-top transition-all duration-500 group-hover:scale-110"
+                      sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 600px"
+                      draggable={false}
+                    />
+                  </div>
+
+                  {/* Enhanced label overlay */}
+                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent p-6">
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.3 + i * 0.1 }}
+                      className="text-center"
+                    >
+                      <h3 className="text-white font-bold text-lg mb-2 tracking-wide">
+                        {label}
+                      </h3>
+                      <motion.div
+                        initial={{ width: 0 }}
+                        whileInView={{ width: '60px' }}
+                        transition={{
+                          delay: 0.5 + i * 0.1,
+                          duration: 0.8,
+                          ease: 'easeOut',
+                        }}
+                        className="h-1 bg-gradient-to-r from-purple-400 to-pink-500 mx-auto rounded-full"
+                      />
+                    </motion.div>
+                  </div>
+
+                  {/* Subtle gradient overlay for depth */}
+                  <div className="absolute inset-0 pointer-events-none bg-gradient-to-t from-black/20 via-transparent to-white/10 dark:from-black/40 dark:to-white/5" />
+
+                  {/* Enhanced hover border effect */}
+                  <div className="absolute inset-0 pointer-events-none opacity-0 group-hover:opacity-100 transition-all duration-500 border-2 border-purple-400/60 rounded-3xl shadow-xl shadow-purple-400/20" />
+
+                  {/* Premium shine effect on hover */}
+                  <motion.div
+                    className="absolute inset-0 pointer-events-none opacity-0 group-hover:opacity-30 transition-opacity duration-700 rounded-3xl"
+                    style={{
+                      background: `linear-gradient(120deg, transparent, rgba(168, 85, 247, 0.4), transparent)`,
+                      transform: 'translateX(-100%) skewX(-15deg)',
+                    }}
+                    whileHover={{
+                      transform: 'translateX(150%) skewX(-15deg)',
+                      transition: {
+                        duration: 1.2,
+                        ease: 'easeInOut',
+                      },
+                    }}
+                  />
+
+                  {/* Corner accent */}
+                  <div className="absolute top-4 right-4 w-3 h-3 bg-purple-400 rounded-full opacity-60 group-hover:opacity-100 transition-opacity duration-300" />
+                </motion.div>
+              );
+            })}
+        </div>
+        {/* Mobile Screenshots */}
+        <div className="overflow-x-auto pt-8">
+          {/* Desktop layout - horizontal row */}
+          <div className="hidden md:flex gap-8 md:gap-10 justify-center items-start min-w-[500px] md:min-w-0">
+            {mobileScreens.map((src, i) => {
+              // Hide tracks_mobile.jpg on mobile
+              const isTracksMobile = src.includes('tracks_mobile');
+              if (isTracksMobile) {
+                return (
+                  <motion.div
+                    key={src}
+                    initial={{ opacity: 0, y: 40, scale: 0.97 }}
+                    whileInView={{ opacity: 1, y: 0, scale: 1 }}
+                    whileHover={{
+                      scale: 1.05,
+                      rotate: i % 2 === 0 ? -2 : 2,
+                    }}
+                    transition={{
+                      duration: 0.7,
+                      delay: 0.1 * i,
+                      type: 'spring',
+                      stiffness: 120,
+                    }}
+                    viewport={{ once: true }}
+                    className="relative rounded-2xl bg-white/80 dark:bg-gray-900/80 border border-gray-200 dark:border-gray-800 shadow-2xl overflow-hidden max-w-[260px] w-full group"
+                    style={{ aspectRatio: '9/19.5', height: '420px' }}
+                  >
+                    <div
+                      style={{
+                        position: 'relative',
+                        width: '100%',
+                        height: '420px',
+                      }}
+                    >
+                      <Image
+                        src={src}
+                        alt={`Sonder.fm mobile screenshot ${i + 1}`}
+                        fill
+                        style={{ objectFit: 'cover' }}
+                        className="w-full h-full object-cover object-top transition-transform duration-300 group-hover:scale-105"
+                        sizes="(max-width: 500px) 100vw, 500px"
+                        draggable={false}
+                      />
+                    </div>
+                    <div className="absolute inset-0 pointer-events-none bg-gradient-to-t from-black/10 via-transparent to-white/10 dark:from-black/30 dark:to-white/0" />
+                  </motion.div>
+                );
+              }
+
+              return (
+                <motion.div
+                  key={src}
+                  initial={{ opacity: 0, y: 40, scale: 0.97 }}
+                  whileInView={{ opacity: 1, y: 0, scale: 1 }}
+                  whileHover={{
+                    scale: 1.05,
+                    rotate: i % 2 === 0 ? -2 : 2,
+                  }}
+                  transition={{
+                    duration: 0.7,
+                    delay: 0.1 * i,
+                    type: 'spring',
+                    stiffness: 120,
+                  }}
+                  viewport={{ once: true }}
+                  className="relative rounded-2xl bg-white/80 dark:bg-gray-900/80 border border-gray-200 dark:border-gray-800 shadow-2xl overflow-hidden max-w-[260px] w-full group"
+                  style={{ aspectRatio: '9/19.5', height: '420px' }}
+                >
+                  <div
+                    style={{
+                      position: 'relative',
+                      width: '100%',
+                      height: '420px',
+                    }}
+                  >
+                    <Image
+                      src={src}
+                      alt={`Sonder.fm mobile screenshot ${i + 1}`}
+                      fill
+                      style={{ objectFit: 'cover' }}
+                      className="w-full h-full object-cover object-top transition-transform duration-300 group-hover:scale-105"
+                      sizes="(max-width: 500px) 100vw, 500px"
+                      draggable={false}
+                    />
+                  </div>
+                  <div className="absolute inset-0 pointer-events-none bg-gradient-to-t from-black/10 via-transparent to-white/10 dark:from-black/30 dark:to-white/0" />
+                </motion.div>
+              );
+            })}
+          </div>
+
+          {/* Mobile layout - fanned out card spread */}
+          <div className="md:hidden relative h-96 flex items-center justify-center">
+            {mobileScreens.map((src, i) => {
+              const isProfileMobile = src.includes('profile_mobile');
+              const isBookmarksMobile = src.includes(
+                'bookmarks_mobile'
+              );
+              const isTracksMobile = src.includes('tracks_mobile');
+
+              let label = '';
+              if (isProfileMobile) label = 'Profile';
+              else if (isBookmarksMobile) label = 'Bookmarks';
+              else if (isTracksMobile) label = 'Tracks';
+
+              // Fan out positions and rotations
+              const rotations = [-15, 0, 15]; // Degrees of rotation for each card
+              const xOffsets = [-60, 0, 60]; // Horizontal offset in pixels
+              const yOffsets = [20, 0, 20]; // Vertical offset for slight arc
+
+              return (
+                <motion.div
+                  key={src}
+                  initial={{
+                    opacity: 0,
+                    y: 100,
+                    scale: 0.8,
+                    rotate: rotations[i] * 2,
+                  }}
+                  whileInView={{
+                    opacity: 1,
+                    y: yOffsets[i],
+                    x: xOffsets[i],
+                    scale: 1,
+                    rotate: rotations[i],
+                  }}
+                  whileHover={{
+                    scale: 1.1,
+                    y: yOffsets[i] - 20,
+                    x: xOffsets[i],
+                    rotate: rotations[i] * 0.5,
+                    zIndex: 50,
+                  }}
+                  transition={{
+                    duration: 0.8,
+                    delay: 0.2 * i,
+                    type: 'spring',
+                    stiffness: 100,
+                    damping: 25,
+                  }}
+                  viewport={{ once: true, amount: 0.3 }}
+                  className="absolute"
+                  style={{
+                    zIndex: i + 1,
+                  }}
+                >
+                  <motion.div
+                    className="relative rounded-2xl bg-white/95 dark:bg-gray-900/95 border border-gray-200 dark:border-gray-800 shadow-2xl overflow-hidden w-[180px] group backdrop-blur-sm cursor-pointer transform-gpu"
+                    style={{
+                      aspectRatio: '9/19.5',
+                      height: '320px',
+                    }}
+                  >
+                    <div
+                      style={{
+                        position: 'relative',
+                        width: '100%',
+                        height: '320px',
+                      }}
+                    >
+                      <Image
+                        src={src}
+                        alt={`Sonder.fm ${label} mobile screenshot`}
+                        fill
+                        style={{ objectFit: 'cover' }}
+                        className="w-full h-full object-cover object-top transition-transform duration-700 group-hover:scale-110"
+                        sizes="(max-width: 500px) 100vw, 500px"
+                        draggable={false}
+                      />
+                    </div>
+
+                    {/* Enhanced label overlay */}
+                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent p-4">
+                      <motion.p
+                        initial={{ opacity: 0, y: 20 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.5 + i * 0.1 }}
+                        className="text-white font-bold text-sm text-center tracking-wide"
+                      >
+                        {label}
+                      </motion.p>
+                      <motion.div
+                        initial={{ width: 0 }}
+                        whileInView={{ width: '100%' }}
+                        transition={{
+                          delay: 0.7 + i * 0.1,
+                          duration: 0.6,
+                        }}
+                        className="h-0.5 bg-purple-400 mx-auto mt-2 rounded-full"
+                        style={{ maxWidth: '50px' }}
+                      />
+                    </div>
+
+                    {/* Subtle gradient overlay */}
+                    <div className="absolute inset-0 pointer-events-none bg-gradient-to-t from-black/30 via-transparent to-white/20 dark:from-black/40 dark:to-white/10" />
+
+                    {/* Enhanced hover border effect */}
+                    <div className="absolute inset-0 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-500 border-2 border-purple-400/80 rounded-2xl shadow-lg shadow-purple-400/30" />
+
+                    {/* Dynamic shine effect */}
+                    <motion.div
+                      className="absolute inset-0 pointer-events-none opacity-0 group-hover:opacity-40 transition-opacity duration-700"
+                      style={{
+                        background: `linear-gradient(45deg, transparent, rgba(168, 85, 247, 0.3), transparent)`,
+                        transform: 'translateX(-100%)',
+                      }}
+                      whileHover={{
+                        transform: 'translateX(100%)',
+                        transition: {
+                          duration: 0.8,
+                          ease: 'easeInOut',
+                        },
+                      }}
+                    />
+                  </motion.div>
+                </motion.div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function HomePageContent() {
   const { user, login, loading } = useAuth();
   console.log(user);
@@ -70,37 +533,37 @@ function HomePageContent() {
       {
         label: 'Vibe Score',
         data: [12, 19, 3, 5, 2, 3, 9],
-        borderColor: 'rgba(16, 185, 129, 0.7)',
-        backgroundColor: 'rgba(16, 185, 129, 0.10)',
+        borderColor: 'rgba(168, 85, 247, 0.7)',
+        backgroundColor: 'rgba(168, 85, 247, 0.10)',
         tension: 0.4,
         pointRadius: 5,
         pointHoverRadius: 8,
-        pointBackgroundColor: 'rgba(16, 185, 129, 0.7)',
-        pointBorderColor: 'rgba(16, 185, 129, 0.3)',
+        pointBackgroundColor: 'rgba(168, 85, 247, 0.7)',
+        pointBorderColor: 'rgba(168, 85, 247, 0.3)',
         fill: true,
       },
       {
         label: 'Friends',
         data: [8, 11, 7, 10, 6, 8, 13],
-        borderColor: 'rgba(234, 179, 8, 0.6)',
-        backgroundColor: 'rgba(234, 179, 8, 0.08)',
+        borderColor: 'rgba(236, 72, 153, 0.6)',
+        backgroundColor: 'rgba(236, 72, 153, 0.08)',
         tension: 0.4,
         pointRadius: 5,
         pointHoverRadius: 8,
-        pointBackgroundColor: 'rgba(234, 179, 8, 0.6)',
-        pointBorderColor: 'rgba(234, 179, 8, 0.2)',
+        pointBackgroundColor: 'rgba(236, 72, 153, 0.6)',
+        pointBorderColor: 'rgba(236, 72, 153, 0.2)',
         fill: true,
       },
       {
         label: 'Discovery',
         data: [5, 7, 6, 8, 4, 5, 10],
-        borderColor: 'rgba(59, 130, 246, 0.5)',
-        backgroundColor: 'rgba(59, 130, 246, 0.07)',
+        borderColor: 'rgba(139, 92, 246, 0.5)',
+        backgroundColor: 'rgba(139, 92, 246, 0.07)',
         tension: 0.4,
         pointRadius: 5,
         pointHoverRadius: 8,
-        pointBackgroundColor: 'rgba(59, 130, 246, 0.5)',
-        pointBorderColor: 'rgba(59, 130, 246, 0.2)',
+        pointBackgroundColor: 'rgba(139, 92, 246, 0.5)',
+        pointBorderColor: 'rgba(139, 92, 246, 0.2)',
         fill: true,
       },
     ],
@@ -149,7 +612,7 @@ function HomePageContent() {
         <nav className="max-w-7xl mx-auto flex items-center justify-between px-6 py-4 relative">
           {/* Logo */}
           <div className="flex items-center gap-2 select-none">
-            <div className="w-8 h-8 bg-gradient-to-br from-green-400 to-green-600 rounded-full flex items-center justify-center font-bold text-lg text-white">
+            <div className="w-8 h-8 bg-gradient-to-br from-purple-400 to-pink-600 rounded-full flex items-center justify-center font-bold text-lg text-white">
               S
             </div>
             <span className="text-xl font-bold tracking-tight">
@@ -162,7 +625,7 @@ function HomePageContent() {
               <a
                 key={link.href}
                 href={link.href}
-                className="text-gray-700 dark:text-gray-200 hover:text-green-600 dark:hover:text-green-400 text-base font-medium transition-colors"
+                className="text-gray-700 dark:text-gray-200 hover:text-purple-600 dark:hover:text-purple-400 text-base font-medium transition-colors"
               >
                 {link.label}
               </a>
@@ -171,7 +634,7 @@ function HomePageContent() {
               href="https://github.com/saalikmubeen/sonder.fm"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-gray-700 dark:text-gray-200 hover:text-green-600 dark:hover:text-green-400 text-base font-medium transition-colors"
+              className="text-gray-700 dark:text-gray-200 hover:text-purple-600 dark:hover:text-purple-400 text-base font-medium transition-colors"
             >
               GitHub
             </a>
@@ -181,7 +644,7 @@ function HomePageContent() {
             <Button
               variant="ghost"
               size="sm"
-              className="text-gray-700 dark:text-gray-200 hover:text-green-600 dark:hover:text-green-400 px-3 py-2 transition-colors"
+              className="text-gray-700 dark:text-gray-200 hover:text-purple-600 dark:hover:text-purple-400 px-3 py-2 transition-colors"
               onClick={() =>
                 setTheme(theme === 'dark' ? 'light' : 'dark')
               }
@@ -202,7 +665,7 @@ function HomePageContent() {
           <div className="md:hidden flex items-center">
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+              className="p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
               aria-label="Open menu"
             >
               <svg
@@ -247,7 +710,7 @@ function HomePageContent() {
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="w-full justify-start text-gray-700 dark:text-gray-200 hover:text-green-600 dark:hover:text-green-400 px-3 py-2"
+                  className="text-gray-700 dark:text-gray-200 hover:text-purple-600 dark:hover:text-purple-400 px-3 py-2"
                   onClick={() => {
                     setTheme(theme === 'dark' ? 'light' : 'dark');
                     setIsMenuOpen(false);
@@ -282,12 +745,12 @@ function HomePageContent() {
           className="w-full"
         >
           <div className="max-w-3xl mx-auto text-center">
-            <span className="inline-block px-5 py-1.5 mb-6 rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 text-sm font-medium">
+            <span className="inline-block px-5 py-1.5 mb-6 rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 text-sm font-medium">
               Modern Music Social
             </span>
             <h1 className="text-5xl md:text-7xl font-extrabold mb-6 tracking-tight leading-tight">
               Connect. Share.{' '}
-              <span className="text-green-600 dark:text-green-400">
+              <span className="text-purple-600 dark:text-purple-400">
                 Vibe.
               </span>
             </h1>
@@ -300,7 +763,7 @@ function HomePageContent() {
               <Button
                 onClick={handleLogin}
                 size="lg"
-                className="bg-green-600 hover:bg-green-700 text-white font-semibold px-8 py-4 text-lg shadow rounded-full transition-all duration-200 hover:scale-105 hover:shadow-2xl"
+                className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-semibold px-8 py-4 text-lg shadow rounded-full transition-all duration-200 hover:scale-105 hover:shadow-2xl"
               >
                 Connect Spotify
               </Button>
@@ -323,7 +786,8 @@ function HomePageContent() {
 
       {/* Waitlist Section */}
       <WaitlistSection referrer={referrer || undefined} />
-
+      {/* Screenshots Section */}
+      <ScreenshotsSection />
       {/* Features Section */}
       <section id="features" className="py-24">
         <div className="max-w-6xl mx-auto px-4">
@@ -422,7 +886,7 @@ function HomePageContent() {
               whileHover={{
                 scale: 1.07,
                 y: -8,
-                boxShadow: '0 8px 32px 0 rgba(16,185,129,0.18)',
+                boxShadow: '0 8px 32px 0 rgba(168,85,247,0.18)',
               }}
             >
               <div className="w-full h-[350px] flex items-center justify-center">
@@ -545,13 +1009,13 @@ function HomePageContent() {
           <div className="flex gap-4">
             <a
               href="#features"
-              className="hover:text-green-600 dark:hover:text-green-400"
+              className="hover:text-purple-600 dark:hover:text-purple-400"
             >
               Features
             </a>
             <a
               href="#how"
-              className="hover:text-green-600 dark:hover:text-green-400"
+              className="hover:text-purple-600 dark:hover:text-purple-400"
             >
               How it Works
             </a>
@@ -559,7 +1023,7 @@ function HomePageContent() {
               href="https://github.com/saalikmubeen/sonder.fm"
               target="_blank"
               rel="noopener noreferrer"
-              className="hover:text-green-600 dark:hover:text-green-400"
+              className="hover:text-purple-600 dark:hover:text-purple-400"
             >
               GitHub
             </a>
@@ -582,7 +1046,7 @@ export default function HomePage() {
               repeat: Infinity,
               ease: 'linear',
             }}
-            className="w-8 h-8 border-2 border-green-500 border-t-transparent rounded-full"
+            className="w-8 h-8 border-2 border-purple-500 border-t-transparent rounded-full"
           />
         </div>
       }
@@ -608,18 +1072,18 @@ function FeatureCard({
       whileHover={{
         scale: 1.07,
         y: -8,
-        boxShadow: '0 8px 32px 0 rgba(16,185,129,0.18)',
+        boxShadow: '0 8px 32px 0 rgba(168,85,247,0.18)',
       }}
       initial={{ opacity: 0, y: 30 }}
       whileInView={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6, delay }}
       viewport={{ once: true }}
-      className="rounded-2xl bg-white/80 dark:bg-gray-900/80 border border-gray-200 dark:border-gray-800 shadow p-8 flex flex-col items-start gap-4 transition-all duration-300 hover:shadow-2xl group cursor-pointer overflow-hidden hover:bg-gradient-to-br hover:from-white/80 hover:to-green-100/60 dark:hover:from-green-900/40 dark:hover:to-blue-900/30"
+      className="rounded-2xl bg-white/80 dark:bg-gray-900/80 border border-gray-200 dark:border-gray-800 shadow p-8 flex flex-col items-start gap-4 transition-all duration-300 hover:shadow-2xl group cursor-pointer overflow-hidden hover:bg-gradient-to-br hover:from-white/80 hover:to-purple-100/60 dark:hover:from-purple-900/40 dark:hover:to-pink-900/30"
     >
       <motion.div
         whileHover={{ scale: 1.18, rotate: 8 }}
         transition={{ type: 'spring', stiffness: 300, damping: 15 }}
-        className="w-12 h-12 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center text-white mb-2 group-hover:scale-110 transition-transform duration-200 shadow-lg"
+        className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-400 to-pink-600 flex items-center justify-center text-white mb-2 group-hover:scale-110 transition-transform duration-200 shadow-lg"
       >
         {icon}
       </motion.div>
@@ -651,16 +1115,16 @@ function StepCard({
       whileHover={{
         scale: 1.07,
         y: -8,
-        boxShadow: '0 8px 32px 0 rgba(16,185,129,0.18)',
+        boxShadow: '0 8px 32px 0 rgba(168,85,247,0.18)',
       }}
       transition={{ duration: 0.6, delay }}
       viewport={{ once: true }}
-      className="rounded-2xl bg-white/80 dark:bg-gray-900/80 border border-gray-200 dark:border-gray-800 shadow p-6 flex flex-col items-center gap-2 text-center transition-all duration-300 hover:shadow-2xl group cursor-pointer overflow-hidden hover:bg-gradient-to-br hover:from-white/80 hover:to-green-100/60 dark:hover:from-green-900/40 dark:hover:to-blue-900/30"
+      className="rounded-2xl bg-white/80 dark:bg-gray-900/80 border border-gray-200 dark:border-gray-800 shadow p-6 flex flex-col items-center gap-2 text-center transition-all duration-300 hover:shadow-2xl group cursor-pointer overflow-hidden hover:bg-gradient-to-br hover:from-white/80 hover:to-purple-100/60 dark:hover:from-purple-900/40 dark:hover:to-pink-900/30"
     >
       <motion.div
         whileHover={{ scale: 1.18, rotate: 8 }}
         transition={{ type: 'spring', stiffness: 300, damping: 15 }}
-        className="w-10 h-10 rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 flex items-center justify-center font-bold text-lg mb-2 group-hover:scale-110 transition-transform duration-200 shadow-lg"
+        className="w-10 h-10 rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 flex items-center justify-center font-bold text-lg mb-2 group-hover:scale-110 transition-transform duration-200 shadow-lg"
       >
         {number}
       </motion.div>
