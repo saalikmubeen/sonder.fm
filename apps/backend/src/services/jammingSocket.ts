@@ -249,15 +249,15 @@ export const setupJammingSocket = (io: Server) => {
       const { roomId, trackId } = data;
       const room = RoomManager.getRoom(roomId);
 
-      // if (!room || room.hostId !== userId) {
-      //   socket.emit('error', { message: 'Not authorized to control playback' });
-      //   return;
-      // }
-
-      if (!room) {
-        socket.emit('error', { message: 'Room not found' });
+      if (!room || room.hostId !== userId) {
+        socket.emit('error', { message: 'Not authorized to control playback' });
         return;
       }
+
+      // if (!room) {
+      //   socket.emit('error', { message: 'Room not found' });
+      //   return;
+      // }
 
       // Fetch track info from Spotify and update currentTrack
       let track = null;
