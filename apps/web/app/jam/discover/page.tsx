@@ -78,7 +78,15 @@ interface Room {
 }
 
 // --- Segmented Toggle Component ---
-function SegmentedToggle({ options, value, onChange }: { options: { label: string, value: string }[], value: string, onChange: (v: string) => void }) {
+function SegmentedToggle({
+  options,
+  value,
+  onChange,
+}: {
+  options: { label: string; value: string }[];
+  value: string;
+  onChange: (v: string) => void;
+}) {
   return (
     <div className="relative flex bg-gray-100 dark:bg-gray-800 rounded-full h-8 w-fit p-1">
       {options.map((opt, i) => (
@@ -105,7 +113,9 @@ export default function RoomDiscoveryPage() {
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
-  const [activeTab, setActiveTab] = useState<'live' | 'recent'>('live');
+  const [activeTab, setActiveTab] = useState<'live' | 'recent'>(
+    'live'
+  );
   const [filter, setFilter] = useState<'all' | 'friends'>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
@@ -139,9 +149,9 @@ export default function RoomDiscoveryPage() {
   const popularTags = availableTags.slice(0, 12); // Show top 12 most used tags
 
   const toggleTag = (tagName: string) => {
-    setSelectedTags(prev =>
+    setSelectedTags((prev) =>
       prev.includes(tagName)
-        ? prev.filter(t => t !== tagName)
+        ? prev.filter((t) => t !== tagName)
         : [...prev, tagName]
     );
   };
@@ -172,11 +182,12 @@ export default function RoomDiscoveryPage() {
     refetch: refetchLive,
   } = useQuery({
     queryKey: ['live-rooms', filter, debouncedSearch, selectedTags],
-    queryFn: () => roomsApi.getDiscoveryRooms(
-      filter,
-      debouncedSearch || undefined,
-      selectedTags.length > 0 ? selectedTags : undefined
-    ),
+    queryFn: () =>
+      roomsApi.getDiscoveryRooms(
+        filter,
+        debouncedSearch || undefined,
+        selectedTags.length > 0 ? selectedTags : undefined
+      ),
     enabled: !!user && activeTab === 'live',
     refetchInterval: 10000, // Refresh every 10 seconds for live rooms
   });
@@ -189,10 +200,11 @@ export default function RoomDiscoveryPage() {
     refetch: refetchRecent,
   } = useQuery({
     queryKey: ['recent-rooms', debouncedSearch, selectedTags],
-    queryFn: () => roomsApi.getRecentRooms(
-      debouncedSearch || undefined,
-      selectedTags.length > 0 ? selectedTags : undefined
-    ),
+    queryFn: () =>
+      roomsApi.getRecentRooms(
+        debouncedSearch || undefined,
+        selectedTags.length > 0 ? selectedTags : undefined
+      ),
     enabled: !!user && activeTab === 'recent',
     refetchInterval: 30000, // Refresh every 30 seconds for recent rooms
   });
@@ -200,7 +212,8 @@ export default function RoomDiscoveryPage() {
   const liveRooms: Room[] = liveRoomsData?.data?.rooms || [];
   const recentRooms: Room[] = recentRoomsData?.data?.rooms || [];
   const currentRooms = activeTab === 'live' ? liveRooms : recentRooms;
-  const isLoading = activeTab === 'live' ? liveLoading : recentLoading;
+  const isLoading =
+    activeTab === 'live' ? liveLoading : recentLoading;
   const error = activeTab === 'live' ? liveError : recentError;
 
   const handleJoinRoom = (roomId: string) => {
@@ -216,7 +229,11 @@ export default function RoomDiscoveryPage() {
       <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex items-center justify-center">
         <motion.div
           animate={{ rotate: 360 }}
-          transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+          transition={{
+            duration: 1,
+            repeat: Infinity,
+            ease: 'linear',
+          }}
           className="w-8 h-8 border-2 border-green-500 border-t-transparent rounded-full"
         />
       </div>
@@ -238,7 +255,8 @@ export default function RoomDiscoveryPage() {
             Discover Music Rooms
           </h1>
           <p className="text-gray-600 dark:text-gray-400 mb-6">
-            Please log in to discover and join music rooms where people are listening together.
+            Please log in to discover and join music rooms where
+            people are listening together.
           </p>
           <button
             onClick={() => router.push('/')}
@@ -256,10 +274,15 @@ export default function RoomDiscoveryPage() {
       {/* Sidebar */}
       <div className="w-64 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 p-6 hidden lg:block">
         <div className="mb-8">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">People</h2>
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+            People
+          </h2>
           <div className="space-y-4">
-            {currentRooms.slice(0, 5).map(room => (
-              <div key={room.roomId} className="flex items-center gap-3">
+            {currentRooms.slice(0, 5).map((room) => (
+              <div
+                key={room.roomId}
+                className="flex items-center gap-3"
+              >
                 <img
                   src={room.host.avatarUrl}
                   alt={room.host.displayName}
@@ -280,13 +303,17 @@ export default function RoomDiscoveryPage() {
 
         {popularTags.length > 0 && (
           <div>
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Trending Tags</h2>
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+              Trending Tags
+            </h2>
             <div className="flex flex-wrap gap-2">
               {popularTags.slice(0, 8).map((tag: any) => (
                 <button
                   key={tag.name}
                   onClick={() => toggleTag(tag.name)}
-                  className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${getTagColor(tag.name)}`}
+                  className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${getTagColor(
+                    tag.name
+                  )}`}
                 >
                   <Hash className="w-3 h-3" />
                   {tag.name}
@@ -317,7 +344,9 @@ export default function RoomDiscoveryPage() {
                     { label: 'Recent Sessions', value: 'recent' },
                   ]}
                   value={activeTab}
-                  onChange={v => setActiveTab(v as 'live' | 'recent')}
+                  onChange={(v) =>
+                    setActiveTab(v as 'live' | 'recent')
+                  }
                 />
               </div>
               {/* Search input (center) */}
@@ -336,7 +365,9 @@ export default function RoomDiscoveryPage() {
               {/* Theme icon (right) */}
               <div className="flex-shrink-0">
                 <button
-                  onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                  onClick={() =>
+                    setTheme(theme === 'dark' ? 'light' : 'dark')
+                  }
                   className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
                   aria-label="Toggle theme"
                 >
@@ -356,10 +387,12 @@ export default function RoomDiscoveryPage() {
                   { label: 'Recent Sessions', value: 'recent' },
                 ]}
                 value={activeTab}
-                onChange={v => setActiveTab(v as 'live' | 'recent')}
+                onChange={(v) => setActiveTab(v as 'live' | 'recent')}
               />
               <button
-                onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                onClick={() =>
+                  setTheme(theme === 'dark' ? 'light' : 'dark')
+                }
                 className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
                 aria-label="Toggle theme"
               >
@@ -392,7 +425,7 @@ export default function RoomDiscoveryPage() {
                     { label: 'Friends Only', value: 'friends' },
                   ]}
                   value={filter}
-                  onChange={v => setFilter(v as 'all' | 'friends')}
+                  onChange={(v) => setFilter(v as 'all' | 'friends')}
                 />
               </div>
             )}
@@ -425,7 +458,13 @@ export default function RoomDiscoveryPage() {
                 <button
                   key={tag.name}
                   onClick={() => toggleTag(tag.name)}
-                  className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium ${getTagColor(tag.name)} ${selectedTags.includes(tag.name) ? 'ring-2 ring-purple-400' : ''}`}
+                  className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium ${getTagColor(
+                    tag.name
+                  )} ${
+                    selectedTags.includes(tag.name)
+                      ? 'ring-2 ring-purple-400'
+                      : ''
+                  }`}
                 >
                   <Hash className="w-4 h-4" />
                   {tag.name}
@@ -472,7 +511,11 @@ export default function RoomDiscoveryPage() {
                 Something went wrong while fetching rooms.
               </p>
               <button
-                onClick={() => activeTab === 'live' ? refetchLive() : refetchRecent()}
+                onClick={() =>
+                  activeTab === 'live'
+                    ? refetchLive()
+                    : refetchRecent()
+                }
                 className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
               >
                 Try Again
@@ -488,19 +531,20 @@ export default function RoomDiscoveryPage() {
                 )}
               </div>
               <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-                {searchQuery ? 'No rooms found' : `No ${activeTab} rooms found`}
+                {searchQuery
+                  ? 'No rooms found'
+                  : `No ${activeTab} rooms found`}
               </h3>
               <p className="text-gray-500 dark:text-gray-400 mb-6">
                 {searchQuery
                   ? `No rooms match "${searchQuery}". Try a different search term.`
                   : selectedTags.length > 0
-                    ? `No rooms found with the selected tags. Try different tags or clear filters.`
+                  ? `No rooms found with the selected tags. Try different tags or clear filters.`
                   : activeTab === 'live'
-                    ? filter === 'friends'
-                      ? "None of your friends are in active rooms right now."
-                      : "No one is jamming right now. Be the first to start a room!"
-                    : "No recent sessions found. Rooms will appear here after they end."
-                }
+                  ? filter === 'friends'
+                    ? 'None of your friends are in active rooms right now.'
+                    : 'No one is jamming right now. Be the first to start a room!'
+                  : 'No recent sessions found. Rooms will appear here after they end.'}
               </p>
               {activeTab === 'live' && !searchQuery && (
                 <Link
@@ -570,10 +614,18 @@ function RoomCard({
   // --- Data prep ---
   const trackToShow = room.currentTrack || room.lastPlayedTrack;
   const maxVisibleParticipants = 6;
-  const visibleParticipants = room.participants.slice(0, maxVisibleParticipants);
-  const remainingCount = Math.max(0, room.participantCount - maxVisibleParticipants);
-  const category = room.tags && room.tags.length > 0 ? room.tags[0] : undefined;
-  const moreTags = room.tags && room.tags.length > 1 ? room.tags.slice(1) : [];
+  const visibleParticipants = room.participants.slice(
+    0,
+    maxVisibleParticipants
+  );
+  const remainingCount = Math.max(
+    0,
+    room.participantCount - maxVisibleParticipants
+  );
+  const category =
+    room.tags && room.tags.length > 0 ? room.tags[0] : undefined;
+  const moreTags =
+    room.tags && room.tags.length > 1 ? room.tags.slice(1) : [];
   // Tag color logic (original)
   const getTagColor = (tag: string) => {
     const colors = [
@@ -626,7 +678,9 @@ function RoomCard({
             {room.participantCount} listening
           </p>
           <p className="text-[11px] text-gray-400 truncate">
-            {room.lastActive ? timeAgo(new Date(room.lastActive)) : 'Just now'}
+            {room.lastActive
+              ? timeAgo(new Date(room.lastActive))
+              : 'Just now'}
           </p>
         </div>
       </div>
@@ -654,7 +708,9 @@ function RoomCard({
           {room.tags.map((tag, index) => (
             <span
               key={tag}
-              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium ${getTagColor(tag)}`}
+              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium ${getTagColor(
+                tag
+              )}`}
             >
               <Hash className="w-3 h-3" />
               {tag}

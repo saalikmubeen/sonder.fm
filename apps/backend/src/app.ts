@@ -11,7 +11,6 @@ import dotenv from 'dotenv';
 import cron from 'node-cron';
 import cookieParser from 'cookie-parser';
 
-
 dotenv.config();
 
 // Import routes
@@ -41,8 +40,8 @@ const server = createServer(app);
 const io = new Server(server, {
   cors: {
     origin: process.env.FRONTEND_URL || 'http://localhost:3000',
-    methods: ['GET', 'POST']
-  }
+    methods: ['GET', 'POST'],
+  },
 });
 
 const PORT = process.env.PORT || 5000;
@@ -51,7 +50,8 @@ const PORT = process.env.PORT || 5000;
 CryptoUtils.initialize(process.env.ENCRYPTION_KEY!);
 
 // Connect to MongoDB
-mongoose.connect(process.env.MONGODB_URI!)
+mongoose
+  .connect(process.env.MONGODB_URI!)
   .then(() => console.log('✅ Connected to MongoDB'))
   .catch((err) => console.error('❌ MongoDB connection error:', err));
 
@@ -59,18 +59,22 @@ mongoose.connect(process.env.MONGODB_URI!)
 app.use(helmet());
 app.use(compression());
 app.use(morgan('combined'));
-app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
-  credentials: true
-}));
+app.use(
+  cors({
+    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+    credentials: true,
+  })
+);
 app.use(cookieParser());
-
 
 // Rate limiting
 const limiter = rateLimit({
-  windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS!) || 15 * 60 * 1000,
-  max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS!) || 100,
-  message: 'Too many requests from this IP, please try again later.'
+  windowMs:
+    parseInt(process.env.RATE_LIMIT_WINDOW_MS!) || 15 * 60 * 1000, // 15 minutes
+  max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS!) || 1500, // 1500 requests per 15 minutes (much more reasonable for music app)
+  message: 'Too many requests from this IP, please try again later.',
+  standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
+  legacyHeaders: false, // Disable the `X-RateLimit-*` headers
 });
 app.use(limiter);
 
@@ -97,7 +101,7 @@ app.get('/health', (req, res) => {
   res.json({
     status: 'OK',
     timestamp: new Date().toISOString(),
-    uptime: process.uptime()
+    uptime: process.uptime(),
   });
 });
 
@@ -117,20 +121,30 @@ setupJammingSocket(io);
 // });
 
 // Error handling middleware
-app.use((error: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
-  console.error('Unhandled error:', error);
-  res.status(500).json({
-    success: false,
-    error: 'Internal server error',
-    message: process.env.NODE_ENV === 'development' ? error.message : 'Something went wrong'
-  });
-});
+app.use(
+  (
+    error: any,
+    req: express.Request,
+    res: express.Response,
+    next: express.NextFunction
+  ) => {
+    console.error('Unhandled error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Internal server error',
+      message:
+        process.env.NODE_ENV === 'development'
+          ? error.message
+          : 'Something went wrong',
+    });
+  }
+);
 
 // 404 handler
 app.use('*', (req, res) => {
   res.status(404).json({
     success: false,
-    error: 'Route not found'
+    error: 'Route not found',
   });
 });
 

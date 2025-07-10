@@ -3,6 +3,7 @@
 export * from './crypto';
 export * from './spotify';
 export * from './openai';
+export * from './theme-utils';
 
 export const generateRandomColor = (): string => {
   const colors = [

@@ -85,8 +85,8 @@ export interface Bookmark {
   caption?: string;
   metadata: {
     name: string;
-    artists: {  name: string }[];
-    album: {  name: string; imageUrl: string };
+    artists: { name: string }[];
+    album: { name: string; imageUrl: string };
     spotifyUrl: string;
   };
   createdAt: Date;
@@ -99,7 +99,8 @@ export type ProfileTheme =
   | 'grunge'
   | 'sadcore'
   | 'neon'
-  | 'forest';
+  | 'forest'
+  | 'sunset';
 
 export interface SpotifyTokens {
   accessToken: string;

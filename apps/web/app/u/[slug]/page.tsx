@@ -42,6 +42,7 @@ import {
   MessageCircle,
   Sparkles,
   Heart,
+  Share2,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 import { formatDuration, timeAgo } from '@sonder/utils';
@@ -734,6 +735,11 @@ export default function UserProfilePage() {
     { id: 'vibe_notes', label: 'Vibe Notes', icon: MessageSquare },
   ];
 
+  const copyProfileUrl = () => {
+    navigator.clipboard.writeText(window.location.href);
+    toast.success('Profile URL copied! 📋');
+  };
+
   return (
     <div className="min-h-screen bg-white dark:bg-black text-gray-900 dark:text-white transition-colors duration-300">
       {/* Desktop Layout */}
@@ -805,19 +811,30 @@ export default function UserProfilePage() {
               </motion.button>
 
               {mounted && (
-                <motion.button
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() =>
-                    setTheme(theme === 'dark' ? 'light' : 'dark')
-                  }
-                  className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-                >
-                  {theme === 'dark' ? (
-                    <Sun className="w-4 h-4" />
-                  ) : (
-                    <Moon className="w-4 h-4" />
-                  )}
-                </motion.button>
+                <div className="flex items-center gap-1">
+                  <motion.button
+                    whileTap={{ scale: 0.95 }}
+                    onClick={copyProfileUrl}
+                    className={`p-2 rounded-full  transition-colors`}
+                    title="Share profile"
+                  >
+                    <Share2 className="w-5 h-5" />
+                  </motion.button>
+
+                  <motion.button
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() =>
+                      setTheme(theme === 'dark' ? 'light' : 'dark')
+                    }
+                    className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                  >
+                    {theme === 'dark' ? (
+                      <Sun className="w-4 h-4" />
+                    ) : (
+                      <Moon className="w-4 h-4" />
+                    )}
+                  </motion.button>
+                </div>
               )}
             </div>
           </div>
@@ -1051,19 +1068,30 @@ export default function UserProfilePage() {
               </motion.button>
 
               {mounted && (
-                <motion.button
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() =>
-                    setTheme(theme === 'dark' ? 'light' : 'dark')
-                  }
-                  className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-                >
-                  {theme === 'dark' ? (
-                    <Sun className="w-5 h-5" />
-                  ) : (
-                    <Moon className="w-5 h-5" />
-                  )}
-                </motion.button>
+                <div className="flex items-center">
+                  <motion.button
+                    whileTap={{ scale: 0.95 }}
+                    onClick={copyProfileUrl}
+                    className={`p-2 rounded-full  transition-colors`}
+                    title="Share profile"
+                  >
+                    <Share2 className="w-5 h-5" />
+                  </motion.button>
+
+                  <motion.button
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() =>
+                      setTheme(theme === 'dark' ? 'light' : 'dark')
+                    }
+                    className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                  >
+                    {theme === 'dark' ? (
+                      <Sun className="w-5 h-5" />
+                    ) : (
+                      <Moon className="w-5 h-5" />
+                    )}
+                  </motion.button>
+                </div>
               )}
             </div>
           </div>
