@@ -249,8 +249,13 @@ export const setupJammingSocket = (io: Server) => {
       const { roomId, trackId } = data;
       const room = RoomManager.getRoom(roomId);
 
-      if (!room || room.hostId !== userId) {
-        socket.emit('error', { message: 'Not authorized to control playback' });
+      // if (!room || room.hostId !== userId) {
+      //   socket.emit('error', { message: 'Not authorized to control playback' });
+      //   return;
+      // }
+
+      if (!room) {
+        socket.emit('error', { message: 'Room not found' });
         return;
       }
 
@@ -290,7 +295,7 @@ export const setupJammingSocket = (io: Server) => {
         const updatedRoom = RoomManager.getRoom(roomId);
         if (updatedRoom?.currentTrack) {
           await RoomSyncService.addSongToHistory(roomId, updatedRoom.currentTrack, user.spotifyId);
-          
+
           // Log track play activity
           ActivityLogger.trackPlay(
             userId,

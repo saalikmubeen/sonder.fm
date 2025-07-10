@@ -384,6 +384,8 @@ export default function JammingRoomPage() {
   // Host controls
   const handlePlay = () => {
     if (!isHost || !room || !socket || !room.currentTrack) return;
+    // if (!room || !room.currentTrack) return;
+
     if (room.playbackState.isPlaying) return;
 
     socket.emit('host_play', { roomId: room.roomId, trackId: room.currentTrack.id, positionMs: currentPosition });
@@ -391,6 +393,8 @@ export default function JammingRoomPage() {
 
   const handlePause = () => {
     if (!isHost || !room || !socket) return;
+    // if (!room || !room.currentTrack) return;
+
     if (!room.playbackState.isPlaying) return;
 
     let latestPosition = currentPosition;
@@ -415,6 +419,8 @@ export default function JammingRoomPage() {
 
   const handleSeek = (positionMs: number) => {
     if (!isHost || !room) return;
+    // if (!room || !room.currentTrack) return;
+
     setCurrentPosition(positionMs);
   };
 
@@ -438,6 +444,8 @@ export default function JammingRoomPage() {
 
   const selectTrack = (track: Track) => {
     if (!isHost || !room || !socket) return;
+    // if (!room) return;
+
     setShowSearch(false);
     setSearchQuery('');
     setSearchResults([]);
@@ -810,7 +818,7 @@ export default function JammingRoomPage() {
           </motion.div>
 
           {/* Host Controls */}
-          {isHost && (
+          { isHost && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -834,7 +842,7 @@ export default function JammingRoomPage() {
                       onChange={(e) => setSearchQuery(e.target.value)}
                       onKeyPress={(e) => e.key === 'Enter' && searchTracks()}
                       placeholder="Search for tracks..."
-                      className="w-full pl-10 pr-3 py-2 sm:py-3 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all placeholder-gray-400 dark:placeholder-gray-500 text-gray-900 dark:text-white text-sm"
+                      className="w-full pl-10 pr-3 py-2 sm:py-3 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 rounded-xl focus:outline-none  focus:ring-2 focus:ring-purple-500 focus:border-transparent  transition-all placeholder-gray-400 dark:placeholder-gray-500 text-gray-900 dark:text-white text-sm"
                     />
                   </div>
                   <motion.button
@@ -842,7 +850,7 @@ export default function JammingRoomPage() {
                     whileTap={{ scale: 0.98 }}
                     onClick={searchTracks}
                     disabled={isSearching || !searchQuery.trim()}
-                    className="px-4 py-2 sm:px-6 sm:py-3 bg-green-600 text-white rounded-xl font-medium hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 text-sm"
+                    className="px-4 py-2 sm:px-6 sm:py-3 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 transition-all duration-200 text-white rounded-xl font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 text-sm"
                   >
                     {isSearching ? (
                       <Loader2 className="w-4 h-4 animate-spin" />
@@ -1059,7 +1067,7 @@ export default function JammingRoomPage() {
                   }}
                   placeholder="Type a message..."
                   maxLength={500}
-                  className="flex-1 px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all placeholder-gray-400 dark:placeholder-gray-500 text-gray-900 dark:text-white text-sm"
+                  className="flex-1 px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none  focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all placeholder-gray-400 dark:placeholder-gray-500 text-gray-900 dark:text-white text-sm"
                 />
                 <motion.button
                   whileHover={{ scale: 1.05 }}
