@@ -354,6 +354,54 @@ export default function WaitlistSection({
               )}
             </motion.button>
           </form>
+
+          {/* Benefits Section */}
+          <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-800">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.7 }}
+              viewport={{ once: true }}
+              className="grid md:grid-cols-3 gap-6 text-center"
+            >
+              <div className="flex flex-col items-center">
+                <div className="w-10 h-10 bg-purple-100 dark:bg-purple-900/30 rounded-full flex items-center justify-center mb-3">
+                  <Users className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                </div>
+                <h3 className="font-semibold text-gray-900 dark:text-white mb-1 text-sm">
+                  Early Access
+                </h3>
+                <p className="text-xs text-gray-600 dark:text-gray-400">
+                  Be first to experience the future of music sharing
+                </p>
+              </div>
+
+              <div className="flex flex-col items-center">
+                <div className="w-10 h-10 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mb-3">
+                  <Gift className="w-5 h-5 text-green-600 dark:text-green-400" />
+                </div>
+                <h3 className="font-semibold text-gray-900 dark:text-white mb-1 text-sm">
+                  Exclusive Perks
+                </h3>
+                <p className="text-xs text-gray-600 dark:text-gray-400">
+                  Special features and benefits for early members
+                </p>
+              </div>
+
+              <div className="flex flex-col items-center">
+                <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center mb-3">
+                  <Heart className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                </div>
+                <h3 className="font-semibold text-gray-900 dark:text-white mb-1 text-sm">
+                  Shape the Future
+                </h3>
+                <p className="text-xs text-gray-600 dark:text-gray-400">
+                  Your feedback will help us build the perfect
+                  platform
+                </p>
+              </div>
+            </motion.div>
+          </div>
         </motion.div>
       </div>
     </motion.section>
