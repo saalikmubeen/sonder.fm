@@ -458,15 +458,9 @@ export default function RoomDiscoveryPage() {
                 <button
                   key={tag.name}
                   onClick={() => toggleTag(tag.name)}
-                  className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium ${getTagColor(
-                    tag.name
-                  )} ${
-                    selectedTags.includes(tag.name)
-                      ? 'ring-2 ring-purple-400'
-                      : ''
-                  }`}
+                  className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium transition-all duration-150 ${getTagColor(tag.name)} ${selectedTags.includes(tag.name) ? 'ring-2 ring-purple-400' : ''}`}
                 >
-                  <Hash className="w-4 h-4" />
+                  <Hash className="w-3 h-3" />
                   {tag.name}
                 </button>
               ))}
@@ -646,7 +640,7 @@ function RoomCard({
       initial={{ opacity: 0, y: 24 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay }}
-      className="bg-gray-50 dark:bg-gray-900/60 border border-gray-200 dark:border-gray-800 rounded-2xl shadow-sm p-3 sm:p-4 flex flex-col min-h-[120px] w-full max-w-md mx-auto hover:shadow-md transition-all"
+      className="bg-white/70 dark:bg-gray-900/60 border border-gray-200 dark:border-gray-800 rounded-2xl shadow-sm p-3 flex flex-col min-h-[100px] w-full max-w-md mx-auto hover:shadow-md transition-all"
     >
       <div className="flex items-center justify-between mb-2">
         <h3 className="text-base font-bold text-gray-900 dark:text-white truncate">
@@ -669,21 +663,16 @@ function RoomCard({
           </button>
         </div>
       </div>
-      <div className="flex items-center gap-2 mb-2">
-        <div className="w-8 h-8 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center">
-          <Users className="w-4 h-4 text-gray-400" />
+      {room.participants && room.participants.length > 0 && (
+        <div className="flex -space-x-3 mb-2">
+          {visibleParticipants.map((p, i) => (
+            <img key={i} src={p.avatarUrl} alt={p.displayName} className="w-6 h-6 rounded-full border-2 border-white dark:border-gray-900 shadow -ml-1" style={{ zIndex: visibleParticipants.length - i }} />
+          ))}
+          {remainingCount > 0 && (
+            <span className="w-6 h-6 rounded-full bg-gray-200 dark:bg-gray-800 flex items-center justify-center text-xs text-gray-500 border-2 border-white dark:border-gray-900 ml-1">+{remainingCount}</span>
+          )}
         </div>
-        <div className="flex-1 min-w-0">
-          <p className="text-xs text-gray-600 dark:text-gray-400 truncate">
-            {room.participantCount} listening
-          </p>
-          <p className="text-[11px] text-gray-400 truncate">
-            {room.lastActive
-              ? timeAgo(new Date(room.lastActive))
-              : 'Just now'}
-          </p>
-        </div>
-      </div>
+      )}
       {trackToShow && (
         <div className="flex items-center gap-2 mb-2">
           <div className="w-8 h-8 bg-gray-100 dark:bg-gray-800 rounded-lg flex items-center justify-center overflow-hidden">
@@ -720,6 +709,10 @@ function RoomCard({
       )}
       <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 mt-1">
         <span>{room.songHistoryCount || 0} songs</span>
+        <span className="flex items-center gap-1">
+          <Users className="w-3 h-3" />
+          {room.participantCount} listening
+        </span>
         <span>{formatTime(room.currentTrack?.durationMs || 0)}</span>
       </div>
     </motion.div>

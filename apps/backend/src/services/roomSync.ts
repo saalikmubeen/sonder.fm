@@ -328,6 +328,7 @@ export class RoomSyncService {
           participants: room.participants,
           currentTrack,
           tags: room.tags || [],
+          songHistoryCount: room.songHistory.length, // <-- Add this line
           hasFriends,
           isActive: true, // All rooms here are active
           lastActive: room.lastActive,
