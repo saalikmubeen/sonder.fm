@@ -1,6 +1,6 @@
 # Sonder.fm
 
-> **Connect. Share. Vibe.**
+> **Connect. Share. Vibe. | Spotify powered music identity and social with live listening rooms, music bookmarks, and public profiles.**
 
 [Sonder.fm](https://sonder-fm.vercel.app/) is a soulful, open-source music identity platform where users log in with Spotify and get a unique, public page (like `/u/xa93b21c`) showing their currently playing song, poetic GPT-generated "vibe summary," profile info, and more. It's like **Linktree for Spotify** or **Letterboxd for Spotify** or **Tumblr for musical energy** — built for people who feel music deeply and want to express their identity through it and connect with others. It also features real-time listening rooms — like intimate, vibe-focused versions of Discord — where users can sync music, chat live, and share moods through tags like melancholy, euphoric, or nostalgic.
 
