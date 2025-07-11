@@ -885,7 +885,7 @@ export default function UserProfilePage() {
           {/* Footer at the bottom (GitHub icon) */}
           <div className="mb-6 flex items-center justify-center w-full">
             <a
-              href="https://github.com"
+              href="https://github.com/saalikmubeen/sonder.fm"
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center justify-center w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-900 hover:bg-gray-300 dark:hover:bg-gray-800 transition-colors"

@@ -346,7 +346,7 @@ export class RoomSyncService {
   // Get recently ended rooms (in database but not in memory)
   static async getRecentlyEndedRooms(userId?: string) {
     try {
-      const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+      const oneDayAgo = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000);
       const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000); // Last hour
       const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000);
 

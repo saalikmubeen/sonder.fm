@@ -185,7 +185,21 @@ yarn start
 
 ## 🖼️ Screenshots
 
-![Sonder.fm Screenshot](https://raw.githubusercontent.com/saalikmubeen/sonder.fm/main/app/web/public/room_desktop.png)
+![Sonder.fm Room Screenshot](https://github.com/saalikmubeen/sonder.fm/blob/main/screenshots/room_desktop.png?raw=true)
+
+![Sonder.fm Dashboard Screenshot](https://github.com/saalikmubeen/sonder.fm/blob/main/screenshots/dashboard_desktop.png?raw=true)
+
+![Sonder.fm Profile Screenshot](https://github.com/saalikmubeen/sonder.fm/blob/main/screenshots/profile_desktop.png?raw=true)
+
+![Sonder.fm Activity Feed Screenshot](https://github.com/saalikmubeen/sonder.fm/blob/main/screenshots/activity_desktop.png?raw=true)
+
+![Sonder.fm Vibe Notes Screenshot](https://github.com/saalikmubeen/sonder.fm/blob/main/screenshots/vibe_desktop.png?raw=true)
+
+![Sonder.fm Jam Screenshot](https://github.com/saalikmubeen/sonder.fm/blob/main/screenshots/jam_desktop.png?raw=true)
+
+![Sonder.fm Bookmarks Screenshot](https://github.com/saalikmubeen/sonder.fm/blob/main/screenshots/bookmarks_desktop.png?raw=true)
+
+![Sonder.fm Export History Screenshot](https://github.com/saalikmubeen/sonder.fm/blob/main/screenshots/export_desktop.png?raw=true)
 
 ---
 
