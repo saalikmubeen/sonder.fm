@@ -43,6 +43,7 @@ import {
   Sparkles,
   Heart,
   Share2,
+  Activity,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 import { formatDuration, timeAgo } from '@sonder/utils';
@@ -61,6 +62,7 @@ import { LoadingSpinner } from '@sonder/ui/components/LoadingSpinner';
 import { motion as motionDiv } from 'framer-motion';
 import Link from 'next/link';
 import { profile } from 'console';
+import BackButton from '@/components/BackButton';
 
 // Minimal Tooltip component
 function Tooltip({
@@ -802,20 +804,26 @@ export default function UserProfilePage() {
           {/* Header */}
           <div className="sticky top-0 bg-white/80 dark:bg-black/80 backdrop-blur-md border-b border-gray-100 dark:border-gray-900 z-40">
             <div className="px-8 py-4 flex items-center justify-between">
-              <motion.button
-                whileTap={{ scale: 0.95 }}
-                onClick={() => router.back()}
-                className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-              >
-                <ChevronRight className="w-5 h-5 rotate-180" />
-              </motion.button>
+              <BackButton />
 
               {mounted && (
                 <div className="flex items-center gap-1">
+                  {/* Activity Feed button for own profile */}
+                  {isOwnProfile && (
+                    <Link href="/activity">
+                      <motion.div
+                        whileTap={{ scale: 0.95 }}
+                        className="p-2 rounded-full hover:bg-purple-100 dark:hover:bg-purple-900/30 text-purple-600 dark:text-purple-400 transition-colors cursor-pointer"
+                        title="Your Activity Feed"
+                      >
+                        <Activity className="w-5 h-5" />
+                      </motion.div>
+                    </Link>
+                  )}
                   <motion.button
                     whileTap={{ scale: 0.95 }}
                     onClick={copyProfileUrl}
-                    className={`p-2 rounded-full  transition-colors`}
+                    className="p-2 rounded-full hover:bg-purple-100 dark:hover:bg-purple-900/30 text-purple-600 dark:text-purple-400 transition-colors"
                     title="Share profile"
                   >
                     <Share2 className="w-5 h-5" />
@@ -826,7 +834,7 @@ export default function UserProfilePage() {
                     onClick={() =>
                       setTheme(theme === 'dark' ? 'light' : 'dark')
                     }
-                    className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                    className="p-2 rounded-full hover:bg-purple-100 dark:hover:bg-purple-900/30 text-purple-600 dark:text-purple-400 transition-colors"
                   >
                     {theme === 'dark' ? (
                       <Sun className="w-4 h-4" />
@@ -1271,20 +1279,26 @@ export default function UserProfilePage() {
         <div className="sticky top-0 bg-white/95 dark:bg-black/95 backdrop-blur-md border-b border-gray-200 dark:border-gray-800 z-50">
           <div className="px-4 py-3">
             <div className="flex items-center justify-between">
-              <motion.button
-                whileTap={{ scale: 0.95 }}
-                onClick={() => router.back()}
-                className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-              >
-                <ChevronRight className="w-6 h-6 rotate-180" />
-              </motion.button>
+              <BackButton />
 
               {mounted && (
                 <div className="flex items-center">
+                  {/* Activity Feed button for own profile (mobile) */}
+                  {isOwnProfile && (
+                    <Link href="/activity">
+                      <motion.div
+                        whileTap={{ scale: 0.95 }}
+                        className="p-2 rounded-full hover:bg-purple-100 dark:hover:bg-purple-900/30 text-purple-600 dark:text-purple-400 transition-colors cursor-pointer"
+                        title="Your Activity Feed"
+                      >
+                        <Activity className="w-5 h-5" />
+                      </motion.div>
+                    </Link>
+                  )}
                   <motion.button
                     whileTap={{ scale: 0.95 }}
                     onClick={copyProfileUrl}
-                    className={`p-2 rounded-full  transition-colors`}
+                    className="p-2 rounded-full hover:bg-purple-100 dark:hover:bg-purple-900/30 text-purple-600 dark:text-purple-400 transition-colors"
                     title="Share profile"
                   >
                     <Share2 className="w-5 h-5" />
@@ -1295,7 +1309,7 @@ export default function UserProfilePage() {
                     onClick={() =>
                       setTheme(theme === 'dark' ? 'light' : 'dark')
                     }
-                    className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                    className="p-2 rounded-full hover:bg-purple-100 dark:hover:bg-purple-900/30 text-purple-600 dark:text-purple-400 transition-colors"
                   >
                     {theme === 'dark' ? (
                       <Sun className="w-5 h-5" />

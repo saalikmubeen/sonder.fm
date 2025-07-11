@@ -28,9 +28,10 @@ import { timeAgo } from '@sonder/utils';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
 import { useTheme } from 'next-themes';
+import BackButton from '@/components/BackButton';
 
 // Activity item component
-function ActivityItem({ activity }: { activity: any }) {
+function ActivityItem({ activity, user, isOwnActivity }: { activity: any; user?: any; isOwnActivity?: boolean }) {
   const getActivityIcon = (type: string) => {
     switch (type) {
       case 'room_join':
@@ -57,29 +58,34 @@ function ActivityItem({ activity }: { activity: any }) {
   };
 
   const getActivityText = (activity: any) => {
+    const isSelf = isOwnActivity && user && activity.actorSlug === user.publicSlug;
+    const actorDisplay = isSelf ? 'You' : (
+      <Link
+        href={`/u/${activity.actorSlug}`}
+        className="font-semibold hover:underline"
+      >
+        {activity.actorName}
+      </Link>
+    );
     switch (activity.type) {
       case 'room_join':
         return (
           <>
-            joined room{' '}
-            <span className="font-medium text-green-600 dark:text-green-400">
-              {activity.roomName}
-            </span>
+            {actorDisplay} joined room{' '}
+            <span className="font-medium text-green-600 dark:text-green-400">{activity.roomName}</span>
           </>
         );
       case 'room_create':
         return (
           <>
-            created room{' '}
-            <span className="font-medium text-yellow-600 dark:text-yellow-400">
-              {activity.roomName}
-            </span>
+            {actorDisplay} created room{' '}
+            <span className="font-medium text-yellow-600 dark:text-yellow-400">{activity.roomName}</span>
           </>
         );
       case 'vibe_note':
         return (
           <>
-            left a vibe note{' '}
+            {actorDisplay} left a vibe note{' '}
             {activity.targetUserName && (
               <>
                 for{' '}
@@ -96,7 +102,7 @@ function ActivityItem({ activity }: { activity: any }) {
       case 'reaction':
         return (
           <>
-            reacted {activity.metadata?.emoji}{' '}
+            {actorDisplay} reacted {activity.metadata?.emoji}{' '}
             {activity.targetUserName && (
               <>
                 to{' '}
@@ -113,7 +119,7 @@ function ActivityItem({ activity }: { activity: any }) {
       case 'follow':
         return (
           <>
-            followed{' '}
+            {actorDisplay} followed{' '}
             <Link
               href={`/u/${activity.targetUserSlug}`}
               className="font-medium text-purple-600 dark:text-purple-400 hover:underline"
@@ -125,43 +131,39 @@ function ActivityItem({ activity }: { activity: any }) {
       case 'bookmark':
         return (
           <>
-            bookmarked{' '}
-            <span className="font-medium text-indigo-600 dark:text-indigo-400">
-              {activity.trackName}
-            </span>{' '}
+            {actorDisplay} bookmarked{' '}
+            <span className="font-medium text-indigo-600 dark:text-indigo-400">{activity.trackName}</span>{' '}
             by {activity.trackArtist}
           </>
         );
       case 'theme_change':
         return (
           <>
-            changed theme to{' '}
-            <span className="font-medium text-orange-600 dark:text-orange-400">
-              {activity.metadata?.theme}
-            </span>
+            {actorDisplay} changed theme to{' '}
+            <span className="font-medium text-orange-600 dark:text-orange-400">{activity.metadata?.theme}</span>
           </>
         );
       case 'track_play':
         return (
           <>
-            played{' '}
-            <span className="font-medium text-green-600 dark:text-green-400">
-              {activity.trackName}
-            </span>{' '}
+            {actorDisplay} played{' '}
+            <span className="font-medium text-green-600 dark:text-green-400">{activity.trackName}</span>{' '}
             in {activity.roomName}
           </>
         );
       case 'playlist_export':
         return (
           <>
-            exported playlist from{' '}
-            <span className="font-medium text-blue-600 dark:text-blue-400">
-              {activity.roomName}
-            </span>
+            {actorDisplay} exported playlist from{' '}
+            <span className="font-medium text-blue-600 dark:text-blue-400">{activity.roomName}</span>
           </>
         );
       default:
-        return 'did something';
+        return (
+          <>
+            {actorDisplay} did something
+          </>
+        );
     }
   };
 
@@ -184,12 +186,6 @@ function ActivityItem({ activity }: { activity: any }) {
         <div className="flex items-center gap-2 mb-1">
           {getActivityIcon(activity.type)}
           <div className="text-sm text-gray-700 dark:text-gray-300">
-            <Link
-              href={`/u/${activity.actorSlug}`}
-              className="font-semibold hover:underline"
-            >
-              {activity.actorName}
-            </Link>{' '}
             {getActivityText(activity)}
           </div>
         </div>
@@ -262,8 +258,8 @@ export default function ActivityFeedPage() {
   });
 
   const feedActivities =
-    feedData?.pages.flatMap((page) => page.data?.activities || []) ||
-    [];
+    (feedData?.pages.flatMap((page) => page.data?.activities || []) || [])
+      .filter((activity) => !user || activity.actorSlug !== user.publicSlug);
   const myActivities =
     myData?.pages.flatMap((page) => page.data?.activities || []) ||
     [];
@@ -341,7 +337,8 @@ export default function ActivityFeedPage() {
           className="text-center mb-5"
         >
           <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
+              <BackButton />
               <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
                 <Activity className="w-5 h-5 text-white" />
               </div>
@@ -380,10 +377,10 @@ export default function ActivityFeedPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="bg-white dark:bg-gray-900 rounded-2xl shadow-lg p-6 mb-6"
+          className="bg-white/80 dark:bg-gray-900/80 border border-gray-200 dark:border-gray-800 rounded-3xl shadow p-4 sm:p-6 mb-6 backdrop-blur-sm"
         >
           {/* Tab Navigation */}
-          <div className="flex bg-gray-100 dark:bg-gray-800 rounded-2xl p-1 mb-6">
+          <div className="flex bg-gray-100/80 dark:bg-gray-800/80 border border-gray-200 dark:border-gray-800 rounded-full p-1 mb-4 shadow-sm">
             {[
               { id: 'feed', label: 'Friends Feed', icon: Users },
               { id: 'me', label: 'My Activity', icon: TrendingUp },
@@ -391,9 +388,9 @@ export default function ActivityFeedPage() {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as any)}
-                className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-medium transition-all ${
+                className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-full font-medium transition-all text-sm ${
                   activeTab === tab.id
-                    ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
+                    ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow'
                     : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
                 }`}
               >
@@ -402,13 +399,15 @@ export default function ActivityFeedPage() {
               </button>
             ))}
           </div>
+          {/* Divider */}
+          <div className="border-t border-gray-200 dark:border-gray-800 my-3" />
 
           {/* Activity Type Filter */}
           <div>
-            <div className="flex items-center gap-2 mb-3">
-              <Filter className="w-4 h-4 text-gray-500" />
-              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                Filter by activity type:
+            <div className="flex items-center gap-2 mb-2">
+              <Filter className="w-4 h-4 text-gray-400" />
+              <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+                Filter by type
               </span>
             </div>
             <div className="flex flex-wrap gap-2">
@@ -416,10 +415,10 @@ export default function ActivityFeedPage() {
                 <button
                   key={type.value}
                   onClick={() => setFilterType(type.value)}
-                  className={`flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition-all ${
+                  className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium transition-all border border-transparent ${
                     filterType === type.value
-                      ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300'
-                      : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
+                      ? 'bg-gradient-to-r from-purple-100 to-pink-100 dark:from-purple-900/30 dark:to-pink-900/20 text-purple-700 dark:text-purple-200 border-purple-200 dark:border-purple-800 shadow'
+                      : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
                   }`}
                 >
                   <type.icon className="w-4 h-4" />
@@ -469,6 +468,8 @@ export default function ActivityFeedPage() {
                   <ActivityItem
                     key={activity._id}
                     activity={activity}
+                    user={user}
+                    isOwnActivity={activeTab === 'me'}
                   />
                 ))}
 

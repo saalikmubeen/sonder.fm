@@ -23,6 +23,7 @@ import { timeAgo, formatTime } from '@sonder/utils';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
 import { useAuth } from '@/lib/auth-context';
+import BackButton from '@/components/BackButton';
 
 interface HistoryItem {
   _id: string;
@@ -199,14 +200,7 @@ export default function RoomHistoryPage() {
           className="bg-white dark:bg-gray-900 rounded-3xl shadow-lg p-5 mb-6"
         >
           <div className="flex items-center gap-4 mb-5">
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => router.back()}
-              className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-            >
-              <ArrowLeft className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-            </motion.button>
+            <BackButton />
             <div className="flex-1">
               <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
                 {room.name}

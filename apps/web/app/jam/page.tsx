@@ -13,6 +13,7 @@ import {
   LogIn,
   X,
   Hash,
+  Compass,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 import { jammingApi } from '@/lib/jamming-api';
@@ -284,10 +285,21 @@ export default function JamPage() {
           <h1 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-3">
             Jamming Rooms
           </h1>
-          <p className="text-base text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
+          <p className="text-base text-gray-600 dark:text-gray-400 max-w-2xl mx-auto mb-6">
             Create or join a room to listen to music together in
             perfect sync. Share the vibe, share the moment.
           </p>
+
+          {/* Discover Button */}
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={() => router.push('/jam/discover')}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-500 to-indigo-500 text-white rounded-xl font-medium hover:from-blue-600 hover:to-indigo-600 transition-all shadow-md hover:shadow-lg text-sm"
+          >
+            <Compass className="w-4 h-4" />
+            Discover Active Rooms
+          </motion.button>
         </motion.div>
 
         {/* Room Form */}

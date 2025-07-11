@@ -22,6 +22,7 @@ import { waitlistApi } from '@/lib/waitlist-api';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import { timeAgo } from '@sonder/utils';
+import BackButton from '@/components/BackButton';
 
 interface WaitlistEntry {
   _id: string;
@@ -207,14 +208,7 @@ export default function AdminWaitlistPage() {
         >
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-4">
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => router.push('/')}
-                className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-              >
-                <ArrowLeft className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-              </motion.button>
+              <BackButton onClick={() => router.push('/')} />
               <div>
                 <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
                   Waitlist Management
