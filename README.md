@@ -2,21 +2,21 @@
 
 > **Connect. Share. Vibe.**
 
-[Sonder.fm](https://sonder-fm.vercel.app/) is a soulful, open-source music identity platform where users log in with Spotify and get a unique, public page (like `/u/xa93b21c`) showing their currently playing song, poetic GPT-generated "vibe summary," profile info, and more. It's like **Letterboxd for Spotify** or **Tumblr for musical energy** — built for people who feel music deeply and want to express their identity through it.
+[Sonder.fm](https://sonder-fm.vercel.app/) is a soulful, open-source music identity platform where users log in with Spotify and get a unique, public page (like `/u/xa93b21c`) showing their currently playing song, poetic GPT-generated "vibe summary," profile info, and more. It's like **Linktree for Spotify** or **Letterboxd for Spotify** or **Tumblr for musical energy** — built for people who feel music deeply and want to express their identity through it and connect with others. It also features real-time listening rooms — like intimate, vibe-focused versions of Discord — where users can sync music, chat live, and share moods through tags like melancholy, euphoric, or nostalgic.
 
-**→ [View the source on GitHub](https://github.com/saalikmubeen/sonder.fm)**
+**→ [My Sonder.fm Profile](https://sonder-fm.vercel.app/u/fa5c84d9)**
 
 ---
 
 ## ✨ Features
 
 - **Modern, Social & Fun:** A beautiful, modern experience designed for music lovers and social discovery.
-- **Personalized Feed:** See what your friends are listening to and discover new music tailored to your taste.
+- **Activity Feed:** ee what your friends are listening to, reacting to, and leaving vibe notes on.
 - **Social Profiles:** Showcase your top tracks, artists, and playlists in a beautiful profile.
 - **Live Now Playing:** Share your current vibe in real time with a live now playing status.
 - **Reactions & Vibe Notes:** React to friends' music and leave vibe notes to share your thoughts.
 - **Bookmarks:** Save your favorite moments in songs and revisit them anytime.
-- **Listening Rooms:** Join or create real-time listening rooms to vibe together with friends.
+- **Listening Rooms:** Join or create real-time listening rooms to listen music together and vibe together with friends.
 - **Room History & Export:** View your listening history in rooms and export playlists to Spotify with one click.
 - **Open Source:** Explore and contribute on [GitHub](https://github.com/saalikmubeen/sonder.fm).
 
@@ -49,6 +49,7 @@
 - [ ] **Scheduled Rooms:** Schedule rooms to start at a specific time
 - [x] **Web:** Next.js frontend
 - [x] **Dark Mode & Themes:** Beautiful, accessible design for all moods
+- [ ] **GPT-generated "vibe summary":** poetic summaries of your current song and profile.
 - [ ] **Production-ready Mobile App:** Full-featured React Native app (coming soon)
 
 ---
@@ -103,15 +104,6 @@ sonder.fm/
   /utils      → crypto, auth, Spotify, OpenAI
   /types      → shared interfaces for User, Message, etc.
 ```
-
-- **Spotify OAuth:** `/auth/login`, `/auth/callback` (secure, encrypted refresh tokens)
-- **User Profiles:** `/u/:slug` (public, themeable, real-time now playing)
-- **Feed:** `/feed/:slug` (see what your friends are listening to)
-- **Reactions:** `/react/:slug` (emoji reactions)
-- **Vibe Notes:** `/note/:slug` (anonymous messages)
-- **Theme Picker:** `/theme/:slug` (choose your vibe)
-- **Messaging:** Real-time chat via Socket.IO
-- **Background Worker:** Refreshes now playing, updates GPT-4 vibe summaries
 
 ### Security and Auth
 
@@ -185,21 +177,35 @@ yarn start
 
 ## 🖼️ Screenshots
 
-![Sonder.fm Room Screenshot](https://github.com/saalikmubeen/sonder.fm/blob/main/screenshots/room_desktop.png?raw=true)
+![Sonder.fm Jam Screenshot](https://github.com/saalikmubeen/sonder.fm/blob/main/screenshots/jam_desktop.png?raw=true)
+
+---
 
 ![Sonder.fm Dashboard Screenshot](https://github.com/saalikmubeen/sonder.fm/blob/main/screenshots/dashboard_desktop.png?raw=true)
 
+---
+
+![Sonder.fm Room Screenshot](https://github.com/saalikmubeen/sonder.fm/blob/main/screenshots/room_desktop.png?raw=true)
+
+---
+
+![Sonder.fm Export History Screenshot](https://github.com/saalikmubeen/sonder.fm/blob/main/screenshots/export_desktop.png?raw=true)
+
+---
+
 ![Sonder.fm Profile Screenshot](https://github.com/saalikmubeen/sonder.fm/blob/main/screenshots/profile_desktop.png?raw=true)
 
-![Sonder.fm Activity Feed Screenshot](https://github.com/saalikmubeen/sonder.fm/blob/main/screenshots/activity_desktop.png?raw=true)
+---
 
 ![Sonder.fm Vibe Notes Screenshot](https://github.com/saalikmubeen/sonder.fm/blob/main/screenshots/vibe_desktop.png?raw=true)
 
-![Sonder.fm Jam Screenshot](https://github.com/saalikmubeen/sonder.fm/blob/main/screenshots/jam_desktop.png?raw=true)
+---
+
+![Sonder.fm Activity Feed Screenshot](https://github.com/saalikmubeen/sonder.fm/blob/main/screenshots/activity_desktop.png?raw=true)
+
+---
 
 ![Sonder.fm Bookmarks Screenshot](https://github.com/saalikmubeen/sonder.fm/blob/main/screenshots/bookmarks_desktop.png?raw=true)
-
-![Sonder.fm Export History Screenshot](https://github.com/saalikmubeen/sonder.fm/blob/main/screenshots/export_desktop.png?raw=true)
 
 ---
 
