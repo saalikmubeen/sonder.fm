@@ -5,6 +5,7 @@ import {
   useQuery,
   useMutation,
   useQueryClient,
+  useInfiniteQuery,
 } from '@tanstack/react-query';
 import { useParams, useRouter } from 'next/navigation';
 import { motion, AnimatePresence, animate } from 'framer-motion';
@@ -44,6 +45,9 @@ import {
   Heart,
   Share2,
   Activity,
+  Radio,
+  Bell,
+  Crown,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 import { formatDuration, timeAgo } from '@sonder/utils';
@@ -53,6 +57,7 @@ import {
   followApi,
   noteApi,
   reactionApi,
+  activityApi,
 } from '@/lib/api';
 import BookmarkModal from '@/components/BookmarkModal';
 import toast from 'react-hot-toast';
@@ -136,7 +141,8 @@ type Section =
   | 'recent'
   | 'playlists'
   | 'bookmarks'
-  | 'vibe_notes';
+  | 'vibe_notes'
+  | 'activity';
 
 // MarqueeText: Robust marquee effect for overflowing text
 function MarqueeText({
@@ -410,6 +416,8 @@ export default function UserProfilePage() {
   const router = useRouter();
   const { user } = useAuth();
   const { theme, setTheme } = useTheme();
+  const iconColorClass =
+    theme === 'dark' ? 'text-white' : 'text-black';
   const [activeSection, setActiveSection] =
     useState<Section>('profile');
   const [timeRange, setTimeRange] = useState<TimeRange>('long');
@@ -420,6 +428,7 @@ export default function UserProfilePage() {
     string | null
   >(null);
   const [editCaption, setEditCaption] = useState('');
+
   const queryClient = useQueryClient();
 
   const isOwnProfile = user?.publicSlug === slug;
@@ -427,6 +436,83 @@ export default function UserProfilePage() {
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  // ... existing code ...
+  // 1. Add state for activity tab
+  const [profileActivityTab, setProfileActivityTab] = useState<
+    'user' | 'friends'
+  >('user');
+
+  // 2. Fetch user and friends activity using useInfiniteQuery
+  const {
+    data: userActivityData,
+    fetchNextPage: fetchNextUserActivity,
+    hasNextPage: hasNextUserActivity,
+    isFetchingNextPage: isFetchingNextUserActivity,
+    isLoading: userActivityLoading,
+  } = useInfiniteQuery({
+    queryKey: ['profile-activity-user', slug],
+    queryFn: ({ pageParam }) =>
+      activityApi.getMyActivities(20, pageParam, undefined, slug),
+    getNextPageParam: (lastPage) =>
+      lastPage.data?.nextCursor || undefined,
+    enabled:
+      !!slug &&
+      activeSection === 'activity' &&
+      profileActivityTab === 'user',
+    initialPageParam: undefined,
+  });
+
+  const {
+    data: friendsActivityData,
+    fetchNextPage: fetchNextFriendsActivity,
+    hasNextPage: hasNextFriendsActivity,
+    isFetchingNextPage: isFetchingNextFriendsActivity,
+    isLoading: friendsActivityLoading,
+  } = useInfiniteQuery({
+    queryKey: ['profile-activity-friends', slug],
+    queryFn: ({ pageParam }) => activityApi.getFeed(20, pageParam),
+    getNextPageParam: (lastPage) =>
+      lastPage.data?.nextCursor || undefined,
+    enabled:
+      !!slug &&
+      activeSection === 'activity' &&
+      profileActivityTab === 'friends' &&
+      isOwnProfile, // Only enable for own profile
+    initialPageParam: undefined,
+  });
+
+  const userActivities =
+    userActivityData?.pages.flatMap(
+      (page) => page.data?.activities || []
+    ) || [];
+  const friendsActivities = (
+    friendsActivityData?.pages.flatMap(
+      (page) => page.data?.activities || []
+    ) || []
+  ).filter(
+    (activity) => !user || activity.actorSlug !== user.publicSlug
+  );
+  const currentProfileActivities =
+    profileActivityTab === 'user'
+      ? userActivities
+      : friendsActivities;
+  const isProfileActivityLoading =
+    profileActivityTab === 'user'
+      ? userActivityLoading
+      : friendsActivityLoading;
+  const hasNextProfileActivity =
+    profileActivityTab === 'user'
+      ? hasNextUserActivity
+      : hasNextFriendsActivity;
+  const isFetchingNextProfileActivity =
+    profileActivityTab === 'user'
+      ? isFetchingNextUserActivity
+      : isFetchingNextFriendsActivity;
+  const fetchNextProfileActivity =
+    profileActivityTab === 'user'
+      ? fetchNextUserActivity
+      : fetchNextFriendsActivity;
 
   // React Query for profile data
   const {
@@ -680,6 +766,19 @@ export default function UserProfilePage() {
     queryClient.invalidateQueries({ queryKey: ['profile', slug] });
   };
 
+  // Activity tab: fetch user's own activity (no filters)
+  const [activityLoading, setActivityLoading] = useState(false);
+  const [activityItems, setActivityItems] = useState<any[]>([]);
+  useEffect(() => {
+    if (activeSection === 'activity' && isOwnProfile) {
+      setActivityLoading(true);
+      activityApi.getMyActivities(20).then((res: any) => {
+        setActivityItems(res.data?.activities || []);
+        setActivityLoading(false);
+      });
+    }
+  }, [activeSection, isOwnProfile]);
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-white dark:bg-black flex items-center justify-center">
@@ -735,6 +834,9 @@ export default function UserProfilePage() {
     { id: 'playlists', icon: List, label: 'Playlists' },
     { id: 'bookmarks', icon: Bookmark, label: 'Bookmarks' },
     { id: 'vibe_notes', label: 'Vibe Notes', icon: MessageSquare },
+    ...(isOwnProfile
+      ? [{ id: 'activity', icon: Activity, label: 'Activity' }]
+      : []),
   ];
 
   const copyProfileUrl = () => {
@@ -813,20 +915,22 @@ export default function UserProfilePage() {
                     <Link href="/activity">
                       <motion.div
                         whileTap={{ scale: 0.95 }}
-                        className="p-2 rounded-full hover:bg-purple-100 dark:hover:bg-purple-900/30 text-purple-600 dark:text-purple-400 transition-colors cursor-pointer"
+                        className={`p-2 rounded-full hover:bg-purple-100 dark:hover:bg-purple-900/30 transition-colors cursor-pointer`}
                         title="Your Activity Feed"
                       >
-                        <Activity className="w-5 h-5" />
+                        <Activity
+                          className={`w-5 h-5 ${iconColorClass}`}
+                        />
                       </motion.div>
                     </Link>
                   )}
                   <motion.button
                     whileTap={{ scale: 0.95 }}
                     onClick={copyProfileUrl}
-                    className="p-2 rounded-full hover:bg-purple-100 dark:hover:bg-purple-900/30 text-purple-600 dark:text-purple-400 transition-colors"
+                    className={`p-2 rounded-full hover:bg-purple-100 dark:hover:bg-purple-900/30 transition-colors ${iconColorClass}`}
                     title="Share profile"
                   >
-                    <Share2 className="w-5 h-5" />
+                    <Share2 className={`w-5 h-5 ${iconColorClass}`} />
                   </motion.button>
 
                   <motion.button
@@ -834,12 +938,12 @@ export default function UserProfilePage() {
                     onClick={() =>
                       setTheme(theme === 'dark' ? 'light' : 'dark')
                     }
-                    className="p-2 rounded-full hover:bg-purple-100 dark:hover:bg-purple-900/30 text-purple-600 dark:text-purple-400 transition-colors"
+                    className={`p-2 rounded-full hover:bg-purple-100 dark:hover:bg-purple-900/30 transition-colors ${iconColorClass}`}
                   >
                     {theme === 'dark' ? (
-                      <Sun className="w-4 h-4" />
+                      <Sun className={`w-4 h-4 ${iconColorClass}`} />
                     ) : (
-                      <Moon className="w-4 h-4" />
+                      <Moon className={`w-4 h-4 ${iconColorClass}`} />
                     )}
                   </motion.button>
                 </div>
@@ -1268,6 +1372,322 @@ export default function UserProfilePage() {
                   </div>
                 </div>
               )}
+
+              {activeSection === 'activity' && (
+                <div className="max-w-4xl mx-auto h-[calc(100vh-120px)] flex flex-col">
+                  {/* Toggle between user and friends activity */}
+                  <div className="flex bg-gray-100/80 dark:bg-gray-800/80 border border-gray-200 dark:border-gray-800 rounded-full p-1 mb-4 shadow-sm w-4/5 mx-auto flex-shrink-0">
+                    <button
+                      onClick={() => setProfileActivityTab('user')}
+                      className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-full font-medium transition-all text-sm ${
+                        profileActivityTab === 'user'
+                          ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow'
+                          : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                      }`}
+                    >
+                      <Activity className="w-4 h-4" />
+                      {isOwnProfile
+                        ? 'Your Activity'
+                        : 'Their Activity'}
+                    </button>
+                    <button
+                      onClick={() => setProfileActivityTab('friends')}
+                      className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-full font-medium transition-all text-sm ${
+                        profileActivityTab === 'friends'
+                          ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow'
+                          : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                      }`}
+                    >
+                      <Users className="w-4 h-4" />
+                      Friends Activity
+                    </button>
+                  </div>
+
+                  {/* Scrollable Activity List */}
+                  <div className="flex-1 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600 scrollbar-track-transparent">
+                    {isProfileActivityLoading ? (
+                      <div className="flex items-center justify-center py-8">
+                        <motion.div
+                          animate={{ rotate: 360 }}
+                          transition={{
+                            duration: 1,
+                            repeat: Infinity,
+                            ease: 'linear',
+                          }}
+                          className="w-6 h-6 border-2 border-purple-500 border-t-transparent rounded-full"
+                        />
+                      </div>
+                    ) : currentProfileActivities.length > 0 ? (
+                      <div className="space-y-3 pb-4">
+                        {currentProfileActivities.map(
+                          (activity: any) => (
+                            <div
+                              key={activity._id}
+                              className="flex items-start gap-4 p-4 rounded-2xl bg-gray-50 dark:bg-gray-900/60 border border-gray-200 dark:border-gray-800"
+                            >
+                              <Link href={`/u/${activity.actorSlug}`}>
+                                <img
+                                  src={activity.actorAvatar}
+                                  alt={activity.actorName}
+                                  className="w-10 h-10 rounded-full object-cover shadow-md"
+                                />
+                              </Link>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2 mb-1">
+                                  {/* Icon */}
+                                  {activity.type === 'room_join' && (
+                                    <Radio className="w-4 h-4 text-green-500" />
+                                  )}
+                                  {activity.type ===
+                                    'room_create' && (
+                                    <Crown className="w-4 h-4 text-yellow-500" />
+                                  )}
+                                  {activity.type === 'vibe_note' && (
+                                    <MessageSquare className="w-4 h-4 text-blue-500" />
+                                  )}
+                                  {activity.type === 'reaction' && (
+                                    <Heart className="w-4 h-4 text-pink-500" />
+                                  )}
+                                  {activity.type === 'follow' && (
+                                    <UserPlus className="w-4 h-4 text-purple-500" />
+                                  )}
+                                  {activity.type === 'bookmark' && (
+                                    <Bookmark className="w-4 h-4 text-indigo-500" />
+                                  )}
+                                  {activity.type ===
+                                    'theme_change' && (
+                                    <Sparkles className="w-4 h-4 text-orange-500" />
+                                  )}
+                                  {activity.type === 'track_play' && (
+                                    <Play className="w-4 h-4 text-green-600" />
+                                  )}
+                                  {activity.type ===
+                                    'playlist_export' && (
+                                    <ExternalLink className="w-4 h-4 text-blue-600" />
+                                  )}
+                                  {/* Text */}
+                                  <div className="text-sm text-gray-700 dark:text-gray-300">
+                                    {/* Use 'You' for own activity, otherwise actor name */}
+                                    {activity.type ===
+                                      'room_join' && (
+                                      <>
+                                        {isOwnProfile &&
+                                        profileActivityTab === 'user'
+                                          ? 'You'
+                                          : activity.actorName}{' '}
+                                        joined room{' '}
+                                        <span className="font-medium text-green-600 dark:text-green-400">
+                                          {activity.roomName}
+                                        </span>
+                                      </>
+                                    )}
+                                    {activity.type ===
+                                      'room_create' && (
+                                      <>
+                                        {isOwnProfile &&
+                                        profileActivityTab === 'user'
+                                          ? 'You'
+                                          : activity.actorName}{' '}
+                                        created room{' '}
+                                        <span className="font-medium text-yellow-600 dark:text-yellow-400">
+                                          {activity.roomName}
+                                        </span>
+                                      </>
+                                    )}
+                                    {activity.type ===
+                                      'vibe_note' && (
+                                      <>
+                                        {isOwnProfile &&
+                                        profileActivityTab === 'user'
+                                          ? 'You'
+                                          : activity.actorName}{' '}
+                                        left a vibe note
+                                        {activity.targetUserName && (
+                                          <>
+                                            {' '}
+                                            for{' '}
+                                            <Link
+                                              href={`/u/${activity.targetUserSlug}`}
+                                              className="font-medium text-blue-600 dark:text-blue-400 hover:underline"
+                                            >
+                                              {
+                                                activity.targetUserName
+                                              }
+                                            </Link>
+                                          </>
+                                        )}
+                                      </>
+                                    )}
+                                    {activity.type === 'reaction' && (
+                                      <>
+                                        {isOwnProfile &&
+                                        profileActivityTab === 'user'
+                                          ? 'You'
+                                          : activity.actorName}{' '}
+                                        reacted{' '}
+                                        {activity.metadata?.emoji}
+                                        {activity.targetUserName && (
+                                          <>
+                                            {' '}
+                                            to{' '}
+                                            <Link
+                                              href={`/u/${activity.targetUserSlug}`}
+                                              className="font-medium text-pink-600 dark:text-pink-400 hover:underline"
+                                            >
+                                              {
+                                                activity.targetUserName
+                                              }
+                                            </Link>
+                                          </>
+                                        )}
+                                      </>
+                                    )}
+                                    {activity.type === 'follow' && (
+                                      <>
+                                        {isOwnProfile &&
+                                        profileActivityTab === 'user'
+                                          ? 'You'
+                                          : activity.actorName}{' '}
+                                        followed{' '}
+                                        <Link
+                                          href={`/u/${activity.targetUserSlug}`}
+                                          className="font-medium text-purple-600 dark:text-purple-400 hover:underline"
+                                        >
+                                          {activity.targetUserName}
+                                        </Link>
+                                      </>
+                                    )}
+                                    {activity.type === 'bookmark' && (
+                                      <>
+                                        {isOwnProfile &&
+                                        profileActivityTab === 'user'
+                                          ? 'You'
+                                          : activity.actorName}{' '}
+                                        bookmarked{' '}
+                                        <span className="font-medium text-indigo-600 dark:text-indigo-400">
+                                          {activity.trackName}
+                                        </span>{' '}
+                                        by {activity.trackArtist}
+                                      </>
+                                    )}
+                                    {activity.type ===
+                                      'theme_change' && (
+                                      <>
+                                        {isOwnProfile &&
+                                        profileActivityTab === 'user'
+                                          ? 'You'
+                                          : activity.actorName}{' '}
+                                        changed theme to{' '}
+                                        <span className="font-medium text-orange-600 dark:text-orange-400">
+                                          {activity.metadata?.theme}
+                                        </span>
+                                      </>
+                                    )}
+                                    {activity.type ===
+                                      'track_play' && (
+                                      <>
+                                        {isOwnProfile &&
+                                        profileActivityTab === 'user'
+                                          ? 'You'
+                                          : activity.actorName}{' '}
+                                        played{' '}
+                                        <span className="font-medium text-green-600 dark:text-green-400">
+                                          {activity.trackName}
+                                        </span>{' '}
+                                        in {activity.roomName}
+                                      </>
+                                    )}
+                                    {activity.type ===
+                                      'playlist_export' && (
+                                      <>
+                                        {isOwnProfile &&
+                                        profileActivityTab === 'user'
+                                          ? 'You'
+                                          : activity.actorName}{' '}
+                                        exported playlist from{' '}
+                                        <span className="font-medium text-blue-600 dark:text-blue-400">
+                                          {activity.roomName}
+                                        </span>
+                                      </>
+                                    )}
+                                    {![
+                                      'room_join',
+                                      'room_create',
+                                      'vibe_note',
+                                      'reaction',
+                                      'follow',
+                                      'bookmark',
+                                      'theme_change',
+                                      'track_play',
+                                      'playlist_export',
+                                    ].includes(activity.type) && (
+                                      <>
+                                        {isOwnProfile &&
+                                        profileActivityTab === 'user'
+                                          ? 'You'
+                                          : activity.actorName}{' '}
+                                        did something
+                                      </>
+                                    )}
+                                  </div>
+                                </div>
+                                <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+                                  <Clock className="w-3 h-3" />
+                                  {timeAgo(
+                                    new Date(activity.createdAt)
+                                  )}
+                                </div>
+                              </div>
+                              {activity.trackImage && (
+                                <img
+                                  src={activity.trackImage}
+                                  alt="Track"
+                                  className="w-10 h-10 rounded-lg object-cover flex-shrink-0 shadow-md"
+                                />
+                              )}
+                            </div>
+                          )
+                        )}
+                      </div>
+                    ) : (
+                      <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                        No recent activity yet.
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Load More Button - Fixed at bottom */}
+                  {hasNextProfileActivity &&
+                    currentProfileActivities.length > 0 && (
+                      <div className="p-6 text-center flex-shrink-0">
+                        <motion.button
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                          onClick={() => fetchNextProfileActivity()}
+                          disabled={isFetchingNextProfileActivity}
+                          className="px-6 py-3 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-2xl font-medium hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors disabled:opacity-50"
+                        >
+                          {isFetchingNextProfileActivity ? (
+                            <div className="flex items-center gap-2">
+                              <motion.div
+                                animate={{ rotate: 360 }}
+                                transition={{
+                                  duration: 1,
+                                  repeat: Infinity,
+                                  ease: 'linear',
+                                }}
+                                className="w-4 h-4 border-2 border-current border-t-transparent rounded-full"
+                              />
+                              Loading...
+                            </div>
+                          ) : (
+                            'Load More'
+                          )}
+                        </motion.button>
+                      </div>
+                    )}
+                </div>
+              )}
             </AnimatePresence>
           </div>
         </div>
@@ -1288,20 +1708,22 @@ export default function UserProfilePage() {
                     <Link href="/activity">
                       <motion.div
                         whileTap={{ scale: 0.95 }}
-                        className="p-2 rounded-full hover:bg-purple-100 dark:hover:bg-purple-900/30 text-purple-600 dark:text-purple-400 transition-colors cursor-pointer"
+                        className={`p-2 rounded-full hover:bg-purple-100 dark:hover:bg-purple-900/30 transition-colors cursor-pointer`}
                         title="Your Activity Feed"
                       >
-                        <Activity className="w-5 h-5" />
+                        <Activity
+                          className={`w-5 h-5 ${iconColorClass}`}
+                        />
                       </motion.div>
                     </Link>
                   )}
                   <motion.button
                     whileTap={{ scale: 0.95 }}
                     onClick={copyProfileUrl}
-                    className="p-2 rounded-full hover:bg-purple-100 dark:hover:bg-purple-900/30 text-purple-600 dark:text-purple-400 transition-colors"
+                    className={`p-2 rounded-full hover:bg-purple-100 dark:hover:bg-purple-900/30 transition-colors ${iconColorClass}`}
                     title="Share profile"
                   >
-                    <Share2 className="w-5 h-5" />
+                    <Share2 className={`w-5 h-5 ${iconColorClass}`} />
                   </motion.button>
 
                   <motion.button
@@ -1309,12 +1731,12 @@ export default function UserProfilePage() {
                     onClick={() =>
                       setTheme(theme === 'dark' ? 'light' : 'dark')
                     }
-                    className="p-2 rounded-full hover:bg-purple-100 dark:hover:bg-purple-900/30 text-purple-600 dark:text-purple-400 transition-colors"
+                    className={`p-2 rounded-full hover:bg-purple-100 dark:hover:bg-purple-900/30 transition-colors ${iconColorClass}`}
                   >
                     {theme === 'dark' ? (
-                      <Sun className="w-5 h-5" />
+                      <Sun className={`w-5 h-5 ${iconColorClass}`} />
                     ) : (
-                      <Moon className="w-5 h-5" />
+                      <Moon className={`w-5 h-5 ${iconColorClass}`} />
                     )}
                   </motion.button>
                 </div>
@@ -1540,6 +1962,156 @@ export default function UserProfilePage() {
                 </div>
               </div>
             )}
+            {activeSection === 'activity' && (
+              <div className="space-y-6">
+                {/* Toggle between user and friends activity */}
+                <div className="flex bg-gray-100/80 dark:bg-gray-800/80 border border-gray-200 dark:border-gray-800 rounded-full p-1 shadow-sm w-4/5 mx-auto">
+                  <button
+                    onClick={() => setProfileActivityTab('user')}
+                    className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-full font-medium transition-all text-sm ${
+                      profileActivityTab === 'user'
+                        ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow'
+                        : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                    }`}
+                  >
+                    <Activity className="w-4 h-4" />
+                    {isOwnProfile
+                      ? 'Your Activity'
+                      : 'Their Activity'}
+                  </button>
+                  <button
+                    onClick={() => setProfileActivityTab('friends')}
+                    className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-full font-medium transition-all text-sm ${
+                      profileActivityTab === 'friends'
+                        ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow'
+                        : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                    }`}
+                  >
+                    <Users className="w-4 h-4" />
+                    Friends Activity
+                  </button>
+                </div>
+
+                {/* Activity List */}
+                <div className="space-y-4">
+                  {isProfileActivityLoading ? (
+                    <div className="flex items-center justify-center py-8">
+                      <motion.div
+                        animate={{ rotate: 360 }}
+                        transition={{
+                          duration: 1,
+                          repeat: Infinity,
+                          ease: 'linear',
+                        }}
+                        className="w-6 h-6 border-2 border-purple-500 border-t-transparent rounded-full"
+                      />
+                    </div>
+                  ) : currentProfileActivities.length > 0 ? (
+                    <div className="space-y-3">
+                      {currentProfileActivities.map(
+                        (activity: any) => (
+                          <div
+                            key={activity._id}
+                            className="flex items-start gap-4 p-4 rounded-2xl bg-gray-50 dark:bg-gray-900/60 border border-gray-200 dark:border-gray-800"
+                          >
+                            <Link href={`/u/${activity.actorSlug}`}>
+                              <img
+                                src={activity.actorAvatar}
+                                alt={activity.actorName}
+                                className="w-10 h-10 rounded-full object-cover shadow-md"
+                              />
+                            </Link>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 mb-1">
+                                <div className="text-sm text-gray-700 dark:text-gray-300">
+                                  <span className="font-semibold">
+                                    {activity.actorName}
+                                  </span>{' '}
+                                  {activity.type === 'room_join' &&
+                                    `joined room ${activity.roomName}`}
+                                  {activity.type === 'room_create' &&
+                                    `created room ${activity.roomName}`}
+                                  {activity.type === 'vibe_note' &&
+                                    `left a vibe note${
+                                      activity.targetUserName
+                                        ? ` for ${activity.targetUserName}`
+                                        : ''
+                                    }`}
+                                  {activity.type === 'reaction' &&
+                                    `reacted ${
+                                      activity.metadata?.emoji
+                                    }${
+                                      activity.targetUserName
+                                        ? ` to ${activity.targetUserName}`
+                                        : ''
+                                    }`}
+                                  {activity.type === 'follow' &&
+                                    `followed ${activity.targetUserName}`}
+                                  {activity.type === 'bookmark' &&
+                                    `bookmarked ${activity.trackName} by ${activity.trackArtist}`}
+                                  {activity.type === 'theme_change' &&
+                                    `changed theme to ${activity.metadata?.theme}`}
+                                  {activity.type === 'track_play' &&
+                                    `played ${activity.trackName} in ${activity.roomName}`}
+                                  {activity.type ===
+                                    'playlist_export' &&
+                                    `exported playlist from ${activity.roomName}`}
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+                                <Clock className="w-3 h-3" />
+                                {timeAgo(
+                                  new Date(activity.createdAt)
+                                )}
+                              </div>
+                            </div>
+                            {activity.trackImage && (
+                              <img
+                                src={activity.trackImage}
+                                alt="Track"
+                                className="w-10 h-10 rounded-lg object-cover flex-shrink-0 shadow-md"
+                              />
+                            )}
+                          </div>
+                        )
+                      )}
+                    </div>
+                  ) : (
+                    <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                      No recent activity yet.
+                    </div>
+                  )}
+
+                  {/* Load More Button */}
+                  {hasNextProfileActivity &&
+                    currentProfileActivities.length > 0 && (
+                      <div className="text-center pt-4">
+                        <motion.button
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                          onClick={() => fetchNextProfileActivity()}
+                          disabled={isFetchingNextProfileActivity}
+                          className="px-6 py-3 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-2xl font-medium hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors disabled:opacity-50"
+                        >
+                          {isFetchingNextProfileActivity ? (
+                            <motion.div
+                              animate={{ rotate: 360 }}
+                              transition={{
+                                duration: 1,
+                                repeat: Infinity,
+                                ease: 'linear',
+                              }}
+                              className="w-4 h-4 border-2 border-gray-500 border-t-transparent rounded-full mx-auto"
+                            />
+                          ) : (
+                            'Load More'
+                          )}
+                        </motion.button>
+                      </div>
+                    )}
+                </div>
+              </div>
+            )}
           </AnimatePresence>
         </div>
 
@@ -1672,11 +2244,11 @@ function ProfileSection({
               {/* Message Button for own profile */}
               {isOwnProfile && user && (
                 <Link
-                  href="/jam"
-                  className="px-3 py-1.5 rounded-full font-medium text-xs bg-gradient-to-r from-purple-500 to-pink-500  text-white  shadow-lg hover:from-purple-600 hover:to-pink-600 hover:shadow-xl transition-all flex items-center gap-1.5"
+                  href="/jam/discover"
+                  className="px-3 py-1.5 rounded-full font-medium text-xs bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg hover:from-purple-600 hover:to-pink-600 hover:shadow-xl transition-all flex items-center gap-1.5"
                 >
                   <Music className="w-3 h-3" />
-                  Create a Jam
+                  Discover Live Sessions
                 </Link>
               )}
             </div>

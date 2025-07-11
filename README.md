@@ -36,16 +36,17 @@
 ## ✨ Features Checklist
 
 - [x] **Spotify OAuth:** Secure login with Spotify, encrypted refresh tokens
-- [x] **Personalized Feed:** See what your friends are listening to
+- [x] **Activity Feed:** See what your friends are listening to, reacting to, and leaving vibe notes on
 - [x] **Social Profiles:** Unique public pages with display name, avatar, and now playing
 - [x] **Live Now Playing:** Real-time song status, always fresh from Spotify or cached
-- [x] **Profile Themes:** Choose from pastel, grunge, sadcore, dark, and more
+- [] **Profile Themes:** Choose from pastel, grunge, sadcore, dark, and more
 - [x] **Emoji Reactions & Vibe Notes:** React and leave anonymous or attributed messages
 - [x] **Follow System:** Follow users, see their feed
 - [x] **Bookmarks:** Save and revisit your favorite song moments
 - [x] **Listening Rooms:** Real-time group listening and chat
 - [x] **Room History & Export:** Export room listening history as Spotify playlists
-- [x] **Mobile & Web:** Next.js frontend, React Native app placeholder
+- [ ] **Scheduled Rooms:** Schedule rooms to start at a specific time
+- [x] **Web:** Next.js frontend
 - [x] **Dark Mode & Themes:** Beautiful, accessible design for all moods
 - [ ] **Production-ready Mobile App:** Full-featured React Native app (coming soon)
 

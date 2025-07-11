@@ -449,7 +449,7 @@ export default function ActivityFeedPage() {
             </p>
           </div>
 
-          <div className="max-h-[600px] overflow-y-auto">
+          <div className="max-h-[80vh] md:max-h-[600px] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-700 scrollbar-track-transparent md:scrollbar-thin md:scrollbar-thumb-gray-300 md:dark:scrollbar-thumb-gray-700 md:scrollbar-track-transparent">
             {isLoading ? (
               <div className="flex items-center justify-center py-12">
                 <motion.div

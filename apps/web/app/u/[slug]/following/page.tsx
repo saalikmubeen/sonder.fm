@@ -1,12 +1,27 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useParams, useRouter, useSearchParams } from 'next/navigation';
+import {
+  useParams,
+  useRouter,
+  useSearchParams,
+} from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Users, MessageSquare, UserPlus, UserMinus, MoreHorizontal } from 'lucide-react';
+import {
+  ArrowLeft,
+  Users,
+  MessageSquare,
+  UserPlus,
+  UserMinus,
+  MoreHorizontal,
+} from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 import { followApi } from '@/lib/api';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import {
+  useQuery,
+  useMutation,
+  useQueryClient,
+} from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import BackButton from '@/components/BackButton';
 
@@ -27,9 +42,9 @@ export default function FollowingPage() {
 
   const slug = params.slug as string;
   const initialTab = searchParams.get('tab') || 'followers';
-  const [activeTab, setActiveTab] = useState<'followers' | 'following'>(
-    initialTab as 'followers' | 'following'
-  );
+  const [activeTab, setActiveTab] = useState<
+    'followers' | 'following'
+  >(initialTab as 'followers' | 'following');
 
   // Check if user is logged in
   useEffect(() => {
@@ -40,55 +55,95 @@ export default function FollowingPage() {
   }, [user, loading, router, slug]);
 
   // Fetch followers
-  const { data: followersData, isLoading: followersLoading, error: followersError, refetch: refetchFollowers } = useQuery({
+  const {
+    data: followersData,
+    isLoading: followersLoading,
+    error: followersError,
+    refetch: refetchFollowers,
+  } = useQuery({
     queryKey: ['followers', slug],
     queryFn: () => followApi.getFollowers(slug),
     enabled: !!user && activeTab === 'followers',
     retry: 3,
-    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+    retryDelay: (attemptIndex) =>
+      Math.min(1000 * 2 ** attemptIndex, 30000),
   });
 
   // Fetch following
-  const { data: followingData, isLoading: followingLoading, error: followingError, refetch: refetchFollowing } = useQuery({
+  const {
+    data: followingData,
+    isLoading: followingLoading,
+    error: followingError,
+    refetch: refetchFollowing,
+  } = useQuery({
     queryKey: ['following', slug],
     queryFn: () => followApi.getFollowing(slug),
     enabled: !!user && activeTab === 'following',
     retry: 3,
-    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+    retryDelay: (attemptIndex) =>
+      Math.min(1000 * 2 ** attemptIndex, 30000),
   });
 
   const isOwnProfile = user?.publicSlug === slug;
   const followers: User[] = followersData?.data?.followers || [];
   const following: User[] = followingData?.data?.following || [];
-  const userList: User[] = activeTab === 'followers' ? followers : following;
+  const userDisplayName =
+    followersData?.data?.displayName ||
+    followingData?.data?.displayName ||
+    slug;
+  const userAvatarUrl =
+    followersData?.data?.avatarUrl ||
+    followingData?.data?.avatarUrl ||
+    '';
+
+  const userList: User[] =
+    activeTab === 'followers' ? followers : following;
 
   // Fetch your own following list (as the logged-in user)
   const { data: myFollowingData } = useQuery({
     queryKey: ['myFollowing', user?.publicSlug],
-    queryFn: () => user?.publicSlug ? followApi.getFollowing(user.publicSlug) : Promise.resolve({ data: { following: [] } }),
+    queryFn: () =>
+      user?.publicSlug
+        ? followApi.getFollowing(user.publicSlug)
+        : Promise.resolve({ data: { following: [] } }),
     enabled: !!user && !isOwnProfile && !!user?.publicSlug,
   });
   const myFollowing = myFollowingData?.data?.following || [];
-  const myFollowingSet = new Set(myFollowing.map((u: User) => u.publicSlug));
+  const myFollowingSet = new Set(
+    myFollowing.map((u: User) => u.publicSlug)
+  );
 
   // Follow/Unfollow mutations
   const followMutation = useMutation({
     mutationFn: (targetSlug: string) => followApi.follow(targetSlug),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['followers', slug] });
-      queryClient.invalidateQueries({ queryKey: ['following', slug] });
-      queryClient.invalidateQueries({ queryKey: ['myFollowing', user?.publicSlug] });
+      queryClient.invalidateQueries({
+        queryKey: ['followers', slug],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ['following', slug],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ['myFollowing', user?.publicSlug],
+      });
       toast.success('Following user ✨');
     },
     onError: () => toast.error('Failed to follow user'),
   });
 
   const unfollowMutation = useMutation({
-    mutationFn: (targetSlug: string) => followApi.unfollow(targetSlug),
+    mutationFn: (targetSlug: string) =>
+      followApi.unfollow(targetSlug),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['followers', slug] });
-      queryClient.invalidateQueries({ queryKey: ['following', slug] });
-      queryClient.invalidateQueries({ queryKey: ['myFollowing', user?.publicSlug] });
+      queryClient.invalidateQueries({
+        queryKey: ['followers', slug],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ['following', slug],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ['myFollowing', user?.publicSlug],
+      });
       toast.success('Unfollowed user');
     },
     onError: () => toast.error('Failed to unfollow user'),
@@ -106,7 +161,9 @@ export default function FollowingPage() {
     }
 
     // Use the same logic as the UI for consistency
-    const isCurrentlyFollowing = myFollowingSet.has(targetUser.publicSlug);
+    const isCurrentlyFollowing = myFollowingSet.has(
+      targetUser.publicSlug
+    );
 
     if (isCurrentlyFollowing) {
       unfollowMutation.mutate(targetUser.publicSlug);
@@ -124,16 +181,35 @@ export default function FollowingPage() {
   }
 
   const currentList = userList;
-  const isLoading = activeTab === 'followers' ? followersLoading : followingLoading;
-  const error = activeTab === 'followers' ? followersError : followingError;
-  const refetch = activeTab === 'followers' ? refetchFollowers : refetchFollowing;
+  const isLoading =
+    activeTab === 'followers' ? followersLoading : followingLoading;
+  const error =
+    activeTab === 'followers' ? followersError : followingError;
+  const refetch =
+    activeTab === 'followers' ? refetchFollowers : refetchFollowing;
 
   // Error fallback component
-  const ErrorFallback = ({ error, retry }: { error: any; retry: () => void }) => (
+  const ErrorFallback = ({
+    error,
+    retry,
+  }: {
+    error: any;
+    retry: () => void;
+  }) => (
     <div className="text-center py-12">
       <div className="w-16 h-16 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
-        <svg className="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+        <svg
+          className="w-8 h-8 text-red-500"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
+          />
         </svg>
       </div>
       <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
@@ -163,19 +239,30 @@ export default function FollowingPage() {
           <div className="flex items-center gap-4 mb-6">
             <BackButton />
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-              {isOwnProfile ? 'Your' : `${slug}'s`} Connections
+              {isOwnProfile ? 'Your' : `${userDisplayName}'s`}{' '}
+              Connections
             </h1>
           </div>
 
           {/* Tab Navigation */}
           <div className="flex bg-gray-100 dark:bg-gray-800 rounded-2xl p-1">
             {[
-              { id: 'followers', label: 'Followers', count: followers.length },
-              { id: 'following', label: 'Following', count: following.length },
+              {
+                id: 'followers',
+                label: 'Followers',
+                count: followers.length,
+              },
+              {
+                id: 'following',
+                label: 'Following',
+                count: following.length,
+              },
             ].map((tab) => (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id as 'followers' | 'following')}
+                onClick={() =>
+                  setActiveTab(tab.id as 'followers' | 'following')
+                }
                 className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-medium transition-all ${
                   activeTab === tab.id
                     ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
@@ -203,7 +290,11 @@ export default function FollowingPage() {
             <div className="flex items-center justify-center py-12">
               <motion.div
                 animate={{ rotate: 360 }}
-                transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                transition={{
+                  duration: 1,
+                  repeat: Infinity,
+                  ease: 'linear',
+                }}
                 className="w-8 h-8 border-2 border-green-500 border-t-transparent rounded-full"
               />
             </div>
@@ -238,7 +329,9 @@ export default function FollowingPage() {
                         {/* User Info */}
                         <div
                           className="flex items-center gap-4 flex-1 cursor-pointer"
-                          onClick={() => handleUserClick(u.publicSlug)}
+                          onClick={() =>
+                            handleUserClick(u.publicSlug)
+                          }
                         >
                           <motion.img
                             whileHover={{ scale: 1.05 }}
@@ -250,9 +343,6 @@ export default function FollowingPage() {
                             <h3 className="font-medium text-gray-900 dark:text-white truncate">
                               {u.displayName}
                             </h3>
-                            <p className="text-sm text-gray-500 dark:text-gray-400">
-                              @{u.publicSlug}
-                            </p>
                           </div>
                         </div>
 
@@ -271,17 +361,25 @@ export default function FollowingPage() {
                             whileHover={{ scale: 1.02 }}
                             whileTap={{ scale: 0.98 }}
                             onClick={() => handleFollowToggle(u)}
-                            disabled={followMutation.isPending || unfollowMutation.isPending}
+                            disabled={
+                              followMutation.isPending ||
+                              unfollowMutation.isPending
+                            }
                             className={`px-4 py-2 rounded-full font-medium transition-all flex items-center gap-2 ${
                               isFollowing
                                 ? 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
                                 : 'bg-green-600 text-white hover:bg-green-700 shadow-lg hover:shadow-xl'
                             }`}
                           >
-                            {followMutation.isPending || unfollowMutation.isPending ? (
+                            {followMutation.isPending ||
+                            unfollowMutation.isPending ? (
                               <motion.div
                                 animate={{ rotate: 360 }}
-                                transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                                transition={{
+                                  duration: 1,
+                                  repeat: Infinity,
+                                  ease: 'linear',
+                                }}
                                 className="w-4 h-4 border-2 border-current border-t-transparent rounded-full"
                               />
                             ) : isFollowing ? (

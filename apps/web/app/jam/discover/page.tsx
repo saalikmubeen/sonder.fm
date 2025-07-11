@@ -26,6 +26,7 @@ import {
   Moon,
   Hash,
   Tag as TagIcon,
+  User,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 import { roomsApi } from '@/lib/rooms-api';
@@ -269,6 +270,8 @@ export default function RoomDiscoveryPage() {
     );
   }
 
+  const iconColorClass = theme === 'dark' ? 'text-white' : 'text-black';
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex">
       {/* Sidebar */}
@@ -363,7 +366,19 @@ export default function RoomDiscoveryPage() {
                 </div>
               </div>
               {/* Theme icon (right) */}
-              <div className="flex-shrink-0">
+              <div className="flex-shrink-0 flex items-center gap-1">
+                {/* Profile quick link */}
+                {user && (
+                  <Link href={`/u/${user.publicSlug}`}>
+                    <motion.div
+                      whileTap={{ scale: 0.95 }}
+                      className="p-2 rounded-full hover:bg-purple-100 dark:hover:bg-purple-900/30 transition-colors cursor-pointer"
+                      title="Your Profile"
+                    >
+                      <User className={`w-5 h-5 ${iconColorClass}`} />
+                    </motion.div>
+                  </Link>
+                )}
                 <button
                   onClick={() =>
                     setTheme(theme === 'dark' ? 'light' : 'dark')
@@ -389,19 +404,32 @@ export default function RoomDiscoveryPage() {
                 value={activeTab}
                 onChange={(v) => setActiveTab(v as 'live' | 'recent')}
               />
-              <button
-                onClick={() =>
-                  setTheme(theme === 'dark' ? 'light' : 'dark')
-                }
-                className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-                aria-label="Toggle theme"
-              >
-                {theme === 'dark' ? (
-                  <Sun className="w-5 h-5 text-gray-400" />
-                ) : (
-                  <Moon className="w-5 h-5 text-gray-400" />
+              <div className="flex items-center gap-1">
+                {user && (
+                  <Link href={`/u/${user.publicSlug}`}>
+                    <motion.div
+                      whileTap={{ scale: 0.95 }}
+                      className="p-2 rounded-full hover:bg-purple-100 dark:hover:bg-purple-900/30 transition-colors cursor-pointer"
+                      title="Your Profile"
+                    >
+                      <User className={`w-5 h-5 ${iconColorClass}`} />
+                    </motion.div>
+                  </Link>
                 )}
-              </button>
+                <button
+                  onClick={() =>
+                    setTheme(theme === 'dark' ? 'light' : 'dark')
+                  }
+                  className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                  aria-label="Toggle theme"
+                >
+                  {theme === 'dark' ? (
+                    <Sun className="w-5 h-5 text-gray-400" />
+                  ) : (
+                    <Moon className="w-5 h-5 text-gray-400" />
+                  )}
+                </button>
+              </div>
             </div>
             {/* Mobile: search input row */}
             <div className="flex sm:hidden justify-center w-full">
