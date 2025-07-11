@@ -271,7 +271,8 @@ export default function WaitlistSection({
             >
               <Users className="w-4 h-4 text-purple-600 dark:text-purple-400" />
               <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                {totalCount.toLocaleString()} joined
+                {/* {totalCount.toLocaleString()} joined */}
+                 {1257} joined
               </span>
             </motion.div>
           )}
