@@ -40,7 +40,7 @@
 - [x] **Activity Feed:** See what your friends are listening to, reacting to, and leaving vibe notes on
 - [x] **Social Profiles:** Unique public pages with display name, avatar, and now playing
 - [x] **Live Now Playing:** Real-time song status, always fresh from Spotify or cached
-- [] **Profile Themes:** Choose from pastel, grunge, sadcore, dark, and more
+- [ ] **Profile Themes:** Choose from pastel, grunge, sadcore, dark, and more
 - [x] **Emoji Reactions & Vibe Notes:** React and leave anonymous or attributed messages
 - [x] **Follow System:** Follow users, see their feed
 - [x] **Bookmarks:** Save and revisit your favorite song moments
